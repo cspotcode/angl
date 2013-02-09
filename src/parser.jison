@@ -28,8 +28,8 @@
 /* literals */
 [0-9]+("."[0-9]+)?\b    return 'NUMBER';        /* 123.4 */
 "$"[0-9a-fA-F]+\b       return 'HEX';           /* $FF00AA */
-"\""[\s\S]*"\""         return 'STRING';        /* "string" */
-"'"[\s\S]*"'"           return 'STRING';        /* 'string' */
+"\""[\s\S]*?"\""        return 'STRING';        /* "string" */
+"'"[\s\S]*?"'"          return 'STRING';        /* 'string' */
 [a-zA-Z_][0-9a-zA-Z_]*  return 'IDENTIFIER';    /* var_name3 */
 
 /* punctuation */
