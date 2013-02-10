@@ -61,6 +61,8 @@ This declares a script as a literal (for assignment to a variable). It has the f
         <statements>
     }
 
+Unlike script definitions, script literals **can be nested** inside other scripts.
+
 ###Expressions
 
 Are any valid literal, valid variable reference, valid use of an operator or valid function call.
@@ -144,6 +146,8 @@ This declares a script. It has the following format:
     }
 
 Script definitions are hoisted, i.e., it does not matter where in the file it is defined, you can still use it. They are also global, which means other files also see them. Scripts can see the local variables of the surrounding script or program. However, they cannot see the variables on the instance.
+
+Script definitions **cannot be nested inside other scripts**. They can only be at the top level in a file.
 
 In GML there is no direct equivalent to this statement. You can create scripts graphically, but you cannot specify argument names (you must use `argument0`, `argument1`, etc.).
 

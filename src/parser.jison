@@ -98,8 +98,22 @@
 %% /* language grammar */
 
 top
-    : statements EOF
-        { return $1; }
+    : top_level_statements EOF
+        { return yy.makeStmtList($1); }
+    ;
+
+top_level_statements
+    : top_level_statement top_level_statements
+        { $$ = [$1].concat($2); }
+    | /* empty */
+        { $$ = []; }
+    ;
+
+top_level_statement
+    : script_definition
+        { $$ = $1; }
+    | statement
+        { $$ = $1; }
     ;
 
 statements
@@ -120,8 +134,6 @@ statement
     | function_call ';'
         { $$ = $1; }
     | var_statement ';'
-        { $$ = $1; }
-    | script_definition
         { $$ = $1; }
     | if_statement
         { $$ = $1; }
@@ -217,7 +229,7 @@ var_list
 script_literal
     : SCRIPT '(' ')' '{' statements '}'
         { $$ = yy.makeScriptVal($3, $5); }
-    | SCRIPT '(' argument_list_definition ')' '{' statements '}'
+    | SCRIPT '(' definition_arguments ')' '{' statements '}'
         { $$ = yy.makeScriptVal($3, $6); }
     ;
 
