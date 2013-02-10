@@ -55,7 +55,7 @@ angl has three scopes for variables and constants which will be defined here:
 
 * instance scope - these are variables belonging to the `self` instance, e.g. `x` for a game object (`self.x`)
 * var scope - these are variables belonging to the script/file, that have been explicitly declared so with the `var` keyword
-* global scope - these are what constants are, they belong to neither of the above scopes, e.g. `mouse_x` or scripts declared with script declarations
+* global scope - these are what constants are, they belong to neither of the above scopes, e.g. `mouse_x` or scripts declared with script definitions
 
 ###Function call
 
