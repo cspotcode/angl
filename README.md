@@ -49,6 +49,14 @@ C-style (`/* this */`) and C++-style (`// this`) comments are allowed.
 
 Identifier names (used for variables or functions), must begin with a letter or an underscore, and may contain letters, underscores and digits. Identifier names are case-sensitive, i.e. `x` and `X` are not the same.
 
+###Scoping
+
+angl has three scopes for variables and constants which will be defined here:
+
+* instance scope - these are variables belonging to the `self` instance, e.g. `x` for a game object (`self.x`)
+* var scope - these are variables belonging to the script/file, that have been explicitly declared so with the `var` keyword
+* global scope - these are what constants are, they belong to neither of the above scopes, e.g. `mouse_x` or scripts declared with script declarations
+
 ###Function call
 
 Calls a function, follows the format `<function>(<arg1>, <arg2>, ...)`.
@@ -62,6 +70,8 @@ This declares a script as a literal (for assignment to a variable). It has the f
     }
 
 Unlike script definitions, script literals **can be nested** inside other scripts.
+
+Scripts are closures, and so they inherit the var scope they were created within. This cascades down, such that a script nested in a script nested in a script can access variables from the top-level. However, scripts inherit the instance scope they are *run* within.
 
 ###Expressions
 
@@ -135,7 +145,7 @@ Does nothing.
 
 ####`var` statement
 
-Declares that the given variable names are local to the script (instead of to the instance). Is of the format `var <var1>, <var2>, ...;`. The semicolon is required.
+Declares that the given variable names are var scoped (instead of instance scoped). Is of the format `var <var1>, <var2>, ...;`. The semicolon is required.
 
 ####Script definition(*)
 
@@ -148,6 +158,8 @@ This declares a script. It has the following format:
 Script definitions are hoisted, i.e., it does not matter where in the file it is defined, you can still use it. They are also global, which means other files also see them. Scripts can see the local variables of the surrounding script or program. However, they cannot see the variables on the instance.
 
 Script definitions **cannot be nested inside other scripts**. They can only be at the top level in a file.
+
+Scripts are closures, and so they inherit the var scope they were created within. This cascades down, such that a script nested in a script nested in a script can access variables from the top-level. However, scripts inherit the instance scope they are *run* within.
 
 In GML there is no direct equivalent to this statement. You can create scripts graphically, but you cannot specify argument names (you must use `argument0`, `argument1`, etc.).
 
@@ -165,7 +177,7 @@ Assigns a value to a variable, follows the format `<variable> = <expression>;`. 
 
 ####Function calls
 
-`<function call>;`
+See above, required semicolon at end.
 
 ####If statement
 
