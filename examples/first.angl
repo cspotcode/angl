@@ -1,5 +1,6 @@
 // this is a test of the grammar's completeness and correctness to build an AST
 // it isn't intended to be executed
+const PANIC = 3;
 script dostuff(x, y) {
     switch (3) {
         case 3:
@@ -13,7 +14,7 @@ script dostuff(x, y) {
                 unreliable_fpu = true;
                 x = 3;
             } else if (2 * 3 == 4) {
-                panic_mode = true;
+                panic_mode = PANIC;
             } else working_as_normal = true; 
         case 4:
         default:

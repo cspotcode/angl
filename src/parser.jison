@@ -24,6 +24,7 @@
 "exit"                  return 'EXIT';
 "return"                return 'RETURN';
 "script"                return 'SCRIPT';
+"const"                 return 'CONST';
 
 /* literals */
 [0-9]+("."[0-9]+)?\b    return 'NUMBER';        /* 123.4 */
@@ -111,6 +112,8 @@ top_level_statements
 
 top_level_statement
     : script_definition
+        { $$ = $1; }
+    | const_definition
         { $$ = $1; }
     | statement
         { $$ = $1; }
@@ -245,6 +248,11 @@ definition_arguments
         { $$ = [$1].concat($3); }
     | IDENTIFIER
         { $$ = [$1]; }
+    ;
+
+const_definition
+    : CONST IDENTIFIER '=' expression ';'
+        { $$ = yy.makeConstStmt($2, $4); }
     ;
 
 assignment

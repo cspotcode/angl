@@ -147,6 +147,18 @@ Does nothing.
 
 Declares that the given variable names are var scoped (instead of instance scoped). Is of the format `var <var1>, <var2>, ...;`. The semicolon is required.
 
+####Constant definition(*)
+
+This declares a constant. It has the following format:
+
+    const <name> = <value>;
+
+Script definitions are hoisted, i.e., it does not matter where in the file it is defined, you can still use it. Constant definitions are placed into the global scope.
+
+Constant definitions **cannot be nested inside scripts**. They can only be at the top level in a file.
+
+In GML there is no direct equivalent to this statement. However, you can create constants graphically.
+
 ####Script definition(*)
 
 This declares a script. It has the following format:
@@ -155,7 +167,7 @@ This declares a script. It has the following format:
         <statements>
     }
 
-Script definitions are hoisted, i.e., it does not matter where in the file it is defined, you can still use it. They are also global, which means other files also see them. Scripts can see the local variables of the surrounding script or program. However, they cannot see the variables on the instance.
+Script definitions are hoisted, i.e., it does not matter where in the file it is defined, you can still use it. Script definitions are placed into the global scope as constants. Hence, `script foo(bar) { ... }` could also effectively be written `const foo = script (bar) { ... };`.
 
 Script definitions **cannot be nested inside other scripts**. They can only be at the top level in a file.
 
