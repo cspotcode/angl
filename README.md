@@ -4,7 +4,7 @@ README
 Introduction
 ------------
 
-angl is a programming language that compiles to JavaScript, which is designed to be [GML](http://en.wikipedia.org/wiki/Game_Maker_Language)-compatible, but adding several features.
+angl is a programming language that compiles to JavaScript, which is designed to be largely [GML](http://en.wikipedia.org/wiki/Game_Maker_Language)-compatible, but adding several features.
 
 Language notes
 -------------
