@@ -143,13 +143,13 @@ parser.yy = {
         };
     },
     // makes continue statement structure
-    makeBreakStmt: function () {
+    makeContinueStmt: function () {
         return {
             type: 'continue'
         };
     },
     // makes exit statement structure
-    makeBreakStmt: function () {
+    makeExitStmt: function () {
         return {
             type: 'exit'
         };
