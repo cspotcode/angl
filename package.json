@@ -1,7 +1,9 @@
 {
-    "name": "angl",
-    "version": "0.0.0",
-    "dependencies": {
-        "jison": "latest"
-    }
+  "name": "angl",
+  "version": "0.0.0",
+  "dependencies": {
+    "jison": "latest",
+    "shelljs": "~0.1.2",
+    "executive": "~0.1.11"
+  }
 }
