@@ -41,6 +41,8 @@
 "}"                     return '}';
 
 /* operators */
+"++"                    return '++';
+"--"                    return '--';
 "+="                    return '+=';
 "-="                    return '-=';
 "*="                    return '*=';
@@ -258,6 +260,10 @@ const_definition
 assignment
     : variable '=' expression
         { $$ = yy.makeAssignStmt($1, $3); }
+    | variable '++'
+        { $$ = yy.makeCmpAssignStmt('+', $1, yy.makeNumVal('1')); }
+    | variable '--'
+        { $$ = yy.makeCmpAssignStmt('-', $1, yy.makeNumVal('1')); }
     | variable '+=' expression
         { $$ = yy.makeCmpAssignStmt('+', $1, $3); }
     | variable '-=' expression

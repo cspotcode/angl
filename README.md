@@ -186,6 +186,7 @@ Assigns a value to a variable, follows the format `<variable> = <expression>;`. 
 * `|=` - assign by OR
 * `&=` - assign by AND
 * `^=` - assign by XOR
+* `++` and `--` can also be used as shorthands for `+= 1` and `-= 1` respectively
 
 ####Function calls
 
