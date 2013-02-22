@@ -74,21 +74,12 @@ parser.yy = {
             expr: expr
         };
     },
-    // make 1D index (a[1]) structure
-    makeIndex1D: function (expr, indexexpr) {
+    // make index (a[1,2,3...]) structure
+    makeIndex: function (expr, indexes) {
         return {
             type: 'index1d',
             expr: expr,
-            indexexpr: indexexpr
-        };
-    },
-    // make 2D index (a[1,2]) structure
-    makeIndex2D: function (expr, indexexpr1, indexexpr2) {
-        return {
-            type: 'index2d',
-            expr: expr,
-            indexexpr1: indexexpr1,
-            indexexpr2: indexexpr2
+            indexes: indexes
         };
     },
     // make function call structure

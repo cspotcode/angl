@@ -366,10 +366,15 @@ variable
         { $$ = $1; }
     | expression '.' identifier
         { $$ = yy.makeBinaryOp($2, $1, $3); }
-    | expression '[' expression ']'
-        { $$ = yy.makeIndex1D($1, $3); }
-    | expression '[' expression ',' expression ']'
-        { $$ = yy.makeIndex2D($1, $3, $5); }
+    | expression '[' indexes ']'
+        { $$ = yy.makeIndex($1, $3); }
+    ;
+
+indexes
+    : expression ',' indexes
+        { $$ = [$1].concat($3); }
+    | expression
+        { $$ = [$1]; }
     ;
 
 identifier

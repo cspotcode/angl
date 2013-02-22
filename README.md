@@ -122,8 +122,7 @@ In order of precedence. `(` and `)` can also be used to embed an expression caus
 ####Object/array dereferencing
 
 * `<object>.<identifier>` - refers to property of object
-* `<array>[<expression>]` - refers to array's <expression>th index (from 0)
-* `<array>[<expression>,<expression>]` - refers to 2d array's <expression>,<expression> index (from 0,0)
+* `<array>[<expression>,<expression>...]` - refers to array's (<expression>,<expression>,<expression>...)th index (from 0), e.g. `arr[1]`, `arr[2,3,4]`, `arr[getIndex()]`
 
 ###Statements
 
