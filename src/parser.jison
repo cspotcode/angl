@@ -226,9 +226,13 @@ var_statement
 
 var_list
     : IDENTIFIER ',' var_list
-        { $$ = [$1].list.concat($3.list); }
+        { $$ = [yy.makeVarStmtItem($1)].concat($3); }
+    | IDENTIFIER '=' expression ',' var_list
+        { $$ = [yy.makeVarStmtItem($1, $3)].concat($5); }
     | IDENTIFIER
-        { $$ = [$1]; }
+        { $$ = [yy.makeVarStmtItem($1)]; }
+    | IDENTIFIER '=' expression
+        { $$ = [yy.makeVarStmtItem($1, $3)]; }
     ;
 
 script_literal

@@ -130,6 +130,21 @@ parser.yy = {
             list: list
         };
     },
+    // makes var statement item structure
+    makeVarStmtItem: function (yytext, expr) {
+        if (expr) {
+            return {
+                type: 'var_item',
+                name: yytext,
+                expr: expr
+            };
+        } else {
+            return {
+                type: 'var_item',
+                name: yytext
+            };
+        }
+    },
     // makes NOP statement structure (freestanding semicolon)
     makeNopStmt: function () {
         return {

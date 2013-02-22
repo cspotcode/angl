@@ -145,7 +145,7 @@ Does nothing.
 
 ####`var` statement
 
-Declares that the given variable names are var scoped (instead of instance scoped). Is of the format `var <var1>, <var2>, ...;`. The semicolon is required.
+Declares that the given variable names are var scoped (instead of instance scoped). Optionally, their initial value may be specified, i.e. instead of `var x, y; x = 3;`, `var x = 3, y;` can be used as a shorthand. Is of the format `var <var1>, <var2>, ...;`. The semicolon is required.
 
 ####Constant definition(*)
 
