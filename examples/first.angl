@@ -5,7 +5,7 @@ script dostuff(x, y) {
     switch (3) {
         case 3:
             var a = 3, m;
-            for(z = 0; z < 5; z += 1) {
+            for(z = 0; z < 5; z++) {
                 a[3,7,dostuff(z, 3)] = 1 - (2 + -2);
             }
             ;;
