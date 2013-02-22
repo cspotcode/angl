@@ -77,7 +77,7 @@ parser.yy = {
     // make index (a[1,2,3...]) structure
     makeIndex: function (expr, indexes) {
         return {
-            type: 'index1d',
+            type: 'index',
             expr: expr,
             indexes: indexes
         };
