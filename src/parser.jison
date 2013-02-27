@@ -187,7 +187,7 @@ while_statement
 
 do_until_statement
     : DO statement UNTIL '(' expression ')'
-        { $$ = yy.makeDoUntilStmt($3, $5); }
+        { $$ = yy.makeDoUntilStmt($2, $5); }
     ;
 
 for_statement
@@ -377,6 +377,10 @@ indexes
         { $$ = [$1]; }
     ;
 
+/*
+  Only used for lvalues (variables above)
+  subscripting, property access, & bare identifiers
+ */
 identifier
     : IDENTIFIER
         { $$ = yy.makeIdentifier(yytext); }
