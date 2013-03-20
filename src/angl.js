@@ -1,4 +1,4 @@
-var parser = require('./parser.js').parser;
+var parser = require('./parser').parser;
 parser.yy = {
     // makes number literal structure from decimal token
     makeNumVal: function (yytext) {
