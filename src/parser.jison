@@ -237,7 +237,7 @@ var_list
 
 script_literal
     : SCRIPT '(' ')' '{' statements '}'
-        { $$ = yy.makeScriptVal($3, $5); }
+        { $$ = yy.makeScriptVal([], $5); }
     | SCRIPT '(' definition_arguments ')' '{' statements '}'
         { $$ = yy.makeScriptVal($3, $6); }
     ;
