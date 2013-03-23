@@ -57,6 +57,46 @@ parser.yy = {
             expr: expr
         };
     },
+    // makes object statement structure
+    makeObjectStmt: function (name, stmts, parent) {
+        if (parent) {
+            return {
+                type: 'object',
+                name: name,
+                parent: parent,
+                stmts: stmts
+            };
+        } else {
+            return {
+                type: 'object',
+                name: name,
+                stmts: stmts
+            };
+        }
+    },
+    // makes create script definition structure
+    makeCreateStmt: function (args, stmts) {
+        return {
+            type: 'createdef',
+            args: args,
+            stmts: stmts
+        };
+    },
+    // makes destroy script definition structure
+    makeDestroyStmt: function (stmts) {
+        return {
+            type: 'destroydef',
+            stmts: stmts
+        };
+    },
+    // makes property definition structure
+    makePropertyStmt: function (name, expr) {
+        return {
+            type: 'property',
+            name: name,
+            expr: expr
+        };
+    },
     // make binary operator structure
     makeBinaryOp: function (op, expr1, expr2) {
         return {
@@ -87,6 +127,13 @@ parser.yy = {
         return {
             type: 'funccall',
             expr: expr,
+            args: args
+        };  
+    },
+    // make super call structure
+    makeSuperCall: function (args) {
+        return {
+            type: 'super',
             args: args
         };  
     },

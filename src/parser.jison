@@ -23,8 +23,13 @@
 "continue"              return 'CONTINUE';
 "exit"                  return 'EXIT';
 "return"                return 'RETURN';
+"object"                return 'OBJECT';
 "script"                return 'SCRIPT';
 "const"                 return 'CONST';
+"parent"                return 'PARENT';
+"create"                return 'CREATE';
+"destroy"               return 'DESTROY';
+"super"                 return 'SUPER';
 
 /* literals */
 [0-9]+("."[0-9]+)?\b    return 'NUMBER';        /* 123.4 */
@@ -114,6 +119,8 @@ top_level_statements
 
 top_level_statement
     : script_definition
+        { $$ = $1; }
+    | object_definition
         { $$ = $1; }
     | const_definition
         { $$ = $1; }
@@ -261,6 +268,33 @@ const_definition
         { $$ = yy.makeConstStmt($2, $4); }
     ;
 
+object_definition
+    : OBJECT IDENTIFIER '{' class_statements '}'
+        { $$ = yy.makeObjectStmt($2, $4); }
+    | OBJECT IDENTIFIER PARENT IDENTIFIER '{' class_statements '}'
+        { $$ = yy.makeObjectStmt($2, $6, $4); }
+    ;
+
+class_statements
+    : class_statement class_statements
+        { $$ = [$1].concat($2); }
+    | /* empty */
+        { $$ = []; }
+    ;
+
+class_statement
+    : script_definition
+        { $$ = $1; }
+    | CREATE '(' ')' '{' statements '}'
+        { $$ = yy.makeCreateStmt([], $5); }
+    | CREATE '(' definition_arguments ')' '{' statements '}'
+        { $$ = yy.makeCreateStmt($3, $6); }
+    | DESTROY '{' statements '}'
+        { $$ = yy.makeDestroyStmt($3); }
+    | IDENTIFIER '=' expression ';'
+        { $$ = yy.makePropertyStmt($1, $3); }
+    ;
+
 assignment
     : variable '=' expression
         { $$ = yy.makeAssignStmt($1, $3); }
@@ -352,6 +386,10 @@ function_call
         { $$ = yy.makeFunctionCall($1, []); }
     | expression '(' function_call_arguments ')'
         { $$ = yy.makeFunctionCall($1, $3); }
+    | SUPER '(' ')'
+        { $$ = yy.makeSuperCall([]); }
+    | SUPER '(' function_call_arguments ')'
+        { $$ = yy.makeSuperCall($3); }
     ;
 
 function_call_arguments
