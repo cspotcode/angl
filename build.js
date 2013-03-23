@@ -1,13 +1,8 @@
-var child_process = require('child_process');
-var fs = require('fs');
+#!/usr/bin/env node
+
 var path = require('path');
 var executive = require('executive');
 require('shelljs/global');
-
-// Utility to combine arguments into a command line
-var buildCommandLine = function(/* ... args */) {
-    return [].slice.apply(arguments).map(function(v) {return v.replace(/ /g, '\\ ')}).join(' ');
-};
 
 // Let's get down to business
 
@@ -33,4 +28,12 @@ executive(command, function(err, out, code) {
     echo('Done!');
 });
 
+////
+// UTILITY FUNCTIONS
+////
+
+// Utility to combine arguments into a command line
+function buildCommandLine(/* ... args */) {
+    return [].slice.apply(arguments).map(function(v) {return v.replace(/ /g, '\\ ')}).join(' ');
+};
 
