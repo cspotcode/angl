@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 var path = require('path');
-var executive = require('executive');
+var spawn = require('child_process').spawn;
 require('shelljs/global');
 
 // Let's get down to business
@@ -18,22 +18,11 @@ mkdir('out');
 var jisonBin = path.resolve(require.resolve('jison/package.json'), '..', require('jison/package.json').bin.jison);
 
 // Build the parser
-var command = buildCommandLine(process.argv[0], jisonBin, 'src/parser.jison', '-o', 'out/parser.js');
-executive(command, function(err, out, code) {
-    if(err) throw err;
+spawn(process.argv[0], [jisonBin, 'src/parser.jison', '-o', 'out/parser.js'], {stdio: ['ignore', 1, 2]}).on('exit', function(code, signal) {
+    if(code) throw code;
 
     // Copy js source to output
     cp('src/*.js', 'out');
 
     echo('Done!');
 });
-
-////
-// UTILITY FUNCTIONS
-////
-
-// Utility to combine arguments into a command line
-function buildCommandLine(/* ... args */) {
-    return [].slice.apply(arguments).map(function(v) {return v.replace(/ /g, '\\ ')}).join(' ');
-};
-
