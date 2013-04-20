@@ -2,9 +2,21 @@
 %lex
 
 %%
-\s+                     /* skip whitespace */
-"/*"[\s\S]*?"*/"        /* C-style comment */
-"//".*                  /* C++-style comment */
+\s+\n                   %{
+                            yy.saveComment(yytext, yylloc);
+                        %}
+\s+                     %{
+                            /* skip whitespace */
+                            yy.saveComment(yytext, yylloc);
+                        %}
+"/*"[\s\S]*?"*/"        %{
+                            /* C-style comment */
+                            yy.saveComment(yytext, yylloc);
+                        %}
+"//".*                  %{
+                            /* C++-style comment */
+                            yy.saveComment(yytext, yylloc);
+                        %}
 
 /* keywords */
 "var"                   return 'VAR';
@@ -107,7 +119,11 @@
 
 top
     : top_level_statements EOF
-        { return yy.makeStmtList($1); }
+        {
+            var ret = yy.makeFile($1, yy.getComments());
+            yy.setLocation(ret, @1, @2);
+            return ret;
+        }
     ;
 
 top_level_statements
@@ -130,7 +146,7 @@ top_level_statement
 
 statements
     : statements_unwrapped
-        { $$ = yy.makeStmtList($1); }
+        { $$ = yy.makeStmtList($1); yy.setLocation($$, @1); }
     ;
 
 statements_unwrapped
@@ -164,47 +180,47 @@ statement
     | '{' statements '}'
         { $$ = $2; }
     | BREAK ';'
-        { $$ = yy.makeBreakStmt(); }
+        { $$ = yy.makeBreakStmt(); yy.setLocation($$, @1, @2); }
     | CONTINUE ';'
-        { $$ = yy.makeContinueStmt(); }
+        { $$ = yy.makeContinueStmt(); yy.setLocation($$, @1, @2); }
     | EXIT ';'
-        { $$ = yy.makeExitStmt(); }
+        { $$ = yy.makeExitStmt(); yy.setLocation($$, @1, @2); }
     | RETURN expression ';'
-        { $$ = yy.makeReturnStmt($2); }
+        { $$ = yy.makeReturnStmt($2); yy.setLocation($$, @1, @3); }
     | ';'
-        { $$ = yy.makeNopStmt(); }
+        { $$ = yy.makeNopStmt(); yy.setLocation($$, @1); }
     ;
 
 if_statement
     : IF '(' expression ')' statement
-        { $$ = yy.makeIfStmt($3, $5); }
+        { $$ = yy.makeIfStmt($3, $5); yy.setLocation($$, @1, @5); }
     | IF '(' expression ')' statement ELSE statement
-        { $$ = yy.makeIfElseStmt($3, $5, $7); }
+        { $$ = yy.makeIfElseStmt($3, $5, $7); yy.setLocation($$, @1, @7); }
     ;
 
 repeat_statement
     : REPEAT '(' expression ')' statement
-        { $$ = yy.makeRepeatStmt($3, $5); }
+        { $$ = yy.makeRepeatStmt($3, $5); yy.setLocation($$, @1, @5); }
     ;
 
 while_statement
     : WHILE '(' expression ')' statement
-        { $$ = yy.makeWhileStmt($3, $5); }
+        { $$ = yy.makeWhileStmt($3, $5); yy.setLocation($$, @1, @5); }
     ;
 
 do_until_statement
     : DO statement UNTIL '(' expression ')'
-        { $$ = yy.makeDoUntilStmt($2, $5); }
+        { $$ = yy.makeDoUntilStmt($2, $5); yy.setLocation($$, @1, @6); }
     ;
 
 for_statement
     : FOR '(' assignment ';' expression ';' assignment ')' statement
-        { $$ = yy.makeForStmt($3, $5, $7, $9); }
+        { $$ = yy.makeForStmt($3, $5, $7, $9); yy.setLocation($$, @1, @9); }
     ;
 
 switch_statement
     : SWITCH '(' expression ')' '{' cases '}'
-        { $$ = yy.makeSwitchStmt($3, $6); }
+        { $$ = yy.makeSwitchStmt($3, $6); yy.setLocation($$, @1, @7); }
     ;
 
 cases
@@ -216,44 +232,44 @@ cases
 
 case
     : CASE expression ':' statements
-        { $$ = yy.makeCase($2, $4); }
+        { $$ = yy.makeCase($2, $4); yy.setLocation($$, @1, @4); }
     | DEFAULT ':' statements
-        { $$ = yy.makeDefaultCase($3); }
+        { $$ = yy.makeDefaultCase($3); yy.setLocation($$, @1, @3); }
     ;
 
 with_statement
     : WITH '(' expression ')' statement
-        { $$ = yy.makeWithStmt($3, $5); }
+        { $$ = yy.makeWithStmt($3, $5); yy.setLocation($$, @1, @5); }
     ;
 
 var_statement
     : VAR var_list
-        { $$ = yy.makeVarStmt($2); }
+        { $$ = yy.makeVarStmt($2); yy.setLocation($$, @1, @2); }
     ;
 
 var_list
     : IDENTIFIER ',' var_list
-        { $$ = [yy.makeVarStmtItem($1)].concat($3); }
+        { $$ = [yy.makeVarStmtItem($1)].concat($3); yy.setLocation($$[0], @1); }
     | IDENTIFIER '=' expression ',' var_list
-        { $$ = [yy.makeVarStmtItem($1, $3)].concat($5); }
+        { $$ = [yy.makeVarStmtItem($1, $3)].concat($5); yy.setLocation($$[0], @1, @3); }
     | IDENTIFIER
-        { $$ = [yy.makeVarStmtItem($1)]; }
+        { $$ = [yy.makeVarStmtItem($1)]; yy.setLocation($$[0], @1); }
     | IDENTIFIER '=' expression
-        { $$ = [yy.makeVarStmtItem($1, $3)]; }
+        { $$ = [yy.makeVarStmtItem($1, $3)]; yy.setLocation($$[0], @1, @3); }
     ;
 
 script_literal
     : SCRIPT '(' ')' '{' statements '}'
-        { $$ = yy.makeScriptVal([], $5); }
+        { $$ = yy.makeScriptVal([], $5); yy.setLocation($$, @1, @6); }
     | SCRIPT '(' definition_arguments ')' '{' statements '}'
-        { $$ = yy.makeScriptVal($3, $6); }
+        { $$ = yy.makeScriptVal($3, $6); yy.setLocation($$, @1, @7); }
     ;
 
 script_definition
     : SCRIPT IDENTIFIER '(' ')' '{' statements '}'
-        { $$ = yy.makeScriptStmt($2, [], $6); }
+        { $$ = yy.makeScriptStmt($2, [], $6); yy.setLocation($$, @1, @7); }
     | SCRIPT IDENTIFIER '(' definition_arguments ')' '{' statements '}'
-        { $$ = yy.makeScriptStmt($2, $4, $7); }
+        { $$ = yy.makeScriptStmt($2, $4, $7); yy.setLocation($$, @1, @8); }
     ;
 
 definition_arguments
@@ -265,14 +281,14 @@ definition_arguments
 
 const_definition
     : CONST IDENTIFIER '=' expression ';'
-        { $$ = yy.makeConstStmt($2, $4); }
+        { $$ = yy.makeConstStmt($2, $4); yy.setLocation($$, @1, @5); }
     ;
 
 object_definition
     : OBJECT IDENTIFIER '{' class_statements '}'
-        { $$ = yy.makeObjectStmt($2, $4); }
+        { $$ = yy.makeObjectStmt($2, $4); yy.setLocation($$, @1, @5); }
     | OBJECT IDENTIFIER PARENT IDENTIFIER '{' class_statements '}'
-        { $$ = yy.makeObjectStmt($2, $6, $4); }
+        { $$ = yy.makeObjectStmt($2, $6, $4); yy.setLocation($$, @1, @7); }
     ;
 
 class_statements
@@ -286,93 +302,93 @@ class_statement
     : script_definition
         { $$ = $1; }
     | CREATE '(' ')' '{' statements '}'
-        { $$ = yy.makeCreateStmt([], $5); }
+        { $$ = yy.makeCreateStmt([], $5); yy.setLocation($$, @1, @6); }
     | CREATE '(' definition_arguments ')' '{' statements '}'
-        { $$ = yy.makeCreateStmt($3, $6); }
+        { $$ = yy.makeCreateStmt($3, $6); yy.setLocation($$, @1, @7); }
     | DESTROY '{' statements '}'
-        { $$ = yy.makeDestroyStmt($3); }
+        { $$ = yy.makeDestroyStmt($3); yy.setLocation($$, @1, @4); }
     | IDENTIFIER '=' expression ';'
-        { $$ = yy.makePropertyStmt($1, $3); }
+        { $$ = yy.makePropertyStmt($1, $3); yy.setLocation($$, @1, @4); }
     ;
 
 assignment
     : variable '=' expression
-        { $$ = yy.makeAssignStmt($1, $3); }
+        { $$ = yy.makeAssignStmt($1, $3); yy.setLocation($$, @1, @3); }
     | variable '++'
-        { $$ = yy.makeCmpAssignStmt('+', $1, yy.makeNumVal('1')); }
+        { $$ = yy.makeCmpAssignStmt('+', $1, yy.makeNumVal('1')); yy.setLocation($$, @1, @2); }
     | variable '--'
-        { $$ = yy.makeCmpAssignStmt('-', $1, yy.makeNumVal('1')); }
+        { $$ = yy.makeCmpAssignStmt('-', $1, yy.makeNumVal('1')); yy.setLocation($$, @1, @2); }
     | variable '+=' expression
-        { $$ = yy.makeCmpAssignStmt('+', $1, $3); }
+        { $$ = yy.makeCmpAssignStmt('+', $1, $3); yy.setLocation($$, @1, @3); }
     | variable '-=' expression
-        { $$ = yy.makeCmpAssignStmt('-', $1, $3); }
+        { $$ = yy.makeCmpAssignStmt('-', $1, $3); yy.setLocation($$, @1, @3); }
     | variable '*=' expression
-        { $$ = yy.makeCmpAssignStmt('*', $1, $3); }
+        { $$ = yy.makeCmpAssignStmt('*', $1, $3); yy.setLocation($$, @1, @3); }
     | variable '/=' expression
-        { $$ = yy.makeCmpAssignStmt('/', $1, $3); }
+        { $$ = yy.makeCmpAssignStmt('/', $1, $3); yy.setLocation($$, @1, @3); }
     | variable '|=' expression
-        { $$ = yy.makeCmpAssignStmt('|', $1, $3); }
+        { $$ = yy.makeCmpAssignStmt('|', $1, $3); yy.setLocation($$, @1, @3); }
     | variable '&=' expression
-        { $$ = yy.makeCmpAssignStmt('&', $1, $3); }
+        { $$ = yy.makeCmpAssignStmt('&', $1, $3); yy.setLocation($$, @1, @3); }
     | variable '^=' expression
-        { $$ = yy.makeCmpAssignStmt('^', $1, $3); }
+        { $$ = yy.makeCmpAssignStmt('^', $1, $3); yy.setLocation($$, @1, @3); }
     ;
 
 expression
     : NUMBER
-        { $$ = yy.makeNumVal(yytext); }
+        { $$ = yy.makeNumVal(yytext); yy.setLocation($$, @1); }
     | HEX
-        { $$ = yy.makeHexVal(yytext); }
+        { $$ = yy.makeHexVal(yytext); yy.setLocation($$, @1); }
     | STRING
-        { $$ = yy.makeStringVal(yytext); }
+        { $$ = yy.makeStringVal(yytext); yy.setLocation($$, @1); }
     | script_literal
         { $$ = $1; }
     | expression '&&' expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp($2, $1, $3); yy.setLocation($$, @1, @3); }
     | expression '||' expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp($2, $1, $3); yy.setLocation($$, @1, @3); }
     | expression '^^' expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp($2, $1, $3); yy.setLocation($$, @1, @3); }
     | expression '<' expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp($2, $1, $3); yy.setLocation($$, @1, @3); }
     | expression '<=' expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp($2, $1, $3); yy.setLocation($$, @1, @3); }
     | expression '==' expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp($2, $1, $3); yy.setLocation($$, @1, @3); }
     | expression '!=' expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp($2, $1, $3); yy.setLocation($$, @1, @3); }
     | expression '>' expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp($2, $1, $3); yy.setLocation($$, @1, @3); }
     | expression '>=' expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp($2, $1, $3); yy.setLocation($$, @1, @3); }
     | expression '|' expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp($2, $1, $3); yy.setLocation($$, @1, @3); }
     | expression '&' expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp($2, $1, $3); yy.setLocation($$, @1, @3); }
     | expression '^' expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp($2, $1, $3); yy.setLocation($$, @1, @3); }
     | expression '<<' expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp($2, $1, $3); yy.setLocation($$, @1, @3); }
     | expression '>>' expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp($2, $1, $3); yy.setLocation($$, @1, @3); }
     | expression '+' expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp($2, $1, $3); yy.setLocation($$, @1, @3); }
     | expression '-' expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp($2, $1, $3); yy.setLocation($$, @1, @3); }
     | expression '*' expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp($2, $1, $3); yy.setLocation($$, @1, @3); }
     | expression '/' expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp($2, $1, $3); yy.setLocation($$, @1, @3); }
     | expression DIV expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp($2, $1, $3); yy.setLocation($$, @1, @3); }
     | expression MOD expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp($2, $1, $3); yy.setLocation($$, @1, @3); }
     | '!' expression
-        { $$ = yy.makeUnaryOp($1, $2); }
+        { $$ = yy.makeUnaryOp($1, $2); yy.setLocation($$, @1, @2); }
     | '~' expression
-        { $$ = yy.makeUnaryOp($1, $2); }
+        { $$ = yy.makeUnaryOp($1, $2); yy.setLocation($$, @1, @2); }
     | '-' expression %prec UMINUS
-        { $$ = yy.makeUnaryOp($1, $2); }
+        { $$ = yy.makeUnaryOp($1, $2); yy.setLocation($$, @1, @2); }
     | function_call
         { $$ = $1; }
     | variable
@@ -383,13 +399,13 @@ expression
 
 function_call
     : expression '(' ')'
-        { $$ = yy.makeFunctionCall($1, []); }
+        { $$ = yy.makeFunctionCall($1, []); yy.setLocation($$, @1, @3); }
     | expression '(' function_call_arguments ')'
-        { $$ = yy.makeFunctionCall($1, $3); }
+        { $$ = yy.makeFunctionCall($1, $3); yy.setLocation($$, @1, @4); }
     | SUPER '(' ')'
-        { $$ = yy.makeSuperCall([]); }
+        { $$ = yy.makeSuperCall([]); yy.setLocation($$, @1, @3); }
     | SUPER '(' function_call_arguments ')'
-        { $$ = yy.makeSuperCall($3); }
+        { $$ = yy.makeSuperCall($3); yy.setLocation($$, @1, @4); }
     ;
 
 function_call_arguments
@@ -403,9 +419,9 @@ variable
     : identifier
         { $$ = $1; }
     | expression '.' identifier
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp($2, $1, $3); yy.setLocation($$, @1, @3); }
     | expression '[' indexes ']'
-        { $$ = yy.makeIndex($1, $3); }
+        { $$ = yy.makeIndex($1, $3); yy.setLocation($$, @1, @4); }
     ;
 
 indexes
@@ -421,5 +437,5 @@ indexes
  */
 identifier
     : IDENTIFIER
-        { $$ = yy.makeIdentifier(yytext); }
+        { $$ = yy.makeIdentifier(yytext); yy.setLocation($$, @1); }
     ;
