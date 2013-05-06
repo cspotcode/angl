@@ -121,7 +121,7 @@ In order of precedence. `(` and `)` can also be used to embed an expression caus
 
 ####Object/array dereferencing
 
-* `<object>.<identifier>` - refers to property of object
+* `<object>.<identifier>` - refers to property of object (if property is called in a function call, the function gets the object scope of the object, and the calling object scope as the value of other)
 * `<array>[<expression>,<expression>...]` - refers to array's (<expression>,<expression>,<expression>...)th index (from 0), e.g. `arr[1]`, `arr[2,3,4]`, `arr[getIndex()]`
 
 ###Statements
@@ -173,6 +173,45 @@ Script definitions **cannot be nested inside other scripts**. They can only be a
 Scripts are closures, and so they inherit the var scope they were created within. This cascades down, such that a script nested in a script nested in a script can access variables from the top-level. However, scripts inherit the instance scope they are *run* within.
 
 In GML there is no direct equivalent to this statement. You can create scripts graphically, but you cannot specify argument names (you must use `argument0`, `argument1`, etc.).
+
+####Object definition(*)
+
+This declares an object. It has the following format:
+
+    object <name> {
+        <statements>
+    }
+
+It may optionally specify a parent object to inherit from, e.g.:
+
+    object <name> parent <parentname> {
+        <statements>
+    }
+
+Object definitions are hoisted, i.e., it does not matter where in the file it is defined, you can still use it. Object definitions are placed into the global scope as constants.
+
+Statements inside an object can be one of four types:
+
+* Assignments (declares a property - equivalent to making an object scope assignment in create script):
+
+    <propertyname> = <expression>;
+
+* Create script (constructor):
+
+    create (<arguments>) {<statements>}
+
+* Destroy script (destructor):
+
+    destroy {<statements>}
+
+Within object scripts, the special call `super` may be used to call the parent script of the same name, for example:
+
+    object SomeThing parent Thing {
+        script doThing(x) {
+            super(x);
+            y();
+        }
+    }
 
 ####Assignments
 

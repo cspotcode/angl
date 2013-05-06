@@ -1,0 +1,36 @@
+// timer methods hypothetical
+
+object WuzzyWog parent FudgiKins {
+    timer = -1;
+    create() {
+        timer = set_timer(1500, onTimer);
+    }
+    destroy {
+        kill_timer(timer);
+    }
+    script onTimer() {
+        show_message('hello!');
+        // timer is only in scope because set_timer passed on self value
+        timer = -1;
+    }
+}
+
+object Test {}
+
+object Thing parent ParentThing {
+    // arguments to new call
+    create(x, y, z) {
+        // call parent constructor, passing z
+        super(z);
+
+        self.x = x;
+        self.y = y;
+    }
+
+    script move(x, y, z) {
+        // call parent's move function, passing x and y
+        super(x * z, y);
+    }
+}
+
+var t = instance_create(1, 2, 3, Thing);
