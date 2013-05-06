@@ -1,4 +1,5 @@
-var parser = require('./parser').parser;
+var parser = require('./parser').parser,
+    fs = require('fs');
 parser.yy = {
     // makes number literal structure from decimal token
     makeNumVal: function (yytext) {
@@ -305,3 +306,13 @@ exports.parse = function (input) {
 exports.printAST = function (input) {
     console.log(JSON.stringify(parser.parse(input), null, '  '));
 };
+
+// command line
+if (require.main === module) {
+    if (process.argv.hasOwnProperty('2') && process.argv[2] !== '--help') {
+        exports.printAST(fs.readFileSync(process.argv[2]).toString());
+    } else {
+        console.log('Usage:');
+        console.log('   node angl.js FILENAME');
+    }
+}
