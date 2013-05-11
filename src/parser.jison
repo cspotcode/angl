@@ -30,6 +30,8 @@
 "create"                return 'CREATE';
 "destroy"               return 'DESTROY';
 "super"                 return 'SUPER';
+"div"                   return 'DIV';
+"mod"                   return 'MOD';
 
 /* literals */
 [0-9]+("."[0-9]+)?\b    return 'NUMBER';        /* 123.4 */
@@ -74,8 +76,6 @@
 "-"                     return '-';
 "*"                     return '*';
 "/"                     return '/';
-"div"                   return 'DIV';
-"mod"                   return 'MOD';
 "!"                     return '!';
 "~"                     return '~';
 "."                     return '.';
