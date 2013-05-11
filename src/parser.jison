@@ -3,7 +3,7 @@
 
 %%
 \s+                     /* skip whitespace */
-"/*"[\s\S]*"*/"         /* C-style comment */
+"/*"[\s\S]*?"*/"        /* C-style comment */
 "//".*                  /* C++-style comment */
 
 /* keywords */
