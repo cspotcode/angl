@@ -73,6 +73,7 @@
 "&"                     return '&';
 "^"                     return '^';
 "+"                     return '+';
+"->"                    return '->';
 "-"                     return '-';
 "*"                     return '*';
 "/"                     return '/';
@@ -98,7 +99,7 @@
 %left '+' '-'
 %left '*' '/' 'DIV' 'MOD'
 %left '!' '~' UMINUS
-%left '.' '[' ']'
+%left '->' '.' '[' ']'
 %left '(' ')'
 
 %start top
@@ -403,6 +404,8 @@ variable
     : identifier
         { $$ = $1; }
     | expression '.' identifier
+        { $$ = yy.makeBinaryOp($2, $1, $3); }
+    | expression '->' identifier
         { $$ = yy.makeBinaryOp($2, $1, $3); }
     | expression '[' indexes ']'
         { $$ = yy.makeIndex($1, $3); }

@@ -1,0 +1,24 @@
+// This tests the -> operator
+// This *should* be compileable, at least in future versions
+
+object Thing parent GameObject {}
+
+script main() {
+    var x, y, z;
+    x = instance_create(0, 0, Thing);
+    x.n = 3;
+    y = instance_create(0, 0, Thing);
+    y.n = 2;
+    z = instance_create(0, 0, Thing);
+    z.n = 1;
+
+    // (Thing->n) gets the value of n for the first instance of Thing
+    console_log('Thing->n == ' + string(Thing->n) + ' (should be 3)');
+    // Thing->n = <value> sets the value of n for all instances of Thing
+    Thing->n = 7;
+    console.log('Thing->n set to 7, '
+        + ' x.n == ' + string(x.n) + ' (should be 7),'
+        + ' y.n == ' + string(y.n) + ' (should be 7),'
+        + ' z.n == ' + string(z.n) + ' (should be 1)'
+    );
+}
