@@ -125,8 +125,6 @@ top_level_statement
         { $$ = $1; }
     | const_definition
         { $$ = $1; }
-    | statement
-        { $$ = $1; }
     ;
 
 statements

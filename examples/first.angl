@@ -21,5 +21,7 @@ script dostuff(x, y) {
         break;
     } // this is really dumb
 }
-dostuff(1, 2);
-with (thing) dostuff();
+script main() {
+    dostuff(1, 2);
+    with (thing) dostuff();
+}
