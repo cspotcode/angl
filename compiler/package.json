@@ -1,0 +1,25 @@
+{
+  "name": "angl-compiler",
+  "version": "0.0.0",
+  "description": "angl-to-Javascript compiler",
+  "main": "index.js",
+  "dependencies": {
+    "lodash": "~1.0.1",
+    "angl": "https://github.com/TazeTSchnitzel/angl/archive/master.tar.gz",
+    "jade": "~0.28.1",
+    "stylus": "~0.32.0",
+    "shelljs": "~0.1.2",
+    "requirejs": "~2.1.5",
+    "almond": "~0.2.5",
+    "typescript": "~0.8.3",
+    "tsd": "https://github.com/Diullei/tsd/archive/3ed4fc45084dbb7640ecdd9834c4447c9094b1f8.tar.gz"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "install": "tsd install*"
+  },
+  "repository": "https://github.com/cspotcode/angl-compiler.git",
+  "author": "Andrew Bradley <cspotcode@gmail.com>",
+  "license": "MIT"
+}

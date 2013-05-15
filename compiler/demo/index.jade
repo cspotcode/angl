@@ -1,0 +1,44 @@
+!!! html
+html
+    head
+        title Angl-to-Javascript compiler demo
+
+        link(rel="stylesheet", type="text/css", href="style.css")
+
+        //- Minified bundle produced by RequireJS
+        script(type="text/javascript", src="index.js")
+
+    body
+        .left-column.container
+            .fill-container
+                textarea#input.size-to-parent(data-bind="value: inputAngl, valueUpdate: 'afterkeydown'")
+        .right-column.container
+            .top-row
+                input(type="radio", name="view", value="ast", data-bind="checked: view")
+                label(data-bind="css: {errors: parserErrors}") AST
+                input(type="radio", name="view", value="js", data-bind="checked: view")
+                label(data-bind="css: {errors: compilerErrors}") Javascript
+                = " | "
+                a(href="javascript:void 0", data-bind="click: on_getPermalinkClicked") Get Permalink
+
+            #output.fill-container.container
+                // ko if: view() == 'js'
+                // ko if: !compilerErrors() && !parserErrors()
+                code#compiledCode.scroll-box
+                    pre(data-bind="text: compiledJs")
+                // /ko
+                // ko if: compilerErrors() || parserErrors()
+                div.scroll-box
+                    pre#error(data-bind="text: compilerErrors() || parserErrors()")
+                // /ko
+                // /ko
+                // ko if: view() == 'ast'
+                // ko ifnot: parserErrors
+                code#compiledCode.scroll-box
+                    pre(data-bind="text: stringifiedAst()")
+                // /ko
+                // ko if: parserErrors
+                div.scroll-box
+                    pre#error(data-bind="text: parserErrors")
+                // /ko
+                // /ko
