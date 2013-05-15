@@ -24,6 +24,6 @@
   "main": "angl.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "install": "node parser/build.js && tsd install* && node compiler/build.js"
+    "install": "node parser/build.js && node_modules/.bin/tsd install* && node compiler/build.js"
   }
 }
