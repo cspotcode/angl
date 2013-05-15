@@ -1,5 +1,5 @@
 {
-    "localPath": "typings",
+    "localPath": "compiler/typings",
     "libPath": "lib",
     "repo": {
         "uriList": [

@@ -6,6 +6,9 @@ require('shelljs/global');
 
 var input, output;
 
+// Manually `cd` into the same directory as this script
+pushd(__dirname);
+
 // create output directories
 mkdir('-p', 'out/demo/vendor');
 
