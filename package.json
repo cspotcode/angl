@@ -1,0 +1,29 @@
+{
+  "name": "angl",
+  "version": "0.0.0",
+  "description": "angl parser and angl-to-JavaScript compiler with accompanying runtime",
+  "homepage": "https://github.com/gg2-angl/angl",
+  "repository": "https://github.com/gg2-angl/angl.git",
+  "contributors": [
+    "Andrew Bradley <cspotcode@gmail.com>",
+    "Andrea Faulds <ajf@ajf.me>"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "shelljs": "~0.1.2",
+    "jison": "~0.4.4",
+    "lodash": "~1.0.1",
+    "jade": "~0.28.1",
+    "stylus": "~0.32.0",
+    "requirejs": "~2.1.5",
+    "almond": "~0.2.5",
+    "typescript": "~0.8.3",
+    "tsd": "https://github.com/Diullei/tsd/archive/3ed4fc45084dbb7640ecdd9834c4447c9094b1f8.tar.gz"
+  },
+  "devDependencies": {},
+  "main": "angl.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "install": "node parser/build.js && tsd install* && node compiler/build.js"
+  }
+}

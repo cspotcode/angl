@@ -1,9 +1,0 @@
-{
-  "name": "angl",
-  "version": "0.0.0",
-  "dependencies": {
-    "shelljs": "~0.1.2",
-    "jison": "~0.4.4"
-  },
-  "main": "out/angl"
-}

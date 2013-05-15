@@ -1,7 +1,7 @@
 LICENSE
 =======
 
-Code except where otherwise noted © 2013 Andrea Faulds.
+Code except where otherwise noted © 2013 Andrea Faulds and Andrew Bradley.
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
