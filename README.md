@@ -9,5 +9,6 @@ In the future this README may be more descriptive.  Until then, check out:
 
 * the [parser's README](./parser/README.md)
 * the [compiler's README](./compiler/README.md)
+* the [runtime's README](./runtime/README.md)
 * The [wiki](https://github.com/gg2-angl/angl/wiki)
 
