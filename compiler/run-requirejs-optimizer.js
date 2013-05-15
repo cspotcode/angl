@@ -5,7 +5,7 @@ var config = {
     out: './out/demo/index.js',
     // Automatically wrap Node-style .js files in an AMD wrapping.
     cjsTranslate: true,
-    name: 'node_modules/almond/almond',
+    name: '../node_modules/almond/almond',
     // Include and execute our main module
     include: ['demo/index'],
     insertRequire: ['demo/index'],
@@ -13,12 +13,12 @@ var config = {
     packages: [
         {
             name: 'lodash',
-            location: 'node_modules/lodash',
+            location: '../node_modules/lodash',
             main: 'index'
         },
         {
             name: 'angl',
-            location: 'node_modules/angl'
+            location: '../parser'
         }
     ],
     // Map short-and-sweet module names to full minified filenames.
