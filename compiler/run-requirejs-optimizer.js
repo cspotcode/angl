@@ -1,11 +1,12 @@
 var requirejs = require('requirejs');
+var path = require('path');
 
 var config = {
     baseUrl: '.',
     out: './out/demo/index.js',
     // Automatically wrap Node-style .js files in an AMD wrapping.
     cjsTranslate: true,
-    name: '../node_modules/almond/almond',
+    name: path.relative('.', require.resolve('almond')).replace(/\.js$/, ''),
     // Include and execute our main module
     include: ['demo/index'],
     insertRequire: ['demo/index'],
@@ -13,7 +14,7 @@ var config = {
     packages: [
         {
             name: 'lodash',
-            location: '../node_modules/lodash',
+            location: path.relative('.', require.resolve('lodash')).replace(/\.js$/, ''),
             main: 'index'
         },
         {
