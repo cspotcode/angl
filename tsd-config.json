@@ -1,9 +1,9 @@
 {
-    "localPath": "compiler/typings",
+    "version": "v2",
+    "typingsPath": "compiler/typings",
     "libPath": "lib",
     "repo": {
-        "uriList": [
-            {
+        "uriList": [{
                 "sourceType": "1",
                 "source": "http://www.tsdpm.com/repository_v2.json"
             }

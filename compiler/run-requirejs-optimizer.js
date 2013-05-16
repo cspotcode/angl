@@ -14,8 +14,8 @@ var config = {
     packages: [
         {
             name: 'lodash',
-            location: path.relative('.', require.resolve('lodash')).replace(/\.js$/, ''),
-            main: 'index'
+            location: path.join(path.relative('.', require.resolve('lodash/package.json')), '..'),
+            main: require('lodash/package.json').main.replace(/\.js$/, '')
         },
         {
             name: 'angl',
