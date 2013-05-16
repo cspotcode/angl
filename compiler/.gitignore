@@ -26,6 +26,8 @@ lib/process-phase-resolve-identifiers-to-variables.js
 lib/process-phase-resolve-identifiers-to-variables.js.map
 lib/process-phase-assign-js-identifiers.js
 lib/process-phase-assign-js-identifiers.js.map
+lib/process-phase-mark-method-calls.js
+lib/process-phase-mark-method-calls.js.map
 lib/ast-utils.js
 lib/ast-utils.js.map
 lib/strings.js

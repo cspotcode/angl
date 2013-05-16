@@ -32,6 +32,7 @@ stylus(input).render(function(err, output) {
         'lib/compile.ts',
         'lib/global-scope.ts',
         'lib/process-phase-assign-js-identifiers.ts',
+        'lib/process-phase-mark-method-calls.ts',
         'lib/process-phase-one.ts',
         'lib/process-phase-resolve-identifiers-to-variables.ts',
         'lib/process-phase-zero.ts',
