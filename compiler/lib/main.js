@@ -55,43 +55,38 @@ var generateExpression = function(astNode, omitIndentation) {
             break;
 
         case 'binop':
-            print('(');
-            // special-case the dot operator
             switch(astNode.op) {
+                // special-case the dot operator - no brackets!
                 case '.':
-                    // Special case: if `self` or `other is on the left side of the dot, we don't need to dereference
-                    if(astNode.expr1.type === 'identifier' && astNode.expr1.variable && _.contains(['self', 'other'], astNode.expr1.variable.getIdentifier())) {
-                        generateExpression(astNode.expr1);
-                        print('.');
-                        generateExpression(astNode.expr2);
-                    } else {
-                        print(strings.ANGL_RUNTIME_IDENTIFIER + '.resolveObjectBeforeDot(');
-                        generateExpression(astNode.expr1);
-                        print(').');
-                        generateExpression(astNode.expr2);
-                    }
+                    generateExpression(astNode.expr1);
+                    print('.');
+                    generateExpression(astNode.expr2);
                     break;
 
                 case 'div':
-                    print('(');
+                    print('((');
                     generateExpression(astNode.expr1);
                     print(' / ');
                     generateExpression(astNode.expr2);
-                    print(')|0');
+                    print(')|0)');
                     break;
 
                 case 'mod':
+                    print('(');
                     generateExpression(astNode.expr1);
                     print(' % ');
                     generateExpression(astNode.expr2);
+                    print(')');
                     break;
 
                 default:
+                    print('(');
                     generateExpression(astNode.expr1);
                     print(' ' + astNode.op + ' ');
                     generateExpression(astNode.expr2);
+                    print(')');
+                    break;
             }
-            print(')');
             break;
 
         case 'unop':
@@ -109,11 +104,9 @@ var generateExpression = function(astNode, omitIndentation) {
             break;
 
         case 'string':
-            print('(');
             print(JSON.stringify(astNode.val));
             // TODO this fails in a select few corner cases.  Use something better,
             // perhaps stolen from the Jade source code
-            print(')');
             break;
 
         case 'index':
