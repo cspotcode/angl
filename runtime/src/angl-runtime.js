@@ -1,6 +1,7 @@
 var _ = require('lodash');
 
 require('./angl-object');
+require('./angl-game-object');
 
 // Some modules export properties onto the runtime object
 var subModules = [

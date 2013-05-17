@@ -17,21 +17,43 @@ module.exports.createAnglObject = function(objectName, parentObjectName, creatio
         });
     } else {
         // Call the creation callback to immediately create the object
-        createObject(objectName, creationCallback);
+        createObject(objectName, parentObjectName, creationCallback);
     }
 };
 
 // call the construction callbacks for all objects that inherit from the given parent object
 var createSubclassesOf = function(parentObjectName) {
     pendingObjects.get(parentObjectName).forEach(function(v) {
-        createObject(v.childObjectName, v.creationCallback);
+        createObject(v.childObjectName, parentObjectName, v.creationCallback);
     });
 };
 
-var createObject = function(objectName, creationCallback) {
+var createObject = function(objectName, parentObjectName, creationCallback) {
+    // Execute callback, which will create the object/class
     creationCallback();
+    
     createdObjectNames.add(objectName);
+    var object = anglGlobalsNamespace[objectName];
+    var parentObject = anglGlobalsNamespace[parentObjectName];
+    
+    // Create an array of each subclass that directly inherits from this object/class
+    object.$childObjects = [];
+    
+    // Add ourselves to the list of subclasses for our parent
+    parentObject.$childObjects.push(object);
+    
+    // If this object inherits from GameObject, initialize it as a GameObject type in the runtime
+    if(object.prototype instanceof anglGlobalsNamespace.GameObject) {
+        registerGameObject(objectName, object);
+    }
+    
+    // Create any subclasses that were waiting
     createSubclassesOf(objectName);
+}
+
+var registerGameObject = function(objectName, object) {
+    object.$name = objectName;
+    object.$instances = new buckets.Set(function(instance) { return instance.$id; });
 }
 
 // Sets up inheritance from parentObject to object
