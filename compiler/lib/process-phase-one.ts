@@ -211,16 +211,6 @@ export var transform = (ast:astTypes.AstNode) => {
             node.methods = [];
             // TODO can't have properties with the same names as methods
 
-            // Create the script that will initialize all properties
-            node.propertyinitscript = {
-                type: 'script',
-                args: [],
-                stmts: {
-                    type: 'statements',
-                    list: node.properties
-                }
-            };
-
             // process all contained statements, storing them onto the object node
             _.each(node.stmts, (stmt) => {
                 switch(stmt.type) {
@@ -289,6 +279,22 @@ export var transform = (ast:astTypes.AstNode) => {
                         throw new Error('Unexpected child node of "object": ' + JSON.stringify(stmt.type));
                 }
             });
+
+            // Create the script that will initialize all properties
+            node.propertyinitscript = {
+                type: 'script',
+                args: [],
+                methodname: strings.OBJECT_INITPROPERTIES_METHOD_NAME,
+                stmts: {
+                    type: 'statements',
+                    list: [{
+                        type: 'super',
+                        //expr: 'this.' + strings.OBJECT_INITPROPERTIES_METHOD_NAME,
+                        args: []
+                    }].concat(node.properties)
+                }
+            };
+
             // We've placed all statements into their respective containers, so now we empty the stmts array so that the
             // walker doesn't traverse it.
             // The walker will still traverse all methods, properties, create, and destroy via their new locations
@@ -325,10 +331,6 @@ export var transform = (ast:astTypes.AstNode) => {
         }
 
         // Transform all methods into anonymous script nodes?
-        // TODO implement `super()` calls search upwards for a method node, use that to figure out the method name and parent class
-        // Property assignments are manually converted to property access on `self`.
-        // This makes the code generator happy: it will spit out `this.` without any complicated, ugly code generated.
-
 
     });
 }

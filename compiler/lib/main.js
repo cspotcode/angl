@@ -445,17 +445,14 @@ var generateStatement = function(astNode, omitTerminator, omitIndentation) {
             // Generate the constructor function
             omitIndentation || printIndent();
             print(objectExpr + ' = function() { ' + parentObjectExpr + '.apply(this, arguments); };\n');
-            // Create the prototype
+            // Set up inheritance
             omitIndentation || printIndent();
-            print(protoExpr + ' = Object.create(' + parentProtoExpr + ');\n');
-            // TODO copy static methods from parent
-            // Generate all methods
-            _.each(astNode.methods, function(method) {
-                omitIndentation || printIndent();
-                print(protoExpr + '.' + method.methodname + ' = ');
-                generateExpression(method);
-                print(';\n');
-            });
+            print(strings.ANGL_RUNTIME_IDENTIFIER + '.inherit(' + objectExpr + ', ' + parentObjectExpr + ');\n');
+            // Generate the property initialization function
+            omitIndentation || printIndent();
+            print(protoExpr + '.' + strings.OBJECT_INITPROPERTIES_METHOD_NAME + ' = ');
+            generateExpression(astNode.propertyinitscript);
+            print(';\n');
             // Generate the create event, if specified
             if(astNode.createscript) {
                 omitIndentation || printIndent();
@@ -470,11 +467,13 @@ var generateStatement = function(astNode, omitTerminator, omitIndentation) {
                 generateExpression(astNode.destroyscript);
                 print(';\n');
             }
-            // Generate the property initialization function
-            omitIndentation || printIndent();
-            print(protoExpr + '.$initproperties = ');
-            generateExpression(astNode.propertyinitscript);
-            print(';\n');
+            // Generate all methods
+            _.each(astNode.methods, function(method) {
+                omitIndentation || printIndent();
+                print(protoExpr + '.' + method.methodname + ' = ');
+                generateExpression(method);
+                print(';\n');
+            });
             outdent();
             omitIndentation || printIndent();
             print('})');
