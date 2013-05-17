@@ -1,5 +1,5 @@
 var buckets = require('buckets');
-var anglGlobalsNamespace = require('angl-globals-namespace');
+var anglGlobalsNamespace = require('./angl-globals-namespace');
 
 // Set of all objects that have already been created
 var createdObjectNames = new buckets.Set();
