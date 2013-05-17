@@ -1,5 +1,8 @@
 var _ = require('lodash');
 
+require('angl-object');
+
+// Some modules export properties onto the runtime object
 var subModules = [
     require('./object-creation'),
     require('./with-blocks')

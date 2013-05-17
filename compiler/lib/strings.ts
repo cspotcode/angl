@@ -9,4 +9,4 @@ export var ANGL_FILE_MODULE_PREFIX = 'compiled-angl/';
 // Name of the default super-object of all Angl objects
 export var SUPER_OBJECT_NAME = 'AnglObject';
 // Name of the method used to initialize instance properties upon creation
-export var OBJECT_INITPROPERTIES_METHOD_NAME = '$initproperties';
+export var OBJECT_INITPROPERTIES_METHOD_NAME = '$initProperties';
