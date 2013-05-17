@@ -366,6 +366,7 @@ var generateStatement = function(astNode, omitTerminator, omitIndentation) {
             break;
 
         case 'funccall':
+        case 'jsfunccall':
             // Delegate to the expression generator
             omitIndentation || printIndent();
             generateExpression(astNode);
