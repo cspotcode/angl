@@ -2,7 +2,7 @@
 
 var anglGlobalNamespace = require('./angl-globals-namespace');
 
-var AnglObject = anglGlobalNamespace[strings.SUPER_OBJECT_NAME] = function() {
+var AnglObject = anglGlobalNamespace.$AnglObject = function() {
     // Initialize all object properties
     this.$initProperties(this);
     
