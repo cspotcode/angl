@@ -6,7 +6,8 @@ require('./angl-game-object');
 // Some modules export properties onto the runtime object
 var subModules = [
     require('./object-creation'),
-    require('./with-blocks')
+    require('./with-blocks'),
+    require('./arrow-operator')
 ];
 
 var exports = module.exports = {};
