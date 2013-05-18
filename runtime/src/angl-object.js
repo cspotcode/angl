@@ -3,6 +3,10 @@
 var anglGlobalNamespace = require('./angl-globals-namespace');
 
 var AnglObject = anglGlobalNamespace.$AnglObject = function() {
+    
+    // Set the `id` value as a reference to self
+    this.id = this;
+    
     // Initialize all object properties
     this.$initProperties(this);
     
