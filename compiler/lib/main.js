@@ -78,7 +78,37 @@ var generateExpression = function(astNode, omitIndentation) {
                     generateExpression(astNode.expr2);
                     print(')');
                     break;
-
+                
+                case '||':
+                    // Implement OR without short-circuit evaluation
+                    // Coerce both sides to booleans, add them, coerce that to a boolean, then coerce that to a number
+                    print('(!!(!!( ');
+                    generateExpression(astNode.expr1);
+                    print(' )+!!( ');
+                    generateExpression(astNode.expr2);
+                    print(' ))|0)');
+                    break;
+                
+                case '&&':
+                    // Implement AND without short-circuit evaluation
+                    // Coerce both sides to booleans, then multiply them
+                    print('(!!( ');
+                    generateExpression(astNode.expr1);
+                    print(' )*!!( ');
+                    generateExpression(astNode.expr2);
+                    print(' ))');
+                    break;
+                
+                case '^^':
+                    // Implement XOR without short-circuit evaluation
+                    // Coerce both sides to boolean and "not" them, add them, subtract 1, coerce to boolean and "not", coerce to number
+                    print('(!((!( ');
+                    generateExpression(astNode.expr1);
+                    print(' )+!( ');
+                    generateExpression(astNode.expr2);
+                    print(' ))-1)|0)');
+                    break;
+                    
                 default:
                     print('(');
                     generateExpression(astNode.expr1);
