@@ -309,23 +309,6 @@ var generateStatement = function(astNode, omitTerminator, omitIndentation) {
             print('}');
             break;
 
-        case 'cmpassign':
-            // Rewrite the cmpassign into a simpler binop and assign combo.
-            // E.g. a += 1 becomes a = a + 1
-            // TODO this will produce somewhat uglier code.  Maybe pretty it up later.
-            // TODO what if the lval contains a function call?  Will it execute twice?
-            generateStatement({
-                type: 'assign',
-                lval: astNode.lval,
-                rval: {
-                    type: 'binop',
-                    op: astNode.op,
-                    expr1: astNode.lval,
-                    expr2: astNode.rval
-                }
-            }, true, omitIndentation);
-            break;
-
         case 'ifelse':
             omitIndentation || printIndent();
             print('if(');

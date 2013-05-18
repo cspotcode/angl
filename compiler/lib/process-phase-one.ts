@@ -367,5 +367,23 @@ export var transform = (ast:astTypes.AstNode) => {
             return arrowReplacement;
         }
 
+        // Replace all cmpassign with the equivalent assign and binop combo
+        // TODO this does not properly prevent lvalue expressions from being evaluated twice
+        if(node.type === 'cmpassign') {
+            var cmpAssignNode = <astTypes.CmpAssignNode>node;
+            var binopNode:astTypes.BinOpNode = {
+                type: 'binop',
+                op: cmpAssignNode.op,
+                expr1: cmpAssignNode.lval,
+                expr2: cmpAssignNode.rval
+            };
+            var assignNode:astTypes.AssignNode = {
+                type: 'assign',
+                lval: cmpAssignNode.lval,
+                rval: binopNode
+            };
+            return assignNode;
+        }
+
     });
 }
