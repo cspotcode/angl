@@ -9,18 +9,25 @@ var GameObject = anglGlobalsNamespace.GameObject;
 
 module.exports.resolveWithExpression = function(value) {
     var instances = [];
+
+    // Special case: `with(noone)` is essentially a no-op
+    if(value === anglGlobalsNamespace.noone) {
+        return [];
+    }
+    
+    // `with(all)` is like `with(GameObject)` since that's the base class for all instances that get stored in global sets
+    if(value === anglGlobalsNamespace.all) {
+        value = anglGlobalsNamespace.GameObject;
+    }
     
     if(_.has(value, '$instances')) { // TODO is this conditional robust enough?
         // value is a subclass of GameObject
         findInstancesOfObject(value, instances);
+        return instances;
     } else {
         // value is an instance
-        instances.push(value);
+        return [value];
     }
-    
-    return instances;
-    
-    // TODO implement `all` and `noone`
     
     // TODO check if value is a non-GameObject and non-instance value.  If so, throw an error.
     
