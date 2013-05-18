@@ -1,4 +1,4 @@
-var buckets = require('buckets');
+var buckets = require('../../compiler/vendor/buckets');
 var anglGlobalsNamespace = require('./angl-globals-namespace');
 
 // Set of all objects that have already been created

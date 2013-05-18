@@ -25,7 +25,9 @@ var config = {
     // Map short-and-sweet module names to full minified filenames.
     paths: {
         jquery: 'demo/vendor/jquery-1.9.1.min',
-        knockout: 'demo/vendor/knockout-2.2.1.min'
+        knockout: 'demo/vendor/knockout-2.2.1.min',
+        buckets: 'vendor/buckets',
+        runtime: '../runtime/src'
     },
     shim: {
         // Force jQuery to load before Knockout.
