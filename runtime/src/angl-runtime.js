@@ -7,7 +7,8 @@ require('./angl-game-object');
 var subModules = [
     require('./object-creation'),
     require('./with-blocks'),
-    require('./arrow-operator')
+    require('./arrow-operator'),
+    require('./math')
 ];
 
 var exports = module.exports = {};
