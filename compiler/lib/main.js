@@ -163,7 +163,7 @@ var generateExpression = function(astNode, omitIndentation) {
                 print('(');
                 generateExpression({
                     type: 'identifier',
-                    variable: astUtils.getAnglScope(astNode).getVariableByIdentifierInChain('self')
+                    variable: astUtils.getAnglScope(astNode).getVariableByIdentifierInChain('other')
                 });
             } else {
                 // Function calls: Function's `self` and `other` are the local `self` and `other` values
