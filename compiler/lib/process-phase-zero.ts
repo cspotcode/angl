@@ -12,7 +12,7 @@ export var transform = (ast:any):types.AstNode => {
     var otherVariable = new scopeVariable.Variable('other', 'ARGUMENT');
     anglScope.addVariable(thisVariable);
     anglScope.addVariable(otherVariable);
-    var globalAnglScope = globalScope.createGlobalScope();
+    var globalAnglScope = ast.globalAnglScope || globalScope.createGlobalScope();
     anglScope.setParentScope(globalAnglScope);
     // Verify that the root node is of type "statements"
     if(ast.type !== 'statements') {
