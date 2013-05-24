@@ -580,9 +580,9 @@ var generateTopNode = function(astNode) {
     }
 };
 
-var compile = module.exports = function(ast) {
+module.exports.generateJs = function(transformedAst) {
     initializeCompiler();
-    generateTopNode(ast);
+    generateTopNode(transformedAst);
     return _.flatten(buffer).join('');
 };
 
