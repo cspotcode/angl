@@ -8,8 +8,8 @@ var config = {
     cjsTranslate: true,
     // Main module: the Almond AMD loader.  This ugliness finds its exact path on the filesystem
     name: path.relative('.', require.resolve('almond')).replace(/\.js$/, ''),
-    // Include and execute our main module
-    include: ['demo/index'],
+    // Include and execute our RequireJS configuration and our main module
+    include: ['set-require-config', 'demo/index'],
     insertRequire: ['demo/index'],
     // Describe NodeJS packages to Require
     packages: [
@@ -50,14 +50,12 @@ var config = {
         'angl-parser': '../parser/out'
     },
     map: {
-        'lib': {
+        '*': {
             // For when the compiler references the runtime
             'lib/../../runtime/src': 'runtime',
             // For when the compiler references the parser
-            'lib/../../parser/out': 'angl-parser'
-        },
-        // For when the runtime references the buckets library
-        'runtime': {
+            'lib/../../parser/out/angl': 'angl-parser/angl',
+            // For when the runtime references the buckets library
             'runtime/../../compiler/vendor/buckets': 'vendor/buckets'
         }
     },
@@ -73,7 +71,10 @@ var config = {
     rawText: {
         'fs': '',
         'path': '',
-        'fileset': ''
+        'fileset': '',
+        
+        // This will be assigned a string below.
+        'set-require-config': null
     },
     // Change this to 'uglify2' to minify output.
     optimize: 'none',
@@ -81,6 +82,11 @@ var config = {
     preserveLicenseComments: false,
     generateSourceMaps: true
 };
+
+// Our "map" config from above is also needed at runtime.
+// Therefore, we generate JavaScript that will pass this configuration into Almond at runtime.
+// We add this JavaScript code to the rawText section above.  It's included by the "include" configuration above.
+config.rawText['set-require-config'] = 'require.config(' + JSON.stringify({map: config.map}) + ');';
 
 // Perform the optimization.
 console.log('Optimizing with RequireJS...');
