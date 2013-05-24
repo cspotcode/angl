@@ -18,10 +18,11 @@ export var transform = (ast:any):types.AstNode => {
     if(ast.type !== 'statements') {
         throw new Error('Unexpected root node from Angl parser. Expected type "statements", got "' + ast.type + '".');
     }
-    return <types.AstNode>{
+    var fileNode:types.FileNode = {
         type: "file",
         stmts: ast.list,
         globalAnglScope: globalAnglScope,
         anglScope: anglScope
-    }
+    };
+    return fileNode;
 };
