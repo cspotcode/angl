@@ -1,6 +1,9 @@
-/// <reference path="angl.d.ts"/>
 
-import angl = module('angl/out/angl');
+// TODO change this to import ... module instead of var ... require
+// possibly caused by this bug: http://typescript.codeplex.com/workitem/777
+/// <reference path="angl.d.ts"/>
+var angl = require('../../parser/out/angl');
+
 import types = module('./ast-types');
 import allTransformations = module('./run-all-transformations');
 var main = require('./main');

@@ -2,9 +2,9 @@ var _ = require('lodash');
 import scope = module('./angl-scope');
 import scopeVariable = module('./scope-variable');
 import strings = module('./strings');
-var anglGlobalsNamespace = require('runtime/angl-globals-namespace');
+var anglGlobalsNamespace = require('../../runtime/src/angl-globals-namespace');
 // Trigger loading of all globals onto the globals namespace
-require('runtime/angl-globals');
+require('../../runtime/src/angl-globals');
 
 
 export function createGlobalScope():scope.AnglScope {

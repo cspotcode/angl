@@ -6,6 +6,7 @@ var config = {
     out: './out/demo/index.js',
     // Automatically wrap Node-style .js files in an AMD wrapping.
     cjsTranslate: true,
+    // Main module: the Almond AMD loader.  This ugliness finds its exact path on the filesystem
     name: path.relative('.', require.resolve('almond')).replace(/\.js$/, ''),
     // Include and execute our main module
     include: ['demo/index'],
@@ -14,20 +15,51 @@ var config = {
     packages: [
         {
             name: 'lodash',
+            // This uglyness finds the exact location of the LoDash js file
             location: path.join(path.relative('.', require.resolve('lodash/package.json')), '..'),
             main: require('lodash/package.json').main.replace(/\.js$/, '')
-        },
-        {
-            name: 'angl',
-            location: '../parser'
         }
     ],
-    // Map short-and-sweet module names to full minified filenames.
+    
+    // ABOUT PATH MAPPING
+    // 
+    // We must write code that can both be loaded by Node.js's require() and be located by the RequireJS optimizer.
+    // The former requires all module names to be relative paths (unless we're loading something from "node_modules")
+    // 
+    // Also, for some reason the RequireJS optimizer thinks that "./foo/bar", "foo/bar", and "./lib/../foo/bar" are all
+    // different paths.  This causes it to include and execute those modules multiple times in the bundled JS file.
+    // 
+    // To solve this, all our JS code uses relative paths that Node's require() can handle.  Then we use the "map"
+    // configuration object below to map those relative paths onto short-and-sweet RequireJS-style paths without any
+    // dots.  Finally we use the "paths" configuration object below to map those short-and-sweet RequireJS-style paths
+    // onto relative filesystem paths.
+    //
+    // The end result of this magic dance is:
+    // a) NodeJS is happy because all paths are relative
+    // b) RequireJS understands that multiple relative paths to the same file really point at the same module ("map" config)
+    // c) RequireJS knows where to find all modules on the filesystem ("path" config)
+    
+    // Map short-and-sweet module names to full paths and names
     paths: {
+        // jQuery and Knockout are only used in the browser.  Therefore they don't need paths compatible with Node-require
         jquery: 'demo/vendor/jquery-1.9.1.min',
         knockout: 'demo/vendor/knockout-2.2.1.min',
-        buckets: 'vendor/buckets',
-        runtime: '../runtime/src'
+        
+        // Map from short-and-sweet names to the proper relative paths, so that RequireJS's optimizer can find these files
+        runtime: '../runtime/src',
+        'angl-parser': '../parser/out'
+    },
+    map: {
+        'lib': {
+            // For when the compiler references the runtime
+            'lib/../../runtime/src': 'runtime',
+            // For when the compiler references the parser
+            'lib/../../parser/out': 'angl-parser'
+        },
+        // For when the runtime references the buckets library
+        'runtime': {
+            'runtime/../../compiler/vendor/buckets': 'vendor/buckets'
+        }
     },
     shim: {
         // Force jQuery to load before Knockout.
@@ -36,13 +68,14 @@ var config = {
             deps: ['jquery']
         }
     },
-    // Allow these Node built-in modules to resolve in the browser.
+    // Allow these modules to resolve in the browser without actually loading any code.
     // They're require()d by angl's parser but only actually used when running in NodeJS.
     rawText: {
         'fs': '',
-        'path': ''
+        'path': '',
+        'fileset': ''
     },
-    // Minify output.
+    // Change this to 'uglify2' to minify output.
     optimize: 'none',
     // These two options are both required for sourcemap generation.
     preserveLicenseComments: false,

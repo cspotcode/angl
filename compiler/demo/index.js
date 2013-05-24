@@ -2,7 +2,7 @@ define(function(require) {
 
 var $ = require('jquery');
 var ko = require('knockout');
-var angl = require('angl/out/angl');
+var anglParser = require('angl-parser/angl');
 var compiler = require('lib/compiler');
 
 $(document).ready(function($) {
@@ -24,7 +24,7 @@ $(document).ready(function($) {
         var recompile = ko.computed(function() {
             var ast;
             try {
-                ast = angl.parse(this.inputAngl());
+                ast = anglParser.parse(this.inputAngl());
                 this.stringifiedAst(JSON.stringify(ast, null, '    '));
             } catch(e) {
                 this.parserErrors(e.message);

@@ -1,4 +1,4 @@
-declare module 'angl/out/angl' {
+declare module '../../parser/out/angl' {
 
     import types = module('./ast-types');
 
