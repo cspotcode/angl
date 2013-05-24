@@ -8,6 +8,10 @@ export interface AstNode {
     globalAnglScope?: scope.AnglScope;
 }
 
+export interface FileNode extends AstNode {
+    stmts: StatementNode[];
+}
+
 export interface ExpressionNode extends AstNode {
     // If true, this expression is used twice in the generated JavaScript.  To avoid triggering side-effects more than
     // once, we must pre-compute the expression's children.
@@ -36,6 +40,11 @@ export interface CmpAssignNode extends StatementNode {
 
 export interface StatementNode extends AstNode {
     
+}
+
+export interface ConstNode extends AstNode {
+    name: string;
+    expr: ExpressionNode;
 }
 
 export interface FuncCallNode extends AstNode {
