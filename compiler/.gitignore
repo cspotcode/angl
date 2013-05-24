@@ -20,6 +20,8 @@ lib/compiler.js
 lib/compiler.js.map
 lib/ast-node-children.js
 lib/ast-node-children.js.map
+lib/find-globals.js
+lib/find-globals.js.map
 lib/scope-variable.js
 lib/scope-variable.js.map
 lib/process-phase-resolve-identifiers-to-variables.js

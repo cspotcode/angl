@@ -30,6 +30,7 @@ stylus(input).render(function(err, output) {
         'lib/ast-types.ts',
         'lib/ast-utils.ts',
         'lib/compiler.ts',
+        'lib/find-globals.ts',
         'lib/global-scope.ts',
         'lib/process-phase-assign-js-identifiers.ts',
         'lib/process-phase-mark-method-calls.ts',
