@@ -1,3 +1,4 @@
+var _ = require('lodash');
 var buckets = require('../../compiler/vendor/buckets');
 var anglGlobalsNamespace = require('./angl-globals-namespace');
 
