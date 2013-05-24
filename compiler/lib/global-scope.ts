@@ -7,12 +7,15 @@ var anglGlobalsNamespace = require('../../runtime/src/angl-globals-namespace');
 require('../../runtime/src/angl-globals');
 
 
-export function createGlobalScope():scope.AnglScope {
+export function createGlobalScope(extraGlobalIdentifiers?:string[] = []):scope.AnglScope {
     var globalScope = new scope.AnglScope();
 
-    // grab the list of all global identifiers from the runtime
+    // Grab the list of all global identifiers from the runtime
     var globalIdentifiers:any = _.keys(anglGlobalsNamespace);
-
+    
+    // Add any user-supplied global identifiers
+    globalIdentifiers = globalIdentifiers.concat(extraGlobalIdentifiers);
+    
     // Add all global identifiers into global scope
     _.each(globalIdentifiers, (globalIdentifier) => {
         // TODO what values should I be adding?  Gotta invent an object/type/schema for values.
