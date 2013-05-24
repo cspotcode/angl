@@ -1,6 +1,6 @@
 var fs = require('fs'),
     parser = require('./parser/out/angl'),
-    compiler = require('./compiler/lib/main');
+    compiler = require('./compiler/lib/compiler');
 
 module.exports = {
     parser: parser,

@@ -3,7 +3,7 @@ define(function(require) {
 var $ = require('jquery');
 var ko = require('knockout');
 var angl = require('angl/out/angl');
-var compiler = require('lib/compile');
+var compiler = require('lib/compiler');
 
 $(document).ready(function($) {
     var viewModel = window.viewModel = {};
