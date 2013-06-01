@@ -8,7 +8,8 @@ var subModules = [
     require('./object-creation'),
     require('./with-blocks'),
     require('./arrow-operator'),
-    require('./math')
+    require('./math'),
+    require('./global-other')
 ];
 
 var exports = module.exports = {};

@@ -45,8 +45,8 @@ export var transform = (ast:astTypes.AstNode) => {
             var thisVar = new scopeVariable.Variable('self', 'ARGUMENT');
             thisVar.setJsIdentifier('this');
             newScope.addVariable(thisVar);
-            var otherVar = new scopeVariable.Variable('other', 'ARGUMENT');
-            newScope.addVariable(otherVar);
+/*            var otherVar = new scopeVariable.Variable('other', 'ARGUMENT');
+            newScope.addVariable(otherVar);*/
             _.each(node.args, (argName) => {
                 var argumentVar = new scopeVariable.Variable(argName, 'ARGUMENT');
                 newScope.addVariable(argumentVar);
@@ -146,19 +146,22 @@ export var transform = (ast:astTypes.AstNode) => {
         // within the loop, `other` maps to the outer `self`
         // and `self` maps to each object from the array, one after the other
         if(node.type === 'with' && !node.alreadyVisited) {
+            
+            var withNode:astTypes.WithNode = node;
 
             // Grab a reference to the outer scope
-            var outerScope = astUtils.getAnglScope(node);
+            var outerScope = astUtils.getAnglScope(withNode);
 
             // Create an inner scope for the with loop
             var innerScope = new scope.WithScope();
             innerScope.setParentScope(outerScope);
-            node.anglScope = innerScope;
+            withNode.anglScope = innerScope;
 
             // Create variable to hold the full list of matched objects to be iterated over
             var allObjectsVariable = new scopeVariable.Variable();
             allObjectsVariable.setDesiredJsIdentifier('$objects');
             outerScope.addVariable(allObjectsVariable);
+            
             // Create variable to hold the index (integer) for iteration over the array of objects
             var indexVariable = new scopeVariable.Variable();
             indexVariable.setDesiredJsIdentifier('$i');
@@ -169,13 +172,17 @@ export var transform = (ast:astTypes.AstNode) => {
             selfVariable.setIdentifier('self');
             selfVariable.setDesiredJsIdentifier('$withSelf');
             innerScope.addVariable(selfVariable);
-            // Create variable that maps `other` inside the with() loop onto `self` from outside the with() loop
-            var otherVariable = new scopeVariable.LinkedVariable('other', outerScope.getVariableByIdentifierInChain('self'));
-            innerScope.addVariable(otherVariable);
+            
+            // Create variable to cache the outer `other` value.  This will be used to restore the value of `other`
+            // after `with` has finished looping.
+            var outerOtherVariable = new scopeVariable.Variable();
+            outerOtherVariable.setDesiredJsIdentifier('$withOuterOther');
+            outerScope.addVariable(outerOtherVariable);
 
             // Store variables onto the with node, for using during code generation
-            node.allObjectsVariable = allObjectsVariable;
-            node.indexVariable = indexVariable;
+            withNode.allObjectsVariable = allObjectsVariable;
+            withNode.indexVariable = indexVariable;
+            withNode.outerOtherVariable = outerOtherVariable;
 
             // Prepend with() AST node with an assignment statement that creates the array of matched objects.
             // By doing this, we ensure that the with() expression is evaluated in the outer scope.
@@ -188,15 +195,16 @@ export var transform = (ast:astTypes.AstNode) => {
                 rval: {
                     type: 'jsfunccall',
                     expr: strings.ANGL_RUNTIME_IDENTIFIER + '.resolveWithExpression',
-                    args: [ astUtils.cleanNode(node.expr) ]
+                    args: [ astUtils.cleanNode(withNode.expr) ]
                 }
             };
 
             // After replacement, this node will be visited again.  Mark it with a flag so that we can skip processing
             // next time.
-            node.alreadyVisited = true;
+            withNode.alreadyVisited = true;
 
-            return [assignmentNode, node];
+            var withReplacement:astTypes.AstNode[] = [assignmentNode, withNode];
+            return withReplacement;
         }
 
         if(node.type === 'object') {

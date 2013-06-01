@@ -82,6 +82,10 @@ export interface StringNode extends ExpressionNode {
 export interface WithNode extends StatementNode {
     expr: ExpressionNode;
     stmt: StatementNode;
+    allObjectsVariable: scopeVariable.AbstractVariable;
+    indexVariable: scopeVariable.AbstractVariable;
+    outerOtherVariable: scopeVariable.AbstractVariable;
+    alreadyVisited: bool;
 }
 
 export interface ObjectNode extends StatementNode {

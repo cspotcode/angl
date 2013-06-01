@@ -2,10 +2,10 @@
 
 module.exports = {
     console: {
-        log: function(other, message) {
+        log: function(message) {
             console.log(message);
         },
-        dir: function(other, value) {
+        dir: function(message) {
             console.dir(message);
         }
     }

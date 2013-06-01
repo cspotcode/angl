@@ -159,12 +159,7 @@ var generateExpression = function(astNode, omitIndentation) {
             print(')');
             if(astNode.isMethodCall) {
                 // Method calls: `self`/`this` is automatically set to the object to which the method belongs
-                // `other` should be set to the local `self` value
                 print('(');
-                generateExpression({
-                    type: 'identifier',
-                    variable: astUtils.getAnglScope(astNode).getVariableByIdentifierInChain('other')
-                });
             } else {
                 // Function calls: Function's `self` and `other` are the local `self` and `other` values
                 print('.call(');
@@ -172,14 +167,9 @@ var generateExpression = function(astNode, omitIndentation) {
                     type: 'identifier',
                     variable: astUtils.getAnglScope(astNode).getVariableByIdentifierInChain('self')
                 });
-                print(', ');
-                generateExpression({
-                    type: 'identifier',
-                    variable: astUtils.getAnglScope(astNode).getVariableByIdentifierInChain('other')
-                })
             }
             _.each(astNode.args, function(arg, i, args) {
-                print(', ');
+                if(i || !astNode.isMethodCall) print(', ');
                 generateExpression(arg);
             });
             print(')');
@@ -187,7 +177,7 @@ var generateExpression = function(astNode, omitIndentation) {
 
         case 'script':
             print('function(');
-            print(['other'].concat(astNode.args).join(', '));
+            print(astNode.args.join(', '));
             print(') {\n');
             indent();
             generateLocalVariableAllocation(astNode);
@@ -254,7 +244,7 @@ var generateStatement = function(astNode, omitTerminator, omitIndentation) {
             omitIndentation || printIndent();
             print(strings.ANGL_GLOBALS_IDENTIFIER + '.' + astNode.name);
             print(' = function(');
-            print(['other'].concat(astNode.args).join(', '));
+            print(astNode.args.join(', '));
             print(') {\n');
             indent();
             generateLocalVariableAllocation(astNode);
@@ -386,10 +376,6 @@ var generateStatement = function(astNode, omitTerminator, omitIndentation) {
             break;
 
         case 'with':
-            // TODO I DONT WANNA IMPLEMENT THIS WAAAAAH
-            // Also it requires some sort of runtime that can find all instances of
-            // a given object type to iterate over.
-            // For now, I'm emitting a comment that explains code has been omitted.
             var indexIdentifier = {
                 type: 'identifier',
                 variable: astNode.indexVariable
@@ -402,6 +388,24 @@ var generateStatement = function(astNode, omitTerminator, omitIndentation) {
                 type: 'identifier',
                 variable: astUtils.getAnglScope(astNode).getVariableByIdentifier('self')
             };
+            var outerSelfIdentifier = {
+                type: 'identifier',
+                variable: astUtils.getAnglScope(astNode.parentNode).getVariableByIdentifier('self')
+            };
+            var outerOtherIdentifier = {
+                type: 'identifier',
+                variable: astNode.outerOtherVariable
+            }
+            // Cache the outer `other` value
+            omitIndentation || printIndent();
+            generateExpression(outerOtherIdentifier);
+            print(' = ' + strings.ANGL_RUNTIME_IDENTIFIER + '.other;\n');
+            // Set the new `other` value
+            omitIndentation || printIndent();
+            print(strings.ANGL_RUNTIME_IDENTIFIER + '.other = ');
+            generateExpression(outerSelfIdentifier);
+            print(';\n');
+            // Start the for loop that iterates over all matched instances
             omitIndentation || printIndent();
             print('for(');
             generateExpression(indexIdentifier);
@@ -421,10 +425,15 @@ var generateStatement = function(astNode, omitTerminator, omitIndentation) {
             print('[');
             generateExpression(indexIdentifier);
             print('];\n');
+            // Generate all statements within the with loop
             generateStatement(astNode.stmt);
             outdent();
             omitIndentation || printIndent();
-            print('}');
+            print('};\n');
+            // Restore the outer value of `other`
+            omitIndentation || printIndent();
+            print(strings.ANGL_RUNTIME_IDENTIFIER + '.other = ');
+            generateExpression(outerOtherIdentifier);
             break;
 
         case 'return':

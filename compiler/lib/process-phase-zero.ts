@@ -2,6 +2,7 @@ import types = module('./ast-types');
 var globalScope = require('./global-scope');
 import AnglScope = module('./angl-scope');
 import scopeVariable = module('./scope-variable');
+import strings = module('./strings');
 
 // Wrap the entire AST in a "file" node
 // TODO fix typing of ast argument
@@ -9,7 +10,8 @@ export var transform = (ast:any):types.AstNode => {
     var anglScope = new AnglScope.AnglScope();
     var thisVariable = new scopeVariable.Variable('self', 'ARGUMENT');
     thisVariable.setJsIdentifier('this');
-    var otherVariable = new scopeVariable.Variable('other', 'ARGUMENT');
+    var otherVariable = new scopeVariable.Variable('other', 'PROP_ASSIGNMENT', 'PROP_ACCESS');
+    otherVariable.setContainingObjectIdentifier(strings.ANGL_RUNTIME_IDENTIFIER);
     anglScope.addVariable(thisVariable);
     anglScope.addVariable(otherVariable);
     var globalAnglScope = ast.globalAnglScope || globalScope.createGlobalScope();
