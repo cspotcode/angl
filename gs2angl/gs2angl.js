@@ -77,7 +77,10 @@ var processObject = logging(function (inpath, outpath, name) {
         throw new Error("Object XML doesn't have <object> at top-level");
     }
 
-    data = {};
+    data = {
+        create: null,
+        destroy: null
+    };
 
     xml.children.forEach(function (child) {
         if (child.name === 'solid') {
@@ -136,6 +139,43 @@ var processObject = logging(function (inpath, outpath, name) {
                 }
             }
 
+            if (eventdata.type === 'ev_collision') {
+                eventdata.funcName = 'onCollisionWith' + eventdata.numb;
+            } else if (eventdata.type === 'ev_create') {
+                eventdata.funcName = 'create';
+            } else if (eventdata.type === 'ev_destroy') {
+                eventdata.funcName = 'destroy';
+            } else if (eventdata.type === 'ev_step') {
+                eventdata.funcName = 'on' + {
+                    'ev_step_normal': 'Step',
+                    'ev_step_begin': 'BeginStep',
+                    'ev_step_end': 'EndStep'
+                }[eventdata.numb];
+            } else if (eventdata.type === 'ev_alarm') {
+                eventdata.funcName = 'onAlarm' + eventdata.numb;
+            } else if (eventdata.type === 'ev_keyboard') {
+                eventdata.funcName = 'onKeyboard' + eventdata.numb;
+            } else if (eventdata.type === 'ev_keypress') {
+                eventdata.funcName = 'onKeyPress' + eventdata.numb;
+            } else if (eventdata.type === 'ev_keyrelease') {
+                eventdata.funcName = 'onKeyRelease' + eventdata.numb;
+            } else if (eventdata.type === 'ev_mouse' || eventdata.type === 'ev_other') {
+                if (typeof eventdata.numb === 'number') {
+                    eventdata.funcName = 'on' + {
+                        ev_mouse: 'Mouse',
+                        ev_other: 'Other'
+                    }[eventdata.type] + eventdata.numb;
+                } else {
+                    eventdata.funcName = 'on' + eventdata.numb.slice(2).replace(/_[a-z]/g, function (text) {
+                        return text.charAt(1).toUpperCase();
+                    });
+                }
+            } else if (eventdata.type === 'ev_draw') {
+                eventdata.funcName = 'onDraw';
+            } else {
+                eventdata.funcName = eventdata.type + (eventdata.type === 'ev_collision' ? '_with_' : '_') + eventdata.numb;
+            }
+
             xml.children.forEach(function (child) {
                 var kind;
 
@@ -172,7 +212,13 @@ var processObject = logging(function (inpath, outpath, name) {
                 });
             });
 
-            data.events.push(eventdata);
+            if (eventdata.type === 'ev_create') {
+                data.create = eventdata;
+            } else if (eventdata.type === 'ev_destroy') {
+                data.destroy = eventdata;
+            } else {
+                data.events.push(eventdata);
+            }
         });
     }
 
@@ -188,14 +234,33 @@ var processObject = logging(function (inpath, outpath, name) {
         angl += '    mask_index = ' + data.mask + ';\n';
     }
 
-    if (data.events) {
+    if (data.events || data.destroy) {
         angl += '    create(x, y) {\n';
+
+        if (data.create) {
+            angl += '       ' + data.create.code.split('\n').join('\n        ') + '\n\n';
+        }
+
         data.events.forEach(function (eventdata) {
-            angl += '        bind_event(' + eventdata.type + ', ' + eventdata.numb + ', script () {\n';
-            angl += '            ' + eventdata.code.split('\n').join('\n            ') + '\n';
-            angl += '        });\n';
+            if (eventdata.type === 'ev_create') {
+                angl += '       ' + eventdata.code.split('\n').join('\n        ') + '\n';
+            } else {
+                angl += '        bind_event(' + eventdata.type + ', ' + eventdata.numb + ', ' + eventdata.funcName + ');\n';
+            }
         });
-        angl += '    }\n';
+        angl += '    }\n\n';
+
+        if (data.destroy) {
+            angl += '    destroy {\n';
+            angl += '       ' + data.destroy.code.split('\n').join('\n        ') + '\n\n';
+            angl += '    }\n\n';
+        }
+
+        data.events.forEach(function (eventdata) {
+                angl += '    script ' + eventdata.funcName + '() {\n';
+                angl += '       ' + eventdata.code.split('\n').join('\n        ') + '\n';
+                angl += '    }\n\n';
+        });
     }
 
     angl += '}';
