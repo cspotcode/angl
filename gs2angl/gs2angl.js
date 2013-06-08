@@ -141,10 +141,6 @@ var processObject = logging(function (inpath, outpath, name) {
 
             if (eventdata.type === 'ev_collision') {
                 eventdata.funcName = 'onCollisionWith' + eventdata.numb;
-            } else if (eventdata.type === 'ev_create') {
-                eventdata.funcName = 'create';
-            } else if (eventdata.type === 'ev_destroy') {
-                eventdata.funcName = 'destroy';
             } else if (eventdata.type === 'ev_step') {
                 eventdata.funcName = 'on' + {
                     'ev_step_normal': 'Step',
