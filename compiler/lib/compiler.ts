@@ -37,16 +37,22 @@ interface AnglFile {
     compiledJs?: string;
 }
 
-export function compileDirectory(directoryPath:string, cb:(err?, message?:string)=>void) {
+export function compileDirectory(directoryPath:string, cb:(err, message?:string)=>void) {
     
-    fileset(path.join(directoryPath, '**/*.angl'), '', (err, filePaths:string[]) => {
+    try {
+        if(!fs.statSync(directoryPath).isDirectory()) throw new Error('"' + directoryPath + '" is not a directory.');
+    } catch(err) {
+        return cb(err);
+    }
+    
+    fileset(path.join(directoryPath, '**/*.angl'), '', (err, filePaths?:string[]) => {
         if(err) return cb(err);
         
         var files = _.map(filePaths, (filePath) => {
             // Create the file object
             var file:AnglFile = {
                 path: filePath,
-                sourceContent: fs.readFileSync(filePath, 'utf8'),
+                sourceContent: fs.readFileSync(filePath, 'utf8')
             };
             // Generate an AST
             file.ast = angl.parse(file.sourceContent);
@@ -72,6 +78,6 @@ export function compileDirectory(directoryPath:string, cb:(err?, message?:string
             fs.writeFileSync(outputPath, file.compiledJs);
         });
         
-        cb(null, 'Success!');
+        return cb(null, 'Success!');
     });
 }
