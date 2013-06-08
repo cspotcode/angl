@@ -1,0 +1,31 @@
+module.exports = {
+    // Event numbers for ev_other
+    // Order from GM8.0 help files, values from experimentation
+    ev_outside: 0,
+    ev_boundary: 1,
+    ev_game_start: 2,
+    ev_game_end: 3,
+    ev_room_start: 4,
+    ev_room_end: 5,
+    ev_no_more_lives: 6,
+    ev_no_more_health: 9,
+    ev_animation_end: 7,
+    ev_end_of_path: 8,
+    ev_close_button: 30,
+    ev_user0: 10,
+    ev_user1: 11,
+    ev_user2: 12,
+    ev_user3: 13,
+    ev_user4: 14,
+    ev_user5: 15,
+    ev_user6: 16,
+    ev_user7: 17,
+    ev_user8: 18,
+    ev_user9: 19,
+    ev_user10: 20,
+    ev_user11: 21,
+    ev_user12: 22,
+    ev_user13: 23,
+    ev_user14: 24,
+    ev_user15: 25
+};

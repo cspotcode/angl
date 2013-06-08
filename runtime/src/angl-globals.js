@@ -12,6 +12,10 @@ require('./angl-object');
 // load all submodules
 var subModules = [
     require('./special-constants'),
+    require('./event-type-constants'),
+    require('./event-mouse-constants'),
+    require('./event-other-constants'),
+    require('./event-step-constants'),
     require('./console')
 ];
 

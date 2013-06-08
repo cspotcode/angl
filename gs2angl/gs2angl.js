@@ -103,16 +103,38 @@ var processObject = logging(function (inpath, outpath, name) {
         data.events = [];
         eventfiles = fs.readdirSync(inpath + '.events');
         eventfiles.forEach(function (fn) {
-            var xml = new xmldoc.XmlDocument(fs.readFileSync(inpath + '.events/' + fn)), eventdata;
+            var xml = new xmldoc.XmlDocument(fs.readFileSync(inpath + '.events/' + fn)),
+                eventdata, constants, constantName, i;
 
             if (xml.name !== 'event') {
                 throw new Error("Event XML doesn't have <event> at top-level");
             }
 
             eventdata = {
-                type: xml.attr.category,
+                type: 'ev_' + xml.attr.category.toLowerCase(),
+                numb: (xml.attr.category === 'COLLISION' ? xml.attr.with : parseInt(xml.attr.id)),
                 code: ''
             };
+
+            // For ev_mouse, ev_other and ev_step, find event number constant
+            if (eventdata.type === 'ev_mouse'
+                || eventdata.type === 'ev_step'
+                || eventdata.type === 'ev_other') {
+                constants = require({
+                    'ev_mouse': '../runtime/src/event-mouse-constants',
+                    'ev_step': '../runtime/src/event-step-constants',
+                    'ev_other': '../runtime/src/event-other-constants',
+                }[eventdata.type]);
+
+                for (constantName in constants) {
+                    if (constants.hasOwnProperty(constantName)) {
+                        if (constants[constantName] === eventdata.numb) {
+                            eventdata.numb = constantName;
+                            break;
+                        }
+                    }
+                }
+            }
 
             xml.children.forEach(function (child) {
                 var kind;
@@ -129,10 +151,11 @@ var processObject = logging(function (inpath, outpath, name) {
                     child.children.forEach(function (child) {
                         if (child.name === 'kind') {
                             kind = child.val;
-                        } else if (child.name === 'arguments') {
                             if (kind !== 'CODE') {
                                 echo('Skipping non-CODE action: ' + kind);
-                            } else {
+                            }
+                        } else if (child.name === 'arguments') {
+                            if (kind === 'CODE') {
                                 child.children.forEach(function (child) {
                                     if (child.name !== 'argument') {
                                         throw new Error("Event XML has non-<argument> tag in <arguments>");
@@ -168,7 +191,7 @@ var processObject = logging(function (inpath, outpath, name) {
     if (data.events) {
         angl += '    create(x, y) {\n';
         data.events.forEach(function (eventdata) {
-            angl += '        bind_event(' + eventdata.type + ', script () {\n';
+            angl += '        bind_event(' + eventdata.type + ', ' + eventdata.numb + ', script () {\n';
             angl += '            ' + eventdata.code.split('\n').join('\n            ') + '\n';
             angl += '        });\n';
         });
