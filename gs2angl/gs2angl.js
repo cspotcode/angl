@@ -101,9 +101,9 @@ var processObject = logging(function (inpath, outpath, name) {
             throw new Error("Object XML has unrecognised tag contained in <object>");
         }
     });
-    
+
+    data.events = [];
     if (fs.existsSync(inpath + '.events')) {
-        data.events = [];
         eventfiles = fs.readdirSync(inpath + '.events');
         eventfiles.forEach(function (fn) {
             var xml = new xmldoc.XmlDocument(fs.readFileSync(inpath + '.events/' + fn)),
@@ -173,25 +173,28 @@ var processObject = logging(function (inpath, outpath, name) {
             }
 
             xml.children.forEach(function (child) {
-                var kind;
-
                 if (child.name !== 'actions') {
                     throw new Error("Event XML has non-<actions> tag in <event>");
                 }
 
                 child.children.forEach(function (child) {
+                    var actiondata = {
+                        arguments: []
+                    };
+
                     if (child.name !== 'action') {
                         throw new Error("Event XML has non-<action> tag in <actions>");
                     }
                 
                     child.children.forEach(function (child) {
                         if (child.name === 'kind') {
-                            kind = child.val;
-                            if (kind !== 'CODE') {
-                                echo('Skipping non-CODE action: ' + kind);
-                            }
+                            actiondata.kind = child.val;
+                        } else if (child.name === 'actionType') {
+                            actiondata.actionType = child.val;
+                        } else if (child.name === 'functionName') {
+                            actiondata.functionName = child.val;
                         } else if (child.name === 'arguments') {
-                            if (kind === 'CODE') {
+                            if (actiondata.kind === 'CODE') {
                                 child.children.forEach(function (child) {
                                     if (child.name !== 'argument') {
                                         throw new Error("Event XML has non-<argument> tag in <arguments>");
@@ -199,12 +202,26 @@ var processObject = logging(function (inpath, outpath, name) {
                                     if (child.attr.kind !== 'STRING') {
                                         echo('Skipping non-STRING argument type: ' + child.attr.kind);
                                     } else {
-                                        eventdata.code += child.val + '\n';
+                                        actiondata.arguments.push(child.val);
                                     }
                                 });
                             }
                         }
                     });
+
+                    if (actiondata.kind === 'CODE') {
+                        eventdata.code += actiondata.arguments.join('\n') + '\n';
+                    } else if (actiondata.kind === 'NORMAL'
+                        && actiondata.actionType === 'FUNCTION'
+                        && actiondata.functionName === 'action_inherited') {
+                        if (eventdata.type === 'ev_create') {
+                            eventdata.code += 'super(x, y);\n';
+                        } else {
+                            eventdata.code += 'super();\n';
+                        }
+                    } else {
+                        echo('Skipping non-CODE action: ' + actiondata.kind);
+                    }
                 });
             });
 
@@ -230,34 +247,23 @@ var processObject = logging(function (inpath, outpath, name) {
         angl += '    mask_index = ' + data.mask + ';\n';
     }
 
-    if (data.events || data.destroy) {
+    if (data.create) {
         angl += '    create(x, y) {\n';
-
-        if (data.create) {
-            angl += '       ' + data.create.code.split('\n').join('\n        ') + '\n\n';
-        }
-
-        data.events.forEach(function (eventdata) {
-            if (eventdata.type === 'ev_create') {
-                angl += '       ' + eventdata.code.split('\n').join('\n        ') + '\n';
-            } else {
-                angl += '        bind_event(' + eventdata.type + ', ' + eventdata.numb + ', ' + eventdata.funcName + ');\n';
-            }
-        });
+        angl += '       ' + data.create.code.split('\n').join('\n        ') + '\n\n';
         angl += '    }\n\n';
-
-        if (data.destroy) {
-            angl += '    destroy {\n';
-            angl += '       ' + data.destroy.code.split('\n').join('\n        ') + '\n\n';
-            angl += '    }\n\n';
-        }
-
-        data.events.forEach(function (eventdata) {
-                angl += '    script ' + eventdata.funcName + '() {\n';
-                angl += '       ' + eventdata.code.split('\n').join('\n        ') + '\n';
-                angl += '    }\n\n';
-        });
     }
+
+    if (data.destroy) {
+        angl += '    destroy {\n';
+        angl += '       ' + data.destroy.code.split('\n').join('\n        ') + '\n\n';
+        angl += '    }\n\n';
+    }
+
+    data.events.forEach(function (eventdata) {
+        angl += '    script ' + eventdata.funcName + '() {\n';
+        angl += '       ' + eventdata.code.split('\n').join('\n        ') + '\n';
+        angl += '    }\n\n';
+    });
 
     angl += '}';
 
