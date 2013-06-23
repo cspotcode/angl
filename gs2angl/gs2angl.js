@@ -40,6 +40,46 @@ var processConstants = logging(function (infile, outfile) {
     fs.writeFileSync(outfile, angl);
 });
 
+var processScripts = logging(function (indir, outdir) {
+    var xml;
+
+    xml = new xmldoc.XmlDocument(fs.readFileSync(indir + '/_resources.list.xml'));
+
+    if (xml.name !== 'resources') {
+        throw new Error("_resources.list.xml doesn't have <resources> at top-level");
+    }
+
+    fs.mkdirSync(outdir);
+
+    xml.children.forEach(function (child) {
+        var fn = child.attr.filename || child.attr.name;
+
+        if (child.name !== 'resource') {
+            throw new Error("_resources.list.xml has non-<resource> as child of <resources> at top-level");
+        }
+
+        if (child.attr.type === 'RESOURCE') {
+            processScript(indir + '/' + fn + '.gml', outdir + '/' + fn + '.angl', child.attr.name);
+        } else if (child.attr.type === 'GROUP') {
+            processScripts(indir + '/' + fn, outdir + '/' + fn);
+        } else {
+            throw new Error("_resources.list.xml has non-RESOURCE/GROUP type for <resource>");
+        }
+    });
+});
+
+
+var processScript = logging(function (inpath, outpath, name) {
+    var gml, angl;
+
+    gml = fs.readFileSync(inpath).toString();
+    angl = 'script ' + name + '() {\n';
+    angl += '    ' + gml.split('\n').join('\n    ') + '\n';
+    angl += '}';
+
+    fs.writeFileSync(outpath, angl);
+});
+
 var processObjects = logging(function (indir, outdir) {
     var xml;
 
@@ -285,6 +325,7 @@ if (process.argv.length === 4 && process.argv[2] !== '--help') {
     logging(function (indir, outdir) {
         processConstants(indir + '/Constants.xml', outdir + '/Constants.angl');
         processObjects(indir + '/Objects', outdir + '/Objects');
+        processScripts(indir + '/Scripts', outdir + '/Scripts');
     })(indir, outdir);
 } else {
     echo('Usage:');
