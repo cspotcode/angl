@@ -289,19 +289,19 @@ var processObject = logging(function (inpath, outpath, name) {
 
     if (data.create) {
         angl += '    create(x, y) {\n';
-        angl += '       ' + data.create.code.split('\n').join('\n        ') + '\n\n';
+        angl += '        ' + data.create.code.split('\n').join('\n        ') + '\n\n';
         angl += '    }\n\n';
     }
 
     if (data.destroy) {
         angl += '    destroy {\n';
-        angl += '       ' + data.destroy.code.split('\n').join('\n        ') + '\n\n';
+        angl += '        ' + data.destroy.code.split('\n').join('\n        ') + '\n\n';
         angl += '    }\n\n';
     }
 
     data.events.forEach(function (eventdata) {
         angl += '    script ' + eventdata.funcName + '() {\n';
-        angl += '       ' + eventdata.code.split('\n').join('\n        ') + '\n';
+        angl += '        ' + eventdata.code.split('\n').join('\n        ') + '\n';
         angl += '    }\n\n';
     });
 
