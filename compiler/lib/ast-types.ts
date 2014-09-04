@@ -1,3 +1,6 @@
+/// <reference path="../../typings/all.d.ts"/>
+"use strict";
+
 import scope = module('./angl-scope');
 import scopeVariable = module('./scope-variable');
 

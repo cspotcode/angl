@@ -1,3 +1,6 @@
+/// <reference path="../../typings/all.d.ts"/>
+"use strict";
+
 // variable name and RequireJS module name for the Angl global namespace
 export var ANGL_GLOBALS_IDENTIFIER = '$AG';
 export var ANGL_GLOBALS_MODULE = 'angl-globals-namespace';

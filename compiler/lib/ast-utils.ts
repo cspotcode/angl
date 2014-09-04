@@ -1,3 +1,6 @@
+/// <reference path="../../typings/all.d.ts"/>
+"use strict";
+
 import astTypes = module('./ast-types');
 import anglScope = module('./angl-scope');
 

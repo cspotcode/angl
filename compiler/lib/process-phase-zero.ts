@@ -1,3 +1,6 @@
+/// <reference path="../../typings/all.d.ts"/>
+"use strict";
+
 import types = module('./ast-types');
 var globalScope = require('./global-scope');
 import AnglScope = module('./angl-scope');

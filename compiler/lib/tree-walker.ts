@@ -1,4 +1,5 @@
-/// <reference path="../typings/DefinitelyTyped/node/node.d.ts"/>
+/// <reference path="../../typings/all.d.ts"/>
+"use strict";
 
 var nodeChildren = require('./ast-node-children');
 var _ = require('lodash');

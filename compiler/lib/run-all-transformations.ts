@@ -1,4 +1,6 @@
-/// <reference path="../typings/DefinitelyTyped/node/node.d.ts"/>
+/// <reference path="../../typings/all.d.ts"/>
+"use strict";
+
 var _ = require('lodash');
 import types = module('./ast-types');
 

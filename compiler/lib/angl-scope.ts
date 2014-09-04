@@ -1,4 +1,6 @@
-/// <reference path="../typings/DefinitelyTyped/node/node.d.ts"/>
+/// <reference path="../../typings/all.d.ts"/>
+"use strict";
+
 // Scope class that represents an Angl lexical scope and all the identifiers inside it.
 
 // Remember, the "self" scope is a bit of an exception.

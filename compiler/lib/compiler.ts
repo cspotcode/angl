@@ -1,3 +1,5 @@
+/// <reference path="../../typings/all.d.ts"/>
+"use strict";
 
 // TODO change this to import ... module instead of var ... require
 // possibly caused by this bug: http://typescript.codeplex.com/workitem/777

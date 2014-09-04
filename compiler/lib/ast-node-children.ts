@@ -1,3 +1,6 @@
+/// <reference path="../../typings/all.d.ts"/>
+"use strict";
+
 export interface ChildNamesMap {
     [nodeTypes:string]:string[];
 }

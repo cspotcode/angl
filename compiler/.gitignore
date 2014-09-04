@@ -35,11 +35,5 @@ lib/ast-utils.js.map
 lib/strings.js
 lib/strings.js.map
 
-# Downloaded TypeScript definitions
-typings
-
-# IntelliJ/WebStorm file
-main module.iml
-.idea
 # gh-pages checkout for updating the website
 github-pages

@@ -1,3 +1,6 @@
+/// <reference path="../../typings/all.d.ts"/>
+"use strict";
+
 import treeWalker = module('./tree-walker');
 import astTypes = module('./ast-types');
 var walk = treeWalker.walk;

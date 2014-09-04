@@ -1,4 +1,5 @@
-/// <reference path="../typings/DefinitelyTyped/node/node.d.ts"/>
+/// <reference path="../../typings/all.d.ts"/>
+"use strict";
 
 import treeWalker = module('./tree-walker');
 import scope = module('./angl-scope');

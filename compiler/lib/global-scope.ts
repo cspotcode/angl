@@ -1,3 +1,6 @@
+/// <reference path="../../typings/all.d.ts"/>
+"use strict";
+
 var _ = require('lodash');
 import scope = module('./angl-scope');
 import scopeVariable = module('./scope-variable');
