@@ -1,11 +1,11 @@
 /// <reference path="../../typings/all.d.ts"/>
 "use strict";
 
-import types = module('./ast-types');
+import types = require('./ast-types');
 var globalScope = require('./global-scope');
-import AnglScope = module('./angl-scope');
-import scopeVariable = module('./scope-variable');
-import strings = module('./strings');
+import AnglScope = require('./angl-scope');
+import scopeVariable = require('./scope-variable');
+import strings = require('./strings');
 
 // Wrap the entire AST in a "file" node
 // TODO fix typing of ast argument

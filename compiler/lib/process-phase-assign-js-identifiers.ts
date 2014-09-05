@@ -1,10 +1,10 @@
 /// <reference path="../../typings/all.d.ts"/>
 "use strict";
 
-import treeWalker = module('./tree-walker');
-import scope = module('./angl-scope');
-import astTypes = module('./ast-types');
-import astUtils = module('./ast-utils');
+import treeWalker = require('./tree-walker');
+import scope = require('./angl-scope');
+import astTypes = require('./ast-types');
+import astUtils = require('./ast-utils');
 var walk = treeWalker.walk;
 
 // Assign concrete identifier names to all unnamed Javascript variables

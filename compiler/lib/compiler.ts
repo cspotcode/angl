@@ -1,20 +1,17 @@
 /// <reference path="../../typings/all.d.ts"/>
 "use strict";
 
-// TODO change this to import ... module instead of var ... require
-// possibly caused by this bug: http://typescript.codeplex.com/workitem/777
-/// <reference path="angl.d.ts"/>
-var angl = require('../../parser/out/angl');
+import angl = require('./angl-parser');
 
-import astTypes = module('./ast-types');
-import globalScope = module('./global-scope');
-import allTransformations = module('./run-all-transformations');
-import path = module('path');
-import fs = module('fs');
-import findGlobals = module('./find-globals');
+import astTypes = require('./ast-types');
+import globalScope = require('./global-scope');
+import allTransformations = require('./run-all-transformations');
+import path = require('path');
+import fs = require('fs');
+import findGlobals = require('./find-globals');
 var jsGenerator = require('./main');
 var fileset = require('fileset');
-var _ = require('lodash');
+import _ = require('lodash');
 
 export function compile(anglSourceCode:string):string {
     // Parse the angl source code into an AST
@@ -22,7 +19,7 @@ export function compile(anglSourceCode:string):string {
     return compileAst(ast);
 }
 
-export function compileAst(anglAst:astTypes.AstNode, extraGlobalIdentifiers?:string[] = []):string {
+export function compileAst(anglAst:astTypes.AstNode, extraGlobalIdentifiers:string[] = []):string {
     // Manually create and assign a global scope to the AST
     var newGlobalScope = globalScope.createGlobalScope(extraGlobalIdentifiers);
     anglAst.globalAnglScope = newGlobalScope;
@@ -50,7 +47,7 @@ export function compileDirectory(directoryPath:string, cb:(err, message?:string)
     fileset(path.join(directoryPath, '**/*.angl'), '', (err, filePaths?:string[]) => {
         if(err) return cb(err);
         
-        var files = _.map(filePaths, (filePath) => {
+        var files: Array<AnglFile> = _.map(filePaths, (filePath) => {
             // Create the file object
             var file:AnglFile = {
                 path: filePath,
@@ -69,7 +66,7 @@ export function compileDirectory(directoryPath:string, cb:(err, message?:string)
         // Compile each file into JavaScript
         _.each(files, (file:AnglFile, i) => {
             // Build the list of global identifiers from *other* files
-            var globalIdentifiers:string[] = _(files).filter((file, i2) => i2 !== i).pluck('globals').flatten().value();
+            var globalIdentifiers = <Array<string>>_(files).filter((file, i2) => i2 !== i).pluck('globals').flatten().value();
             console.log(globalIdentifiers);
             file.compiledJs = compileAst(file.ast, globalIdentifiers);
         });

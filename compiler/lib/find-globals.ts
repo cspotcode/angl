@@ -1,10 +1,10 @@
 /// <reference path="../../typings/all.d.ts"/>
 "use strict";
 
-import astTypes = module('./ast-types');
-import astUtils = module('./ast-utils');
-var _ = require('lodash');
-import treeWalker = module('./tree-walker');
+import astTypes = require('./ast-types');
+import astUtils = require('./ast-utils');
+import _ = require('lodash');
+import treeWalker = require('./tree-walker');
 
 // Return an array of the names of all globals created by the Angl code
 export var getGlobalNames = function(astRoot:astTypes.AstNode):string[] {

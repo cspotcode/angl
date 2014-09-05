@@ -1,8 +1,8 @@
 /// <reference path="../../typings/all.d.ts"/>
 "use strict";
 
-import scope = module('./angl-scope');
-import scopeVariable = module('./scope-variable');
+import scope = require('./angl-scope');
+import scopeVariable = require('./scope-variable');
 
 export interface AstNode {
     parentNode?: AstNode;
@@ -18,10 +18,10 @@ export interface FileNode extends AstNode {
 export interface ExpressionNode extends AstNode {
     // If true, this expression is used twice in the generated JavaScript.  To avoid triggering side-effects more than
     // once, we must pre-compute the expression's children.
-    isUsedTwice?: bool;
+    isUsedTwice?: boolean;
     // `requiresPrecomputation` is set on the children of an `isUsedTwice` node.  This indicates that the expression
     // must be evaluated ahead-of-time, stored in a variable, and referenced.
-    requiresPrecomputation?: bool;
+    requiresPrecomputation?: boolean;
 }
 
 export interface BinOpNode extends AstNode {
@@ -41,6 +41,15 @@ export interface CmpAssignNode extends StatementNode {
     op: string;
 }
 
+export interface VarDeclarationNode extends StatementNode {
+    list: Array<VarDeclarationItemNode>;
+}
+
+export interface VarDeclarationItemNode extends AstNode {
+    name: string;
+    expr?: ExpressionNode;
+}
+
 export interface StatementNode extends AstNode {
     
 }
@@ -55,7 +64,7 @@ export interface FuncCallNode extends AstNode {
     args: ExpressionNode[];
     // If set to true during AST transformation, JavaScript's automatic `this` binding will occur, and we don't need
     // to use `.call`
-    isMethodCall?: bool;
+    isMethodCall?: boolean;
 }
 
 export interface JsFuncCallNode extends AstNode {
@@ -88,13 +97,28 @@ export interface WithNode extends StatementNode {
     allObjectsVariable: scopeVariable.AbstractVariable;
     indexVariable: scopeVariable.AbstractVariable;
     outerOtherVariable: scopeVariable.AbstractVariable;
-    alreadyVisited: bool;
+    // Used in a processing phase to avoid processing this node twice.
+    alreadyVisited: boolean;
+}
+
+export interface RepeatNode extends StatementNode {
+    expr: ExpressionNode;
+    stmt: StatementNode;
+}
+
+export interface SuperNode extends StatementNode {
+    args: Array<ExpressionNode>;
 }
 
 export interface ObjectNode extends StatementNode {
     name: string;
     parent?: string;
-    stmts: StatementNode[];
+    stmts: Array<StatementNode>;
+    properties: Array<AssignNode>;
+    methods: Array<ScriptNode>;
+    createscript: ScriptNode;
+    destroyscript: ScriptNode;
+    propertyinitscript: ScriptNode;
 }
 
 export interface PropertyNode extends StatementNode {
@@ -102,14 +126,23 @@ export interface PropertyNode extends StatementNode {
     expr: ExpressionNode;
 }
 
+// TODO MethodNode and ScriptNode both have type==='script'
+// This is a problem, because the type property is supposed to
+// allow a clean way to detect the type of a node at runtime and
+// perform the correct downcast (without the possibility of making
+// a mistake)
 export interface MethodNode extends ScriptNode {
     methodname: string;
 }
 
-export interface ScriptNode extends ExpressionNode implements AbstractArgsInvokableNode {
+export interface CreateDefNode extends AbstractArgsInvokableNode, AstNode {};
+
+export interface DestroyDefNode extends AbstractInvokableNode, AstNode {};
+
+export interface ScriptNode extends ExpressionNode, AbstractArgsInvokableNode {
 }
 
-export interface ScriptDefNode extends StatementNode implements AbstractArgsInvokableNode {
+export interface ScriptDefNode extends StatementNode, AbstractArgsInvokableNode {
     name: string;
 }
 
@@ -121,7 +154,7 @@ export interface ForNode extends StatementNode {
 }
 
 export interface AbstractInvokableNode {
-    stmts: StatementNode[];
+    stmts: StatementsNode;
 }
 
 export interface AbstractArgsInvokableNode extends AbstractInvokableNode {

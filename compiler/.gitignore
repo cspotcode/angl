@@ -34,6 +34,10 @@ lib/ast-utils.js
 lib/ast-utils.js.map
 lib/strings.js
 lib/strings.js.map
+lib/angl-parser.js
+lib/angl-parser.js.map
+lib/angl-parser-interface.js
+lib/angl-parser-interface.js.map
 
 # gh-pages checkout for updating the website
 github-pages

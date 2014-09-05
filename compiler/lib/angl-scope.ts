@@ -6,9 +6,9 @@
 // Remember, the "self" scope is a bit of an exception.
 // It is the scope used when no other scope has a given identifier.
 
-var _ = require('lodash');
+import _ = require('lodash');
 var buckets = require('../vendor/buckets');
-import scopeVariable = module('./scope-variable');
+import scopeVariable = require('./scope-variable');
 
 var bucketIdProp = '_id' + new Date;
 
@@ -19,14 +19,14 @@ export class AnglScope {
     // Set of all Variables
     private _variables;
     // Dictionary mapping Angl identifiers to Variables.  Not all Variables have an Angl identifier.
-    private _identifiers;
+    /*protected*/ _identifiers;
     // Dictionary mapping Javascript identifiers to Variables.  Not all Variables have a Javascript identifier, though
     // one will eventually have to be assigned to them.
-    private _jsIdentifiers;
+    /*protected*/ _jsIdentifiers;
     // Set containing all Variables that do not have a Javascript identifier.  These identifiers will be assigned to
     // them before Javascript code generation occurs.
     private _unnamedVariables;
-    private _parentScope;
+    /*protected*/ _parentScope;
     private _namingUid;
 
     constructor() {
@@ -79,17 +79,17 @@ export class AnglScope {
     // returns value for the identifier with the given name, undefined if it doesn't exist
     getVariableByIdentifier(identifier:string):scopeVariable.AbstractVariable {
         return this._identifiers.get(identifier);
-    };
+    }
 
     // returns value for the identifier with the given name in this or any parent scope, undefined if it doesn't exist
     getVariableByIdentifierInChain(identifier:string):scopeVariable.AbstractVariable {
         return this._identifiers.get(identifier) || (this._parentScope && this._parentScope.getVariableByIdentifierInChain(identifier));
-    };
+    }
 
     // returns true or false if identifier with given name exists or doesn't exist
     hasIdentifier(identifier:string) {
         return this._identifiers.containsKey(identifier);
-    };
+    }
 
     hasIdentifierInChain(identifier:string) {
         return this.hasIdentifier(identifier) || !!(this._parentScope && this._parentScope.hasIdentifierInChain(identifier));
@@ -101,7 +101,7 @@ export class AnglScope {
     };*/
 
     // removes identifier with the given name, returning true if it was removed, false if it didn't exist
-    removeVariableByIdentifier(identifier:string):bool {
+    removeVariableByIdentifier(identifier:string):boolean {
         var variable = this.getVariableByIdentifier(identifier);
         if(variable) {
             this.removeVariable(variable);
@@ -109,9 +109,9 @@ export class AnglScope {
         } else {
             return false;
         }
-    };
+    }
 
-    removeVariable(variable:scopeVariable.AbstractVariable):bool {
+    removeVariable(variable:scopeVariable.AbstractVariable):boolean {
         var ret = this._variables.remove(variable);
         if(ret) {
             var jsIdentifier = variable.getJsIdentifier()
@@ -143,7 +143,7 @@ export class AnglScope {
 
     setParentScope(parentAnglScope) {
         this._parentScope = parentAnglScope;
-    };
+    }
 
     getParentScope():AnglScope {
         return this._parentScope;
@@ -183,16 +183,12 @@ export class AnglScope {
         });
     }
 
-    _hasJsIdentifier(identifier:string):bool {
+    _hasJsIdentifier(identifier:string):boolean {
         return this._jsIdentifiers.containsKey(identifier);
     }
 }
 
 export class WithScope extends AnglScope {
-
-    private _parentScope:AnglScope;
-    private _identifiers;
-    private _jsIdentifiers;
 
     getVariableByIdentifier(identifier:string) { return super.getVariableByIdentifier(identifier) || this._parentScope.getVariableByIdentifier(identifier); }
 
@@ -213,7 +209,7 @@ export class WithScope extends AnglScope {
         this._addVariable(variable);
     }
 
-    _hasJsIdentifier(identifier:string):bool {
+    _hasJsIdentifier(identifier:string):boolean {
         return this._jsIdentifiers.containsKey(identifier) || this._parentScope._hasJsIdentifier(identifier);
     }
 

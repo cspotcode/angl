@@ -1,10 +1,10 @@
 /// <reference path="../../typings/all.d.ts"/>
 "use strict";
 
-var _ = require('lodash');
+import _ = require('lodash');
 
 export interface AbstractVariable {
-    awaitingJsIdentifierAssignment():bool;
+    awaitingJsIdentifierAssignment():boolean;
     getJsIdentifier():string;
     getIdentifier():string;
     getAllocationType():string;
@@ -24,7 +24,7 @@ export class Variable implements AbstractVariable {
     private static allocationTypes = ['LOCAL', 'ARGUMENT', 'PROP_ASSIGNMENT', 'NONE'];
     private static accessTypes = ['BARE', 'PROP_ACCESS'];
 
-    constructor(identifier?:string = null, allocationType?:string = 'LOCAL', accessType?:string = 'BARE') {
+    constructor(identifier:string = null, allocationType:string = 'LOCAL', accessType:string = 'BARE') {
         if(!_.contains(Variable.allocationTypes, allocationType)) throw new Error('Invalid Variable allocationType "' + allocationType + '"');
         if(!_.contains(Variable.accessTypes, accessType)) throw new Error('Invalid Variable accessType"' + accessType + '"');
 

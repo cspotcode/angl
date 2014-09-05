@@ -2,8 +2,8 @@
 "use strict";
 
 var nodeChildren = require('./ast-node-children');
-var _ = require('lodash');
-import types = module('./ast-types');
+import _ = require('lodash');
+import types = require('./ast-types');
 
 export interface WalkerFunction {
     (node:types.AstNode, parentNode:types.AstNode, locationInParent:string):any;

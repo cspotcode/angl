@@ -3,21 +3,21 @@
 
 // AST transformation phase one
 
-import treeWalker = module('./tree-walker');
-import scope = module('./angl-scope');
-import astTypes = module('./ast-types');
-import astUtils = module('./ast-utils');
-import scopeVariable = module('./scope-variable');
-import strings = module('./strings');
+import treeWalker = require('./tree-walker');
+import scope = require('./angl-scope');
+import astTypes = require('./ast-types');
+import astUtils = require('./ast-utils');
+import scopeVariable = require('./scope-variable');
+import strings = require('./strings');
 var buckets = require('../vendor/buckets');
-var _ = require('lodash');
+import _ = require('lodash');
 var walk = treeWalker.walk;
 
 // Create scopes for all nodes
 
 export var transform = (ast:astTypes.AstNode) => {
     // TODO fix the typing on node.  I don't know how to access arbitrary properties of an object implementing an interface.
-    walk(ast, (node:any, parent:astTypes.AstNode, locationInParent):any => {
+    walk(ast, (node:astTypes.AstNode, parent:astTypes.AstNode, locationInParent):any => {
 
         var replacement:any[];
 
@@ -26,29 +26,31 @@ export var transform = (ast:astTypes.AstNode) => {
 
         // Script definitions register an identifier into the parent scope
         if(node.type === 'scriptdef' || node.type === 'const') {
-            if(node.parentNode.type !== 'file' && (node.parentNode.type !== 'object' || node.type !== 'scriptdef')) {
-                throw new Error(node.type + ' must be at the root level of a file.');
+            var scriptDefNode = <astTypes.ScriptDefNode>node;
+            if(scriptDefNode.parentNode.type !== 'file' && (scriptDefNode.parentNode.type !== 'object' || scriptDefNode.type !== 'scriptdef')) {
+                throw new Error(scriptDefNode.type + ' must be at the root level of a file.');
             }
-            var globalVar = new scopeVariable.Variable(node.name, 'PROP_ASSIGNMENT', 'PROP_ACCESS');
+            var globalVar = new scopeVariable.Variable(scriptDefNode.name, 'PROP_ASSIGNMENT', 'PROP_ACCESS');
             globalVar.setContainingObjectIdentifier(strings.ANGL_GLOBALS_IDENTIFIER);
-            astUtils.getGlobalAnglScope(node).addVariable(globalVar);
+            astUtils.getGlobalAnglScope(scriptDefNode).addVariable(globalVar);
         }
 
         // Const definitions register an identifier into the parent scope
 
         // Scripts create a new scope
         if(node.type === 'script' || node.type === 'scriptdef') {
+            var scriptNode = <astTypes.ScriptNode>node;
             var newScope = new scope.AnglScope();
-            newScope.setParentScope(astUtils.getAnglScope(node));
-            node.anglScope = newScope;
+            newScope.setParentScope(astUtils.getAnglScope(scriptNode));
+            scriptNode.anglScope = newScope;
             // Register script arguments into the local scope
             // TODO how to handle self and other?
             var thisVar = new scopeVariable.Variable('self', 'ARGUMENT');
             thisVar.setJsIdentifier('this');
             newScope.addVariable(thisVar);
-/*            var otherVar = new scopeVariable.Variable('other', 'ARGUMENT');
-            newScope.addVariable(otherVar);*/
-            _.each(node.args, (argName) => {
+            /*            var otherVar = new scopeVariable.Variable('other', 'ARGUMENT');
+             newScope.addVariable(otherVar);*/
+            _.each(scriptNode.args, (argName) => {
                 var argumentVar = new scopeVariable.Variable(argName, 'ARGUMENT');
                 newScope.addVariable(argumentVar);
             });
@@ -56,13 +58,14 @@ export var transform = (ast:astTypes.AstNode) => {
 
         // Var declarations register local variables into their scope
         if(node.type === 'var') {
+            var varNode = <astTypes.VarDeclarationNode>node;
             replacement = [];
-            _.each(node.list, (var_item) => {
-                if(astUtils.getAnglScope(node).hasIdentifier(var_item.name)) {
+            _.each(varNode.list, (var_item) => {
+                if(astUtils.getAnglScope(varNode).hasIdentifier(var_item.name)) {
                     throw new Error('Attempt to declare local variable with the name ' + JSON.stringify(var_item.name) + ' more than once.');
                 }
                 var localVar = new scopeVariable.Variable(var_item.name);
-                astUtils.getAnglScope(node).addVariable(localVar);
+                astUtils.getAnglScope(varNode).addVariable(localVar);
                 if(var_item.expr) {
                     replacement.push({
                         type: 'assign',
@@ -79,14 +82,15 @@ export var transform = (ast:astTypes.AstNode) => {
 
         // repeat loops are replaced by a for loop
         if(node.type === 'repeat') {
+            var repeatNode = <astTypes.RepeatNode>node;
             // construct a new AstNode to replace it.
             // allocate a temporary Javascript counter variable
             var counterVariable = new scopeVariable.Variable();
             counterVariable.setDesiredJsIdentifier('$i');
-            astUtils.getAnglScope(node).addVariable(counterVariable);
+            astUtils.getAnglScope(repeatNode).addVariable(counterVariable);
             var timesVariable = new scopeVariable.Variable();
             timesVariable.setDesiredJsIdentifier('$l');
-            astUtils.getAnglScope(node).addVariable(timesVariable);
+            astUtils.getAnglScope(repeatNode).addVariable(timesVariable);
             replacement = [
                 {
                     type: 'assign',
@@ -94,7 +98,7 @@ export var transform = (ast:astTypes.AstNode) => {
                         type: 'identifier',
                         variable: timesVariable
                     },
-                    rval: astUtils.cleanNode(node.expr)
+                    rval: astUtils.cleanNode(repeatNode.expr)
                 },
                 {
                     type: 'for',
@@ -133,11 +137,10 @@ export var transform = (ast:astTypes.AstNode) => {
                             val: 1
                         }
                     },
-                    stmt: astUtils.cleanNode(node.stmt)
+                    stmt: astUtils.cleanNode(repeatNode.stmt)
                 }
             ];
             return replacement;
-
 
         }
 
@@ -146,9 +149,8 @@ export var transform = (ast:astTypes.AstNode) => {
         // for-loop over each object
         // within the loop, `other` maps to the outer `self`
         // and `self` maps to each object from the array, one after the other
-        if(node.type === 'with' && !node.alreadyVisited) {
-            
-            var withNode:astTypes.WithNode = node;
+        if(node.type === 'with' && !(<astTypes.WithNode>node).alreadyVisited) {
+            var withNode = <astTypes.WithNode>node;
 
             // Grab a reference to the outer scope
             var outerScope = astUtils.getAnglScope(withNode);
@@ -162,7 +164,7 @@ export var transform = (ast:astTypes.AstNode) => {
             var allObjectsVariable = new scopeVariable.Variable();
             allObjectsVariable.setDesiredJsIdentifier('$objects');
             outerScope.addVariable(allObjectsVariable);
-            
+
             // Create variable to hold the index (integer) for iteration over the array of objects
             var indexVariable = new scopeVariable.Variable();
             indexVariable.setDesiredJsIdentifier('$i');
@@ -173,7 +175,7 @@ export var transform = (ast:astTypes.AstNode) => {
             selfVariable.setIdentifier('self');
             selfVariable.setDesiredJsIdentifier('$withSelf');
             innerScope.addVariable(selfVariable);
-            
+
             // Create variable to cache the outer `other` value.  This will be used to restore the value of `other`
             // after `with` has finished looping.
             var outerOtherVariable = new scopeVariable.Variable();
@@ -209,64 +211,69 @@ export var transform = (ast:astTypes.AstNode) => {
         }
 
         if(node.type === 'object') {
-
+            var objectNode = <astTypes.ObjectNode>node;
             // If no parent is specified, use the default
-            if(!node.parent) node.parent = strings.SUPER_OBJECT_NAME;
+            if (!objectNode.parent) objectNode.parent = strings.SUPER_OBJECT_NAME;
 
             // Initialize some basic containers for storing methods, create, destroy, and property assignments
-            node.propertyNames = new buckets.Set();
-            node.properties = [];
-            node.methodNames = new buckets.Set();
-            node.methods = [];
+            var objectPropertyNames = new buckets.Set();
+            objectNode.properties = [];
+            var objectMethodNames = new buckets.Set();
+            objectNode.methods = [];
             // TODO can't have properties with the same names as methods
 
             // process all contained statements, storing them onto the object node
-            _.each(node.stmts, (stmt) => {
-                switch(stmt.type) {
+            _.each(objectNode.stmts, (stmt) => {
+                switch (stmt.type) {
                     case 'scriptdef':
-                        if(node.methodNames.contains(stmt.name)) {
-                            throw new Error('Method ' + JSON.stringify(stmt.name) + ' defined more than once for object ' + JSON.stringify(node.name));
+                        var scriptDefStmt = <astTypes.ScriptDefNode>stmt;
+                        if (objectMethodNames.contains(scriptDefStmt.name)) {
+                            throw new Error('Method ' + JSON.stringify(scriptDefStmt.name) + ' defined more than once for object ' + JSON.stringify(objectNode.name));
                         }
-                        node.methodNames.add(stmt.name);
-                        var stmt = astUtils.cleanNode(stmt);
-                        node.methods.push({
+                        objectMethodNames.add(scriptDefStmt.name);
+                        astUtils.cleanNode(scriptDefStmt);
+                        objectNode.methods.push({
                             type: 'script',
-                            args: stmt.args,
-                            stmts: stmt.stmts,
-                            methodname: stmt.name
+                            args: scriptDefStmt.args,
+                            stmts: scriptDefStmt.stmts,
+                            methodname: scriptDefStmt.name
                         });
                         break;
 
                     case 'createdef':
-                        if(node.createscript) {
-                            throw new Error('Multiple create scripts defined for object ' + JSON.stringify(node.name));
+                        var createDefStmt = <astTypes.CreateDefNode>stmt;
+                        if (objectNode.createscript) {
+                            throw new Error('Multiple create scripts defined for object ' + JSON.stringify(objectNode.name));
                         }
-                        node.createscript = {
+                        objectNode.createscript = {
                             type: 'script',
-                            args: stmt.args,
-                            stmts: stmt.stmts,
+                            args: createDefStmt.args,
+                            stmts: createDefStmt.stmts,
                             methodname: '$create'
                         };
                         break;
 
                     case 'destroydef':
-                        if(node.destroyscript) {
-                            throw new Error('Multiple destroy scripts defined for object ' + JSON.stringify(node.name));
+                        var destroyDefStmt = <astTypes.DestroyDefNode>stmt;
+                        if (objectNode.destroyscript) {
+                            throw new Error('Multiple destroy scripts defined for object ' + JSON.stringify(objectNode.name));
                         }
-                        node.destroyscript = {
+                        objectNode.destroyscript = {
                             type: 'script',
                             args: [],
-                            stmts: stmt.stmts,
+                            stmts: destroyDefStmt.stmts,
                             methodname: '$destroy'
                         };
                         break;
 
                     case 'property':
-                        if(node.propertyNames.contains(stmt.name)) {
-                            throw new Error('Cannot initialize object property ' + JSON.stringify(stmt.name) + 'more than once for object ' + JSON.stringify(node.name));
+                        var propertyStmt = <astTypes.PropertyNode>stmt;
+                        
+                        if (objectPropertyNames.contains(propertyStmt.name)) {
+                            throw new Error('Cannot initialize object property ' + JSON.stringify(propertyStmt.name) + 'more than once for object ' + JSON.stringify(objectNode.name));
                         }
-                        node.propertyNames.add(stmt.name);
-                        node.properties.push({
+                        objectPropertyNames.add(propertyStmt.name);
+                        objectNode.properties.push({
                             type: 'assign',
                             lval: {
                                 type: 'binop',
@@ -277,30 +284,34 @@ export var transform = (ast:astTypes.AstNode) => {
                                 },
                                 expr2: {
                                     type: 'identifier',
-                                    name: stmt.name
+                                    name: propertyStmt.name
                                 }
                             },
-                            rval: astUtils.cleanNode(stmt.expr)
+                            rval: astUtils.cleanNode(propertyStmt.expr)
                         });
                         break;
 
                     default:
-                        throw new Error('Unexpected child node of "object": ' + JSON.stringify(stmt.type));
+                        throw new Error('Unexpected child node of "object": ' + JSON.stringify(propertyStmt.type));
                 }
             });
 
             // Create the script that will initialize all properties
-            node.propertyinitscript = {
+            objectNode.propertyinitscript = {
                 type: 'script',
                 args: [],
                 methodname: strings.OBJECT_INITPROPERTIES_METHOD_NAME,
                 stmts: {
                     type: 'statements',
-                    list: [{
-                        type: 'super',
-                        //expr: 'this.' + strings.OBJECT_INITPROPERTIES_METHOD_NAME,
-                        args: []
-                    }].concat(node.properties)
+                    list: <Array<astTypes.StatementNode>>_.flatten([
+                        [
+                            {
+                                type: 'super',
+                                //expr: 'this.' + strings.OBJECT_INITPROPERTIES_METHOD_NAME,
+                                args: []
+                            }
+                        ],
+                        objectNode.properties], true)
                 }
             };
 
@@ -308,35 +319,38 @@ export var transform = (ast:astTypes.AstNode) => {
             // walker doesn't traverse it.
             // The walker will still traverse all methods, properties, create, and destroy via their new locations
             // on the object node.
-            node.stmts = [];
+            objectNode.stmts = [];
         }
 
         if(node.type === 'super') {
+            var superNode = <astTypes.SuperNode>node;
+            
             // Find the containing object (which will tell us the super-class) and the containing method's name
 
-            var methodNode:any = astUtils.findParent(node, (parentNode:any) => parentNode.type === 'script' && parentNode.methodname );
-            if(!methodNode) {
+            var methodNode = <astTypes.MethodNode>astUtils.findParent(superNode, (parentNode) => parentNode.type === 'script' && null != (<astTypes.MethodNode>parentNode).methodname);
+            if (!methodNode) {
                 throw new Error('"super" calls only allowed within object methods.');
             }
-            var objectNode:any = astUtils.findParent(methodNode, (parentNode) => parentNode.type === 'object' );
+            var containingObjectNode = <astTypes.ObjectNode>astUtils.findParent(methodNode, (parentNode) => parentNode.type === 'object');
             var methodName = methodNode.methodname;
-            var parentName = objectNode.parent;
+            var parentName = containingObjectNode.parent;
 
             // Special case for destroy() scripts: Since an object's destroy script can't have arguments, the super()
             // call can't have arguments either.
-            if(methodName === '$destroy' && node.args.length) {
+            if(methodName === '$destroy' && superNode.args.length) {
                 throw new Error('Can\'t pass arguments to "super" call within a "destroy" script.');
             }
 
             // replace `super` calls with a funccall node that calls the parent object's method
-            return {
+            var replacementForSuper: astTypes.FuncCallNode = {
                 type: 'funccall',
                 expr: {
                     type: 'jsexpr',
                     expr: strings.ANGL_GLOBALS_IDENTIFIER + '.' + parentName + '.prototype.' + methodName
                 },
-                args: node.args
+                args: superNode.args
             };
+            return replacementForSuper;
         }
 
         if(node.type === 'assign') {

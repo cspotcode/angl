@@ -1,8 +1,8 @@
 /// <reference path="../../typings/all.d.ts"/>
 "use strict";
 
-import treeWalker = module('./tree-walker');
-import astTypes = module('./ast-types');
+import treeWalker = require('./tree-walker');
+import astTypes = require('./ast-types');
 var walk = treeWalker.walk;
 
 // Mark all funccalls of the form `foo.bar()` (as opposed to `bar()`) as method calls, because JavaScript will

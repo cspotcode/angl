@@ -1,8 +1,8 @@
 /// <reference path="../../typings/all.d.ts"/>
 "use strict";
 
-var _ = require('lodash');
-import types = module('./ast-types');
+import _ = require('lodash');
+import types = require('./ast-types');
 
 var transformers = [
     require('./process-phase-zero').transform,

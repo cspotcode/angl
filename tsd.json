@@ -5,6 +5,9 @@
   "path": "typings/from-tsd",
   "bundle": "typings/tsd.d.ts",
   "installed": {
+    "lodash/lodash.d.ts": {
+      "commit": "83e1a7ddb6a2407fbf377b8dfb10d6b12776929f"
+    },
     "knockout/knockout.d.ts": {
       "commit": "83e1a7ddb6a2407fbf377b8dfb10d6b12776929f"
     },
