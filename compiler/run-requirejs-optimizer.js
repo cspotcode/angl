@@ -26,7 +26,7 @@ var config = {
     // We must write code that can both be loaded by Node.js's require() and be located by the RequireJS optimizer.
     // The former requires all module names to be relative paths (unless we're loading something from "node_modules")
     // 
-    // Also, for some reason the RequireJS optimizer thinks that "./foo/bar", "foo/bar", and "./lib/../foo/bar" are all
+    // Also, for some reason the RequireJS optimizer thinks that "./foo/bar", "foo/bar", and "./build/../foo/bar" are all
     // different paths.  This causes it to include and execute those modules multiple times in the bundled JS file.
     // 
     // To solve this, all our JS code uses relative paths that Node's require() can handle.  Then we use the "map"
@@ -52,11 +52,14 @@ var config = {
     map: {
         '*': {
             // For when the compiler references the runtime
-            'lib/../../runtime/src': 'runtime',
+            'build/../../runtime/src': 'runtime',
             // For when the compiler references the parser
-            'lib/../../parser/out/angl': 'angl-parser/angl',
+            'build/../../parser/out/angl': 'angl-parser/angl',
             // For when the runtime references the buckets library
-            'runtime/../../compiler/vendor/buckets': 'vendor/buckets'
+            'runtime/../../compiler/vendor/buckets': 'vendor/buckets',
+            
+            // For when the demo tries to load the compiler
+            'lib': 'build'
         }
     },
     shim: {
