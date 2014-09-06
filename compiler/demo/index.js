@@ -1,4 +1,5 @@
 define(function(require) {
+"use strict";
 
 var $ = require('jquery');
 var ko = require('knockout');

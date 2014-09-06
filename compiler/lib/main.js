@@ -1,3 +1,5 @@
+"use strict";
+
 var _ = require('lodash');
 var astUtils = require('./ast-utils');
 var strings = require('./strings');
