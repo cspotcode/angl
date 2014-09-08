@@ -112,7 +112,12 @@ export enum JavascriptOperatorsEnum {
     YIELD,                          // not sure; we are not using it regardless
     ASSIGNMENT,                     // foo = 2;
     SPREAD,                         // foo(...bar);
-    COMMA                           // a = 1, 2, 3
+    COMMA,                          // a = 1, 2, 3
+    WRAPPED_IN_PARENTHESES          // Not a JS operator.  Used when the expression is wrapped in parentheses,
+                                    // making any extra parentheses unnecessary.  For example,
+                                    // if(a == b)
+                                    // The "==" expression never needs to add its own parentheses because if()
+                                    // already supplies them.
 }
 
 export enum Associativity {
@@ -189,4 +194,5 @@ operator(JavascriptOperatorsEnum.YIELD,                        16, Associativity
 operator(JavascriptOperatorsEnum.ASSIGNMENT,                   17, Associativity.RIGHT_TO_LEFT);
 operator(JavascriptOperatorsEnum.SPREAD,                       18, Associativity.N_A);
 operator(JavascriptOperatorsEnum.COMMA,                        19, Associativity.LEFT_TO_RIGHT);
+operator(JavascriptOperatorsEnum.WRAPPED_IN_PARENTHESES,       20, Associativity.N_A);
 

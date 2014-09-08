@@ -362,7 +362,7 @@ function generateStatement(astNode, omitTerminator: boolean = false, omitIndenta
             var ifElseNode = <astTypes.IfElseNode>astNode;
             omitIndentation || printIndent();
             print('if(');
-            generateExpression(ifElseNode.expr);
+            generateExpression(ifElseNode.expr, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A);
             print(') {\n');
             indent();
             generateStatement(ifElseNode.stmt1);
@@ -391,7 +391,7 @@ function generateStatement(astNode, omitTerminator: boolean = false, omitIndenta
             var whileNode = <astTypes.WhileNode>astNode;
             omitIndentation || printIndent();
             print('while(');
-            generateExpression(whileNode.expr);
+            generateExpression(whileNode.expr, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A);
             print(') {\n');
             indent();
             generateStatement(whileNode.stmt);
@@ -408,9 +408,9 @@ function generateStatement(astNode, omitTerminator: boolean = false, omitIndenta
             generateStatement(doUntilNode.stmt);
             outdent();
             omitIndentation || printIndent();
-            print('} while(!(');
-            generateExpression(doUntilNode.expr);
-            print('))');
+            print('} while(!');
+            generateExpression(doUntilNode.expr, OpEnum.LOGICAL_NOT, ops.Location.N_A);
+            print(')');
             break;
 
         case 'break':
