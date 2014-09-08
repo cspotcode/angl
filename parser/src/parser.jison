@@ -30,8 +30,13 @@
 "create"                return 'CREATE';
 "destroy"               return 'DESTROY';
 "super"                 return 'SUPER';
+
+/* keyword operators (must appear above identifier) */
 "div"                   return 'DIV';
 "mod"                   return 'MOD';
+"and"                   return '&&';
+"or"                    return '||';
+"not"                   return '!';
 
 /* literals */
 [0-9]+("."[0-9]+)?\b    return 'NUMBER';        /* 123.4 */
@@ -327,9 +332,9 @@ expression
     | script_literal
         { $$ = $1; }
     | expression '&&' expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp('&&', $1, $3); }
     | expression '||' expression
-        { $$ = yy.makeBinaryOp($2, $1, $3); }
+        { $$ = yy.makeBinaryOp('||', $1, $3); }
     | expression '^^' expression
         { $$ = yy.makeBinaryOp($2, $1, $3); }
     | expression '<' expression
@@ -367,7 +372,7 @@ expression
     | expression MOD expression
         { $$ = yy.makeBinaryOp($2, $1, $3); }
     | '!' expression
-        { $$ = yy.makeUnaryOp($1, $2); }
+        { $$ = yy.makeUnaryOp('!', $2); }
     | '~' expression
         { $$ = yy.makeUnaryOp($1, $2); }
     | '-' expression %prec UMINUS
