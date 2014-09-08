@@ -237,13 +237,13 @@ var_statement
     ;
 
 var_list
-    : IDENTIFIER ',' var_list
+    : identifier ',' var_list
         { $$ = [yy.makeVarStmtItem($1)].concat($3); }
-    | IDENTIFIER '=' expression ',' var_list
+    | identifier '=' expression ',' var_list
         { $$ = [yy.makeVarStmtItem($1, $3)].concat($5); }
-    | IDENTIFIER
+    | identifier
         { $$ = [yy.makeVarStmtItem($1)]; }
-    | IDENTIFIER '=' expression
+    | identifier '=' expression
         { $$ = [yy.makeVarStmtItem($1, $3)]; }
     ;
 
@@ -255,28 +255,28 @@ script_literal
     ;
 
 script_definition
-    : SCRIPT IDENTIFIER '(' ')' '{' statements '}'
+    : SCRIPT identifier '(' ')' '{' statements '}'
         { $$ = yy.makeScriptStmt($2, [], $6); }
-    | SCRIPT IDENTIFIER '(' definition_arguments ')' '{' statements '}'
+    | SCRIPT identifier '(' definition_arguments ')' '{' statements '}'
         { $$ = yy.makeScriptStmt($2, $4, $7); }
     ;
 
 definition_arguments
-    : IDENTIFIER ',' definition_arguments
+    : identifier ',' definition_arguments
         { $$ = [$1].concat($3); }
-    | IDENTIFIER
+    | identifier
         { $$ = [$1]; }
     ;
 
 const_definition
-    : CONST IDENTIFIER '=' expression ';'
+    : CONST identifier '=' expression ';'
         { $$ = yy.makeConstStmt($2, $4); }
     ;
 
 object_definition
-    : OBJECT IDENTIFIER '{' class_statements '}'
+    : OBJECT identifier '{' class_statements '}'
         { $$ = yy.makeObjectStmt($2, $4); }
-    | OBJECT IDENTIFIER PARENT IDENTIFIER '{' class_statements '}'
+    | OBJECT identifier PARENT identifier '{' class_statements '}'
         { $$ = yy.makeObjectStmt($2, $6, $4); }
     ;
 
@@ -296,7 +296,7 @@ class_statement
         { $$ = yy.makeCreateStmt($3, $6); }
     | DESTROY '{' statements '}'
         { $$ = yy.makeDestroyStmt($3); }
-    | IDENTIFIER '=' expression ';'
+    | identifier '=' expression ';'
         { $$ = yy.makePropertyStmt($1, $3); }
     ;
 
@@ -405,11 +405,11 @@ function_call_arguments
     ;
 
 variable
-    : identifier
+    : lval_identifier
         { $$ = $1; }
-    | expression '.' identifier
+    | expression '.' lval_identifier
         { $$ = yy.makeBinaryOp($2, $1, $3); }
-    | expression '->' identifier
+    | expression '->' lval_identifier
         { $$ = yy.makeBinaryOp($2, $1, $3); }
     | expression '[' indexes ']'
         { $$ = yy.makeIndex($1, $3); }
@@ -426,7 +426,17 @@ indexes
   Only used for lvalues (variables above)
   subscripting, property access, & bare identifiers
  */
+lval_identifier
+    : identifier
+        { $$ = yy.makeIdentifier(yytext); }
+    ;
+
+/* It is possible to use a few Angl keywords as an identifier since those keywords are never used in the same places
+   as an identifier.
+ */
 identifier
     : IDENTIFIER
-        { $$ = yy.makeIdentifier(yytext); }
+    | OBJECT
+    | PARENT
+        { $$ = yytext; }
     ;
