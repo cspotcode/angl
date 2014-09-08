@@ -40,6 +40,7 @@
 
 /* literals */
 [0-9]+("."[0-9]+)?\b    return 'NUMBER';        /* 123.4 */
+"."[0-9]+\b             return 'NUMBER';        /* .9 (no digits before the decimal point) */
 "$"[0-9a-fA-F]+\b       return 'HEX';           /* $FF00AA */
 "\""[\s\S]*?"\""        return 'STRING';        /* "string" */
 "'"[\s\S]*?"'"          return 'STRING';        /* 'string' */
