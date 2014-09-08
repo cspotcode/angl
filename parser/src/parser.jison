@@ -96,15 +96,15 @@
 
 /* operator associations and precedence */
 
-%left 'IF'
-%left 'ELSE'
+%left IF WHILE DO
+%left ELSE
 %left '&&' '||' '^^'
 %left '<' '<=' '==' '!=' '>' '>='
 %left '|' '&' '^'
 %left '<<' '>>'
 %left '+' '-'
 %left '*' '/' 'DIV' 'MOD'
-%left '!' '~' UMINUS
+%right '!' '~' UMINUS
 %left '->' '.' '[' ']'
 %left '(' ')'
 
@@ -181,10 +181,15 @@ statement
     ;
 
 if_statement
-    : IF '(' expression ')' statement
+    /*: IF '(' expression ')' statement
         { $$ = yy.makeIfStmt($3, $5); }
     | IF '(' expression ')' statement ELSE statement
         { $$ = yy.makeIfElseStmt($3, $5, $7); }
+    ;*/
+    : IF expression statement
+        { $$ = yy.makeIfStmt($2, $3); }
+    | IF expression statement ELSE statement
+        { $$ = yy.makeIfElseStmt($2, $3, $5); }
     ;
 
 repeat_statement
@@ -198,8 +203,8 @@ while_statement
     ;
 
 do_until_statement
-    : DO statement UNTIL '(' expression ')'
-        { $$ = yy.makeDoUntilStmt($2, $5); }
+    : DO statement UNTIL expression
+        { $$ = yy.makeDoUntilStmt($2, $4); }
     ;
 
 for_statement
@@ -387,9 +392,9 @@ expression
     ;
 
 function_call
-    : expression '(' ')'
+    : identifier '(' ')'
         { $$ = yy.makeFunctionCall($1, []); }
-    | expression '(' function_call_arguments ')'
+    | identifier '(' function_call_arguments ')'
         { $$ = yy.makeFunctionCall($1, $3); }
     | SUPER '(' ')'
         { $$ = yy.makeSuperCall([]); }
