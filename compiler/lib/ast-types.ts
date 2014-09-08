@@ -24,10 +24,20 @@ export interface ExpressionNode extends AstNode {
     requiresPrecomputation?: boolean;
 }
 
-export interface BinOpNode extends AstNode {
+export interface BinOpNode extends ExpressionNode {
     op: string;
     expr1: ExpressionNode;
     expr2: ExpressionNode;
+}
+
+export interface UnOpNode extends ExpressionNode {
+    op: string;
+    expr: ExpressionNode;
+}
+
+export interface IndexNode extends ExpressionNode {
+    expr: ExpressionNode;
+    indexes: Array<ExpressionNode>;
 }
 
 export interface AssignNode extends StatementNode {
@@ -59,6 +69,47 @@ export interface ConstNode extends AstNode {
     expr: ExpressionNode;
 }
 
+export interface SwitchNode extends StatementNode {
+    expr: ExpressionNode;
+    cases: Array<AstNode>;
+    // TODO tighten up the type checking for cases array
+    // It contains zero or more CaseNode and zero or one DefaultCaseNode
+}
+
+export interface CaseNode extends AstNode {
+    expr: ExpressionNode;
+    stmts: StatementsNode;
+}
+
+export interface DefaultCaseNode extends AstNode {
+    stmts: StatementsNode;
+}
+
+export interface IfNode extends StatementNode {
+    expr: ExpressionNode;
+    stmt: StatementNode;
+}
+
+export interface IfElseNode extends StatementNode {
+    expr: ExpressionNode;
+    stmt1: StatementNode;
+    stmt2: StatementNode;
+}
+
+export interface WhileNode extends StatementNode {
+    expr: ExpressionNode;
+    stmt: StatementNode;
+}
+
+export interface DoUntilNode extends StatementNode {
+    expr: ExpressionNode;
+    stmt: StatementNode;
+}
+
+export interface ReturnNode extends StatementNode {
+    expr: ExpressionNode;
+}
+
 export interface FuncCallNode extends AstNode {
     expr: ExpressionNode;
     args: ExpressionNode[];
@@ -68,6 +119,7 @@ export interface FuncCallNode extends AstNode {
 }
 
 export interface JsFuncCallNode extends AstNode {
+    expr: string;
     args: ExpressionNode[];
 }
 
@@ -115,7 +167,7 @@ export interface ObjectNode extends StatementNode {
     parent?: string;
     stmts: Array<StatementNode>;
     properties: Array<AssignNode>;
-    methods: Array<ScriptNode>;
+    methods: Array<MethodNode>;
     createscript: ScriptNode;
     destroyscript: ScriptNode;
     propertyinitscript: ScriptNode;
@@ -133,6 +185,10 @@ export interface PropertyNode extends StatementNode {
 // a mistake)
 export interface MethodNode extends ScriptNode {
     methodname: string;
+}
+
+export interface JsExprNode extends AstNode {
+    expr: string;
 }
 
 export interface CreateDefNode extends AbstractArgsInvokableNode, AstNode {};
