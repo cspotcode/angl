@@ -7,10 +7,6 @@ object Foo parent Bar {
   }
   destroy {}
 }
-
-x = script(a, b, c) {
-  return 1;
-};
 script y(a, b, c) {
   for(i = 0; i < 10; i++) {
     continue;
@@ -39,50 +35,55 @@ script y(a, b, c) {
   with(c) {
   }
 }
-; // nop
-exit;
-functionCall(functionArg);
-var b = $FF
-  , c = "hello world";
-a.b[1, 2, 3] = 'hello world';
 const foo = "bar";
-/*
-var obj = object {
-  thing: value
-};
-*/
-// cmpassign operators
-a += b;
-a -= b;
-a /= b;
-a *= b;
-a |= b;
-a &= b;
-a ^= b;
-a--;
-a++;
-// Binary operators
-a = a + b;
-a = a - b;
-a = a / b;
-a = a * b;
-a = a && b;
-a = a || b;
-a = a < b;
-a = a <= b;
-a = a > b;
-a = a >= b;
-a = a ^^ b;
-a = a == b;
-a = a != b;
-a = a & b;
-a = a | b;
-a = a ^ b;
-//a = a >> b;
-//a = a << b;
-//a = a div b;
-//a = a mod b;
-// Unary operators
-a = !b;
-a = ~b;
-a = -b;
+script allTheRest() {
+    x = script(a, b, c) {
+      return 1;
+    };
+    ; // nop
+    exit;
+    functionCall(functionArg);
+    var b = $FF
+      , c = "hello world";
+    a.b[1, 2, 3] = 'hello world';
+    /*
+    var obj = object {
+      thing: value
+    };
+    */
+    // cmpassign operators
+    a += b;
+    a -= b;
+    a /= b;
+    a *= b;
+    a |= b;
+    a &= b;
+    a ^= b;
+    a--;
+    a++;
+    // Binary operators
+    a = a + b;
+    a = a - b;
+    a = a / b;
+    a = a * b;
+    a = a && b;
+    a = a || b;
+    a = a < b;
+    a = a <= b;
+    a = a > b;
+    a = a >= b;
+    a = a ^^ b;
+    a = a == b;
+    a = a != b;
+    a = a & b;
+    a = a | b;
+    a = a ^ b;
+    //a = a >> b;
+    //a = a << b;
+    //a = a div b;
+    //a = a mod b;
+    // Unary operators
+    a = !b;
+    a = ~b;
+    a = -b;
+}
