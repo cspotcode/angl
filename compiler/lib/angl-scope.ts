@@ -76,17 +76,23 @@ export class AnglScope {
         }
     }
 
-    // returns value for the identifier with the given name, undefined if it doesn't exist
+    /**
+     * returns value for the identifier with the given name, undefined if it doesn't exist
+      */
     getVariableByIdentifier(identifier:string):scopeVariable.AbstractVariable {
         return this._identifiers.get(identifier);
     }
 
-    // returns value for the identifier with the given name in this or any parent scope, undefined if it doesn't exist
+    /**
+     * returns value for the identifier with the given name in this or any parent scope, undefined if it doesn't exist
+     */
     getVariableByIdentifierInChain(identifier:string):scopeVariable.AbstractVariable {
         return this._identifiers.get(identifier) || (this._parentScope && this._parentScope.getVariableByIdentifierInChain(identifier));
     }
 
-    // returns true or false if identifier with given name exists or doesn't exist
+    /**
+     * returns true or false if identifier with given name exists or doesn't exist
+     */
     hasIdentifier(identifier:string) {
         return this._identifiers.containsKey(identifier);
     }
@@ -100,7 +106,9 @@ export class AnglScope {
         this._identifiers.set(name, value);
     };*/
 
-    // removes identifier with the given name, returning true if it was removed, false if it didn't exist
+    /**
+     * removes identifier with the given name, returning true if it was removed, false if it didn't exist
+     */
     removeVariableByIdentifier(identifier:string):boolean {
         var variable = this.getVariableByIdentifier(identifier);
         if(variable) {
