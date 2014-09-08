@@ -194,6 +194,10 @@ export class AnglScope {
     _hasJsIdentifier(identifier:string):boolean {
         return this._jsIdentifiers.containsKey(identifier);
     }
+    
+    hasVariable(variable: scopeVariable.AbstractVariable): boolean {
+        return this._variables.contains(variable);
+    }
 }
 
 export class WithScope extends AnglScope {
