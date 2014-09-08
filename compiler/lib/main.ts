@@ -22,14 +22,14 @@ function initializeCompiler() {
 
 function indent() {
     indentationLevel++;
-};
+}
 
 function outdent() {
     indentationLevel--;
     if(indentationLevel < 0) {
         throw new Error('Tried to outdent too far.');
     }
-};
+}
 
 function printIndent() {
     // TODO create customizable indentation level
@@ -37,7 +37,7 @@ function printIndent() {
     _.times(indentationLevel, function() {
         print('    ');
     });
-};
+}
 
 // TODO properly translate all binops and unops:
 //   ones that GML has that JS doesn't have
@@ -244,7 +244,7 @@ function generateExpression(astNode: astTypes.ExpressionNode, parentExpressionTy
             var jsFuncCallNode = <astTypes.JsFuncCallNode>astNode;
             writeParens = ops.needsParentheses(OpEnum.FUNCTION_CALL, parentExpressionType, locationInParentExpression);
             writeParens && print('(');
-            print(jsFuncCallNode.expr, OpEnum.FUNCTION_CALL, ops.Location.LEFT);
+            print(jsFuncCallNode.expr);
             print('(');
             _.each(jsFuncCallNode.args, function(arg, i) {
                 if(i) print(', ');
