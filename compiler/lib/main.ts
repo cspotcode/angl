@@ -101,9 +101,9 @@ function generateExpression(astNode: astTypes.ExpressionNode, parentExpressionTy
                     writeParens = ops.needsParentheses(OpEnum.BITWISE_OR, parentExpressionType, locationInParentExpression);
                     writeParens && print('(');
                     print('!!(!! ');
-                    generateExpression(binOpNode.expr1, OpEnum.LOGICAL_NOT, ops.Location.N_A);
+                    generateExpression(binOpNode.expr1, OpEnum.LOGICAL_NOT, ops.Location.RIGHT);
                     print(' +!! ');
-                    generateExpression(binOpNode.expr2, OpEnum.LOGICAL_NOT, ops.Location.N_A);
+                    generateExpression(binOpNode.expr2, OpEnum.LOGICAL_NOT, ops.Location.RIGHT);
                     print(' )|0');
                     writeParens && print(')');
                     break;
@@ -114,9 +114,9 @@ function generateExpression(astNode: astTypes.ExpressionNode, parentExpressionTy
                     writeParens = ops.needsParentheses(OpEnum.MULTIPLICATION, parentExpressionType, locationInParentExpression);
                     writeParens && print('(');
                     print('!! ');
-                    generateExpression(binOpNode.expr1, OpEnum.LOGICAL_NOT, ops.Location.N_A);
+                    generateExpression(binOpNode.expr1, OpEnum.LOGICAL_NOT, ops.Location.RIGHT);
                     print(' *!! ');
-                    generateExpression(binOpNode.expr2, OpEnum.LOGICAL_NOT, ops.Location.N_A);
+                    generateExpression(binOpNode.expr2, OpEnum.LOGICAL_NOT, ops.Location.RIGHT);
                     print(' ');
                     writeParens && print(')');
                     break;
@@ -127,9 +127,9 @@ function generateExpression(astNode: astTypes.ExpressionNode, parentExpressionTy
                     writeParens = ops.needsParentheses(OpEnum.BITWISE_OR, parentExpressionType, locationInParentExpression);
                     writeParens && print('(');
                     print('!((! ');
-                    generateExpression(binOpNode.expr1, OpEnum.LOGICAL_NOT, ops.Location.N_A);
+                    generateExpression(binOpNode.expr1, OpEnum.LOGICAL_NOT, ops.Location.RIGHT);
                     print(' +! ');
-                    generateExpression(binOpNode.expr2, OpEnum.LOGICAL_NOT, ops.Location.N_A);
+                    generateExpression(binOpNode.expr2, OpEnum.LOGICAL_NOT, ops.Location.RIGHT);
                     print(' )-1)|0');
                     writeParens && print(')');
                     break;
@@ -151,10 +151,9 @@ function generateExpression(astNode: astTypes.ExpressionNode, parentExpressionTy
             var unOpNode = <astTypes.UnOpNode> astNode;
             var unOpType = anglToJsOpMap.anglToJsUnOps[unOpNode.op];
             writeParens = ops.needsParentheses(unOpType, parentExpressionType, locationInParentExpression);
-            // TODO figure out whether or not to write parens.  Must make a mapping from unOpNode.op values to OpEnum values
             writeParens && print('(');
             print(unOpNode.op);
-            generateExpression(unOpNode.expr, unOpType, ops.Location.N_A);
+            generateExpression(unOpNode.expr, unOpType, ops.Location.RIGHT);
             writeParens && print(')');
             break;
 
@@ -409,7 +408,7 @@ function generateStatement(astNode, omitTerminator: boolean = false, omitIndenta
             outdent();
             omitIndentation || printIndent();
             print('} while(!');
-            generateExpression(doUntilNode.expr, OpEnum.LOGICAL_NOT, ops.Location.N_A);
+            generateExpression(doUntilNode.expr, OpEnum.LOGICAL_NOT, ops.Location.RIGHT);
             print(')');
             break;
 
