@@ -8,6 +8,7 @@
 
 /* keywords */
 "var"                   return 'VAR';
+"globalvar"             return 'GLOBALVAR';
 "if"                    return 'IF';
 "else"                  return 'ELSE';
 "repeat"                return 'REPEAT';
@@ -152,6 +153,8 @@ statement
         { $$ = $1; }
     | var_statement ';'
         { $$ = $1; }
+    | globalvar_statement ';'
+        { $$ = $1; }
     | if_statement
         { $$ = $1; }
     | repeat_statement
@@ -245,6 +248,18 @@ var_list
         { $$ = [yy.makeVarStmtItem($1)]; }
     | identifier '=' expression
         { $$ = [yy.makeVarStmtItem($1, $3)]; }
+    ;
+    
+globalvar_statement
+    : GLOBALVAR globalvar_list
+        { $$ = yy.makeGlobalVarStmt($2); }
+    ;
+
+globalvar_list
+    : identifier ',' globalvar_list
+        { $$ = [yy.makeVarStmtItem($1)].concat($3); }
+    | identifier
+        { $$ = [yy.makeVarStmtItem($1)]; }
     ;
 
 script_literal

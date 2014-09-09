@@ -79,6 +79,22 @@ export var transform = (ast:astTypes.AstNode) => {
             });
             return replacement;
         }
+        
+        // globalVar declarations register variables into the global scope
+        if(node.type === 'globalvar') {
+            var globalVarNode = <astTypes.GlobalVarDeclarationNode>node;
+            // Add all variables into global scope
+            _.each(globalVarNode.list, (var_item) => {
+                if(astUtils.getGlobalAnglScope(globalVarNode).hasIdentifier(var_item.name)) {
+                    throw new Error('Attempt to declare global variable with the name ' + JSON.stringify(var_item.name) + ' more than once.');
+                }
+                var globalVar = new scopeVariable.Variable(var_item.name, 'PROP_ASSIGNMENT', 'PROP_ACCESS');
+                globalVar.setContainingObjectIdentifier(strings.ANGL_GLOBALS_IDENTIFIER);
+                astUtils.getGlobalAnglScope(globalVarNode).addVariable(globalVar);
+            });
+            // Remove globalvar declaration from the code
+            return null;
+        }
 
         // repeat loops are replaced by a for loop
         if(node.type === 'repeat') {

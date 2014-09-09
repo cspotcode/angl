@@ -55,6 +55,8 @@ export interface VarDeclarationNode extends StatementNode {
     list: Array<VarDeclarationItemNode>;
 }
 
+export interface GlobalVarDeclarationNode extends VarDeclarationNode {}
+
 export interface VarDeclarationItemNode extends AstNode {
     name: string;
     expr?: ExpressionNode;

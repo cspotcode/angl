@@ -171,6 +171,13 @@ parser.yy = {
             list: list
         };
     },
+    // makes globalvar statement structure
+    makeGlobalVarStmt: function (list) {
+      return {
+        type: 'globalvar',
+        list: list
+      };
+    },
     // makes var statement item structure
     makeVarStmtItem: function (yytext, expr) {
         if (expr) {
