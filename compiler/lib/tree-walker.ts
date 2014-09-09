@@ -65,6 +65,26 @@ function _walk(node, fn) {
             while(true) {
                 setNodeParent(child, node);
                 ret = fn(child, node, childName);
+                // Did the callback try to either remove this node or replace it with an array of nodes?
+                if(ret === null || _.isArray(ret)) {
+                    // In some situations, a single statement node can be converted into a Statements node
+                    // (an array of statements).  Can we do that here?
+                    if(    node.type === 'if' && childName === 'stmt'
+                        || node.type === 'ifelse' && _.contains(['stmt1', 'stmt2'], childName)
+                        || node.type === 'for' && childName === 'stmt'
+                        ) {
+                        // We can replace child with a StatementsNode containing the replacement statements.
+                        var statementsNode: types.StatementsNode = {
+                            type: 'statements',
+                            list: ret || []
+                        };
+                        // Replace node with new StatementsNode
+                        child = statementsNode;
+                        node[childName] = statementsNode;
+                        // Immediately revisit the new child.
+                        continue;
+                    }
+                }
                 if(ret === null) {
                     // null means node should be removed from the tree, but we can't do that unless the node is in a list
                     // (e.g. array of statements)
