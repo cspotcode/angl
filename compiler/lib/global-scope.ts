@@ -6,6 +6,7 @@ import scope = require('./angl-scope');
 import scopeVariable = require('./scope-variable');
 import strings = require('./strings');
 var anglGlobalsNamespace = require('../../runtime/src/angl-globals-namespace');
+var allGmlGlobalIdentifiers = require('../resource/globals');
 // Trigger loading of all globals onto the globals namespace
 require('../../runtime/src/angl-globals');
 
@@ -14,7 +15,7 @@ export function createGlobalScope(extraGlobalIdentifiers:string[] = []):scope.An
     var globalScope = new scope.AnglScope();
 
     // Grab the list of all global identifiers from the runtime
-    var globalIdentifiers:Array<string> = _.keys(anglGlobalsNamespace);
+    var globalIdentifiers:Array<string> = allGmlGlobalIdentifiers.slice();
     
     // Add any user-supplied global identifiers
     globalIdentifiers = globalIdentifiers.concat(extraGlobalIdentifiers);

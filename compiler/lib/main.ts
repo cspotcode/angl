@@ -4,6 +4,7 @@ import _ = require('lodash');
 
 import astTypes = require('./ast-types');
 import astUtils = require('./ast-utils');
+import scope = require('./angl-scope');
 import strings = require('./strings');
 import ops = require('./operator-precedence-and-associativity');
 var OpEnum = ops.JavascriptOperatorsEnum;
@@ -14,11 +15,27 @@ var buffer
   , indentationLevel: number;
   ;
 
+var usedGlobalVariables
+  , globalScope: scope.AnglScope
+  ;
+
+// Call this with every variable that is referenced in the output code
+function trackVariableUsage(variable) {
+    if(globalScope.hasVariable(variable)) {
+        usedGlobalVariables.push(variable);
+    }
+}
+
 function initializeCompiler() {
     buffer = [];
     print = _.bind(buffer.push, buffer);
     indentationLevel = 0;
-};
+    
+    // tracking usages of global variables
+    usedGlobalVariables = [];
+    globalScope = null;
+    
+}
 
 function indent() {
     indentationLevel++;
@@ -57,6 +74,7 @@ function generateExpression(astNode: astTypes.ExpressionNode, parentExpressionTy
                     print(variable.getContainingObjectIdentifier() + '.');
                 }
                 print(variable.getJsIdentifier());
+                trackVariableUsage(variable);
             } else {
                 print(identifierNode.name);
             }
@@ -632,6 +650,9 @@ function generateTopNode(astNode) {
     switch(astNode.type) {
 
         case 'file':
+            // Tracking usages of global variables
+            globalScope = astNode.globalAnglScope;
+            
             // RequireJS `define()` call
             print('define(function(require) {\n');
             indent();
