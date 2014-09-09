@@ -24,8 +24,8 @@ export var transform = (ast:astTypes.AstNode) => {
         // TODO convert all scriptdefs into consts
         // Will be a good test of replacing nodes
 
-        // Script definitions register an identifier into the parent scope
-        if(node.type === 'scriptdef' || node.type === 'const') {
+        // Script definitions, constants, and object definitions register an identifier into the parent scope
+        if(node.type === 'scriptdef' || node.type === 'const' || node.type === 'object') {
             var scriptDefNode = <astTypes.ScriptDefNode>node;
             if(scriptDefNode.parentNode.type !== 'file' && (scriptDefNode.parentNode.type !== 'object' || scriptDefNode.type !== 'scriptdef')) {
                 throw new Error(scriptDefNode.type + ' must be at the root level of a file.');
