@@ -9,10 +9,9 @@ import ops = require('./operator-precedence-and-associativity');
 var OpEnum = ops.JavascriptOperatorsEnum;
 import anglToJsOpMap = require('./angl-to-js-operator-map');
 
-var buffer
-  , print
-  , indentationLevel: number;
-  ;
+var buffer,
+    print: (text: string)=>void,
+    indentationLevel: number;
 
 function initializeCompiler() {
     buffer = [];
