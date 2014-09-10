@@ -16,16 +16,28 @@ var idGeneratorFn = (item) => item[bucketIdProp] = item[bucketIdProp] || _.uniqu
 
 export class AnglScope {
 
-    // Set of all Variables
+    /**
+     * Set of all Variables
+     */
     private _variables;
-    // Dictionary mapping Angl identifiers to Variables.  Not all Variables have an Angl identifier.
+    /**
+     * Dictionary mapping Angl identifiers to Variables.  Not all Variables have an Angl identifier.
+     */
     /*protected*/ _identifiers;
-    // Dictionary mapping Javascript identifiers to Variables.  Not all Variables have a Javascript identifier, though
-    // one will eventually have to be assigned to them.
+    /**
+     * Dictionary mapping Javascript identifiers to Variables.  Not all Variables have a Javascript identifier, though
+     * one will eventually have to be assigned to them.
+     */
     /*protected*/ _jsIdentifiers;
-    // Set containing all Variables that do not have a Javascript identifier.  These identifiers will be assigned to
-    // them before Javascript code generation occurs.
+    /**
+     * Set containing all Variables that do not have a Javascript identifier.  These identifiers will be assigned to
+     * them before Javascript code generation occurs.
+     */
     private _unnamedVariables;
+    /**
+     * Scope that contains this AnglScope.  If an identifier is not found in this scope, it may be found in the parent
+     * scope.  Identifiers in this scope will shadow a variable with the same name in the parent scope.
+     */
     /*protected*/ _parentScope;
     private _namingUid;
 
@@ -51,8 +63,10 @@ export class AnglScope {
     // These identifiers can be assigned names after the scope is done being created.
     // At that time, it's possible to assign names without causing conflicts.
     // Alternatively, assign names right away and rename if necessary.
-
-    // adds an identifier with the given name, throwing an exception if it already exists
+    
+    /**
+     * adds an identifier with the given name, throwing an exception if it already exists
+     */
     addVariable(variable:scopeVariable.AbstractVariable) {
         var identifier = variable.getIdentifier();
 
@@ -61,7 +75,9 @@ export class AnglScope {
         this._addVariable(variable);
     }
 
-    // Internal method for adding variables
+    /**
+     * Internal method for adding variables
+     */
     _addVariable(variable:scopeVariable.AbstractVariable) {
         var identifier = variable.getIdentifier();
         var jsIdentifier = variable.getJsIdentifier();
@@ -157,18 +173,22 @@ export class AnglScope {
         return this._parentScope;
     }
 
-    // Creates a new identifier in this scope, when you don't care what the name is.  You can specify a
-    // preferred name and, if possible, this unnamed identifier will be assigned that name.  If that name is taken, it
-    // will be modified to make it unique.
-    // Returns an UnnamedIdentifier instance.  When this scope is asked to assign names to all unnamed identifiers, it
-    // will add the assigned names into each UnnamedIdentifier instance.
+    /**
+     * Creates a new identifier in this scope, when you don't care what the name is.  You can specify a
+     * preferred name and, if possible, this unnamed identifier will be assigned that name.  If that name is taken, it
+     * will be modified to make it unique.
+     * Returns an UnnamedIdentifier instance.  When this scope is asked to assign names to all unnamed identifiers, it
+     * will add the assigned names into each UnnamedIdentifier instance.
+     */
     createUnnamedIdentifier(preferredName, value):UnnamedIdentifier {
         var unnamedIdentifier = new UnnamedIdentifier(preferredName);
         this._unnamedVariables.set(unnamedIdentifier, value);
         return unnamedIdentifier;
     }
 
-    // Converts all unnamed identifiers to regular identifiers by assigning them names
+    /**
+     * Converts all unnamed identifiers to regular identifiers by assigning them names
+     */
     assignJsIdentifiers():void {
         var unnamedVariables = this._unnamedVariables.toArray();
         _.each(unnamedVariables, (variable:scopeVariable.Variable) => {
