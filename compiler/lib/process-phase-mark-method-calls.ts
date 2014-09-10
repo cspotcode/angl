@@ -14,8 +14,8 @@ export var transform = (ast:astTypes.AstNode) => {
         // For example `a.b()` doesn't need it's `this` context manually set because JS will set it to `a`.
         // `c()` must be generated as `c.call(this, ...)` in order to pass the desired `this` context into the function.
         if(node.type === 'funccall') {
-            var funcNode = <any>node;
-            if(funcNode.expr.type === 'binop' && funcNode.expr.op === '.') {
+            var funcNode = <astTypes.FuncCallNode>node;
+            if(funcNode.expr.type === 'binop' && (<astTypes.BinOpNode>funcNode.expr).op === '.') {
                 funcNode.isMethodCall = true;
             }
         }

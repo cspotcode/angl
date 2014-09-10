@@ -2,14 +2,18 @@
 "use strict";
 
 import types = require('./ast-types');
-var globalScope = require('./global-scope');
+import globalScope = require('./global-scope');
 import AnglScope = require('./angl-scope');
 import scopeVariable = require('./scope-variable');
 import strings = require('./strings');
 
 // Wrap the entire AST in a "file" node
 // TODO fix typing of ast argument
-export var transform = (ast:any):types.AstNode => {
+export var transform = (ast:types.StatementsNode):types.AstNode => {
+    // Sanity-check that we were, in fact, passed a StatementsNode
+    if(ast.type !== 'statements')
+        throw new Error('Transformation phase expected a statements node, got a ' + ast.type + ' node instead.');
+    
     var anglScope = new AnglScope.AnglScope();
     var thisVariable = new scopeVariable.Variable('self', 'ARGUMENT');
     thisVariable.setJsIdentifier('this');

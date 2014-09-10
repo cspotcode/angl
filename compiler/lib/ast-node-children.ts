@@ -1,14 +1,9 @@
 /// <reference path="../../typings/all.d.ts"/>
 "use strict";
 
-export interface ChildNamesMap {
-    [nodeTypes:string]:string[];
-}
-declare var module:{
-    exports:ChildNamesMap;
-};
-
-var nodeChildNames:ChildNamesMap = {
+var nodeChildNames: {
+    [nodeTypes:string]:Array<string>;
+} = {
     // Angl source file
     "file": [
         "stmts"
@@ -143,4 +138,4 @@ var nodeChildNames:ChildNamesMap = {
     ]
 };
 
-(module).exports = nodeChildNames;
+export = nodeChildNames;

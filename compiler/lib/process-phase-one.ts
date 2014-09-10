@@ -19,7 +19,7 @@ export var transform = (ast:astTypes.AstNode) => {
     // TODO fix the typing on node.  I don't know how to access arbitrary properties of an object implementing an interface.
     walk(ast, (node:astTypes.AstNode, parent:astTypes.AstNode, locationInParent):any => {
 
-        var replacement:any[];
+        var replacement: Array<astTypes.AstNode>;
 
         // TODO convert all scriptdefs into consts
         // Will be a good test of replacing nodes

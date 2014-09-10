@@ -1,7 +1,7 @@
 /// <reference path="../../typings/all.d.ts"/>
 "use strict";
 
-var nodeChildren = require('./ast-node-children');
+import nodeChildren = require('./ast-node-children');
 import _ = require('lodash');
 import types = require('./ast-types');
 
@@ -14,13 +14,15 @@ var setNodeParent = (node:types.AstNode, parent:types.AstNode) => {
 }
 
 
-// Walks an AST, calling fn for each node
-// fn(node, parent, locationInParent)
-// TODO allow fn to specify that a node should be re-processed via return value?
-// If fn returns:
-//   an object or array or objects, that object or array will replace the node in the tree
-//   null, node will be removed from the tree
-//   false, children will *not* be visited
+/**
+ * Walks an AST, calling fn for each node
+ * fn(node, parent, locationInParent)
+ * TODO allow fn to specify that a node should be re-processed via return value?
+ * If fn returns:
+ *   an object or array or objects, that object or array will replace the node in the tree
+ *   null, node will be removed from the tree
+ *   false, children will *not* be visited
+ */
 export function walk(rootNode:types.AstNode, fn:WalkerFunction) {
     setNodeParent(rootNode, null);
     // visit this node
@@ -29,7 +31,12 @@ export function walk(rootNode:types.AstNode, fn:WalkerFunction) {
     _walk(rootNode, fn);
 }
 
-// Visit all children of a node
+/**
+ * Visit all children of a node
+ * @param node
+ * @param fn
+ * @private
+ */
 function _walk(node, fn) {
     var type = node.type;
     var children = nodeChildren[type];
