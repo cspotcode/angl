@@ -88,9 +88,9 @@ function generateExpression(astNode: astTypes.ExpressionNode, parentExpressionTy
                 case 'mod':
                     writeParens = ops.needsParentheses(OpEnum.REMAINDER, parentExpressionType, locationInParentExpression);
                     writeParens && print('(');
-                    generateExpression(binOpNode.expr1);
+                    generateExpression(binOpNode.expr1, OpEnum.REMAINDER, ops.Location.LEFT);
                     print(' % ');
-                    generateExpression(binOpNode.expr2);
+                    generateExpression(binOpNode.expr2, OpEnum.REMAINDER, ops.Location.RIGHT);
                     writeParens && print(')');
                     break;
                 
@@ -320,14 +320,14 @@ function generateStatement(astNode, omitTerminator: boolean = false, omitIndenta
             omitIndentation || printIndent();
             print(strings.ANGL_GLOBALS_IDENTIFIER + '.' + constNode.name);
             print(' = ');
-            generateExpression(constNode.expr);
+            generateExpression(constNode.expr, OpEnum.ASSIGNMENT, ops.Location.RIGHT);
             break;
 
         case 'switch':
             var switchNode = <astTypes.SwitchNode>astNode;
             omitIndentation || printIndent();
             print('switch(');
-            generateExpression(switchNode.expr);
+            generateExpression(switchNode.expr, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A);
             print(') {\n');
             indent();
             _.each(switchNode.cases, (caseNode) => {
@@ -344,7 +344,7 @@ function generateStatement(astNode, omitTerminator: boolean = false, omitIndenta
             print('for(');
             generateStatement(forNode.initstmt, true, true);
             print('; ');
-            generateExpression(forNode.contexpr);
+            generateExpression(forNode.contexpr, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A);
             print('; ');
             generateStatement(forNode.stepstmt, true, true);
             print(') {\n');
@@ -590,9 +590,9 @@ function generateCase(astNode) {
         case 'case':
             var caseNode = <astTypes.CaseNode>astNode;
             printIndent();
-            print('case (');
-            generateExpression(caseNode.expr);
-            print('):\n');
+            print('case ');
+            generateExpression(caseNode.expr, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A);
+            print(':\n');
             indent();
             generateStatement(caseNode.stmts);
             outdent();
