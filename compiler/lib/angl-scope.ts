@@ -10,7 +10,7 @@ import _ = require('lodash');
 var buckets = require('../vendor/buckets');
 import scopeVariable = require('./scope-variable');
 
-var bucketIdProp = '_id' + new Date;
+var bucketIdProp = '_id' + +new Date;
 
 var idGeneratorFn = (item) => item[bucketIdProp] = item[bucketIdProp] || _.uniqueId();
 
