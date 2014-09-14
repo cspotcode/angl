@@ -23,7 +23,8 @@ export var transform = (ast:astTypes.AstNode) => {
             if(node.variable) {
                 return;
             }
-            var variable = astUtils.getAnglScope(node).getVariableByIdentifierInChain(node.name);
+            var anglScope = astUtils.getAnglScope(node);
+            var variable = anglScope.getVariableByIdentifierInChain(node.name);
             // If there's no variable by that name in scope, then we're dealing with a property of `this`
             // (e.g. `this.bar`)
             if(!variable) {
@@ -39,6 +40,10 @@ export var transform = (ast:astTypes.AstNode) => {
                 };
             }
             node.variable = variable;
+            // If this variable is from a parent scope, then we must tell this scope not to shadow it.
+            if(!anglScope.hasVariable(variable)) {
+                anglScope.doNotShadow(variable);
+            }
         }
 
     });

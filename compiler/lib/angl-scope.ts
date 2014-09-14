@@ -39,6 +39,15 @@ export class AnglScope {
      * scope.  Identifiers in this scope will shadow a variable with the same name in the parent scope.
      */
     /*protected*/ _parentScope;
+    /**
+     * Set of variables from parent scopes that cannot be shadowed by this scope in the generated JS.
+     * This will be taken into account when assigning JS identifiers to variables.
+     */
+    private _unshadowableVariables;
+    /**
+     * A number appended to identifiers to make them unique.  Only used in case of a naming conflict.
+     * Counts up every time it is used.
+     */
     private _namingUid;
 
     constructor() {
@@ -47,6 +56,7 @@ export class AnglScope {
         this._unnamedVariables = new buckets.Set(idGeneratorFn);
         this._variables = new buckets.Set(idGeneratorFn);
         this._parentScope = null;
+        this._unshadowableVariables = new buckets.Set(idGeneratorFn);
         this._namingUid = 0;
     }
 
@@ -115,6 +125,15 @@ export class AnglScope {
 
     hasIdentifierInChain(identifier:string) {
         return this.hasIdentifier(identifier) || !!(this._parentScope && this._parentScope.hasIdentifierInChain(identifier));
+    }
+
+    /**
+     * returns true or false if variable is in this scope (and not in a parent scope)
+     * @param variable
+     * @returns {boolean}
+     */
+    hasVariable(variable: scopeVariable.AbstractVariable) {
+        return this._variables.contains(variable);
     }
 
     // sets identifier with given name and value, replacing previous one with that name if it exists
@@ -191,6 +210,20 @@ export class AnglScope {
      */
     assignJsIdentifiers():void {
         var unnamedVariables = this._unnamedVariables.toArray();
+        // Create a set of all the identifier names we cannot shadow.
+        var unshadowableNames = new buckets.Set();
+        this._unshadowableVariables.forEach((variable) => {
+            // Sanity check that this variable is capable of being shadowed
+            if(variable.getAccessType() !== 'BARE') {
+                throw new Error('Variable should not be shadowed, yet it is not possible to shadow this variable.  This probably indicates a bug elsewhere in the compiler.');
+            }
+            // Sanity check that this variable has been assigned a JS identifier.  Otherwise there is
+            // nothing for us to avoid shadowing.
+            if(variable.awaitingJsIdentifierAssignment() || !variable.getJsIdentifier()) {
+                throw new Error('Variable should not be shadowed, yet it has not been assigned a JS identifier.');
+            }
+            unshadowableNames.add(variable.getJsIdentifier());
+        });
         _.each(unnamedVariables, (variable:scopeVariable.Variable) => {
             // Some variables might be unnamed but don't want us to assign them a name.  (e.g. LinkedVariables)
             if(!variable.awaitingJsIdentifierAssignment()) return;
@@ -199,7 +232,7 @@ export class AnglScope {
             var namePrefix = variable.getDesiredJsIdentifier() || '__a';
             var nameSuffix = '';
             // While the name is already in use, create a new name by using a different suffix
-            while(this._hasJsIdentifier(namePrefix + nameSuffix)) {
+            while(this._hasJsIdentifier(namePrefix + nameSuffix) || unshadowableNames.contains(namePrefix + nameSuffix)) {
                 nameSuffix = '' + this._namingUid;
                 this._namingUid++;
             }
@@ -213,6 +246,14 @@ export class AnglScope {
 
     _hasJsIdentifier(identifier:string):boolean {
         return this._jsIdentifiers.containsKey(identifier);
+    }
+
+    /**
+     * Remember not to shadow the given variable in the generated JS.
+     * @param variable A variable from a parent scope that must not be shadowed by this scope.
+     */
+    doNotShadow(variable: scopeVariable.AbstractVariable) {
+        this._unshadowableVariables.add(variable);
     }
 }
 
