@@ -21,7 +21,14 @@ export class Variable implements AbstractVariable {
     private _jsIdentifier:string;
     private _containingObjectIdentifier:string;
 
+    /**
+     * Enumeration of possible allocationType values.
+     * TODO should this be split into allocationType and assignmentType?  Or is that unnecessary complexity/over-engineering?
+     */
     private static allocationTypes = ['LOCAL', 'ARGUMENT', 'PROP_ASSIGNMENT', 'NONE'];
+    /**
+     * Enumeration of possible accessType values.
+     */
     private static accessTypes = ['BARE', 'PROP_ACCESS'];
 
     constructor(identifier:string = null, allocationType:string = 'LOCAL', accessType:string = 'BARE') {

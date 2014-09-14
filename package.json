@@ -12,6 +12,7 @@
   "dependencies": {
     "almond": "~0.2.5",
     "chai": "^1.9.1",
+    "fileset": "^0.1.5",
     "glob": "^4.0.5",
     "jade": "~0.28.1",
     "jison": "~0.4.4",

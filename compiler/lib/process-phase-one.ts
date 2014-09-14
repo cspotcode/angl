@@ -16,7 +16,6 @@ var walk = treeWalker.walk;
 // Create scopes for all nodes
 
 export var transform = (ast:astTypes.AstNode) => {
-    // TODO fix the typing on node.  I don't know how to access arbitrary properties of an object implementing an interface.
     walk(ast, (node:astTypes.AstNode, parent:astTypes.AstNode, locationInParent):any => {
 
         var replacement: Array<astTypes.AstNode>;
@@ -34,8 +33,6 @@ export var transform = (ast:astTypes.AstNode) => {
             globalVar.setContainingObjectIdentifier(strings.ANGL_GLOBALS_IDENTIFIER);
             astUtils.getGlobalAnglScope(scriptDefNode).addVariable(globalVar);
         }
-
-        // Const definitions register an identifier into the parent scope
 
         // Scripts create a new scope
         if(node.type === 'script' || node.type === 'scriptdef') {
