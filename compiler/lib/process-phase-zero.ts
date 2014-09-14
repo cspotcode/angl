@@ -6,6 +6,7 @@ import globalScope = require('./global-scope');
 import AnglScope = require('./angl-scope');
 import scopeVariable = require('./scope-variable');
 import strings = require('./strings');
+import ModuleDescriptor = require('./module-descriptor');
 
 // Wrap the entire AST in a "file" node
 // TODO fix typing of ast argument
@@ -31,7 +32,9 @@ export var transform = (ast:types.StatementsNode):types.AstNode => {
         type: "file",
         stmts: ast.list,
         globalAnglScope: globalAnglScope,
-        anglScope: anglScope
+        anglScope: anglScope,
+        dependencies: [],
+        moduleDescriptor: new ModuleDescriptor('main', true)
     };
     return fileNode;
 };
