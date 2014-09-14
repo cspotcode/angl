@@ -16,6 +16,12 @@
     },
     "jquery/jquery.d.ts": {
       "commit": "83e1a7ddb6a2407fbf377b8dfb10d6b12776929f"
+    },
+    "mocha/mocha.d.ts": {
+      "commit": "50dd84eb5d5593787b7686decf1476d094f5e13a"
+    },
+    "chai/chai.d.ts": {
+      "commit": "50dd84eb5d5593787b7686decf1476d094f5e13a"
     }
   }
 }

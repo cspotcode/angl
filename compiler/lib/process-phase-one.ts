@@ -9,7 +9,7 @@ import astTypes = require('./ast-types');
 import astUtils = require('./ast-utils');
 import scopeVariable = require('./scope-variable');
 import strings = require('./strings');
-var buckets = require('../vendor/buckets');
+var buckets = require('../../compiler/vendor/buckets');
 import _ = require('lodash');
 var walk = treeWalker.walk;
 

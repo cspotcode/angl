@@ -1,6 +1,5 @@
 # Built files
 out
-build
 
 # gh-pages checkout for updating the website
 github-pages

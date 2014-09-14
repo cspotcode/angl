@@ -52,14 +52,14 @@ var config = {
     map: {
         '*': {
             // For when the compiler references the runtime
-            'build/../../runtime/src': 'runtime',
+            '../compiler-build/lib/../../runtime/src': 'runtime',
             // For when the compiler references the parser
-            'build/../../parser/out/angl': 'angl-parser/angl',
+            '../parser/out/angl': 'angl-parser/angl',
             // For when the runtime references the buckets library
             'runtime/../../compiler/vendor/buckets': 'vendor/buckets',
             
             // For when the demo tries to load the compiler
-            'lib': 'build'
+            'lib': '../compiler-build/lib'
         }
     },
     shim: {

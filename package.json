@@ -11,10 +11,12 @@
   "license": "MIT",
   "dependencies": {
     "almond": "~0.2.5",
+    "chai": "^1.9.1",
     "glob": "^4.0.5",
     "jade": "~0.28.1",
     "jison": "~0.4.4",
     "lodash": "^2.4.1",
+    "mocha": "^1.21.4",
     "nomnom": "~1.6.1",
     "requirejs": "~2.1.5",
     "shelljs": "~0.1.2",

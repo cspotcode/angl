@@ -4,3 +4,5 @@ node_modules
 # IntelliJ/WebStorm project files
 .idea
 
+# Built compiler and tests
+compiler-build

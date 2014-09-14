@@ -7,7 +7,7 @@
 // It is the scope used when no other scope has a given identifier.
 
 import _ = require('lodash');
-var buckets = require('../vendor/buckets');
+var buckets = require('../../compiler/vendor/buckets');
 import scopeVariable = require('./scope-variable');
 
 var bucketIdProp = '_id' + +new Date;

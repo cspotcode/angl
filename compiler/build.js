@@ -50,12 +50,12 @@ stylus(input).render(function(err, output) {
 //    ];
     var tsFiles = glob.sync('lib/**/*.ts');
     var cmd = require.resolve('typescript/' + require('typescript/package.json').bin.tsc);
-    child_process.spawn(process.argv[0], [cmd, '--sourcemap', '--module', 'commonjs', '--outDir', 'build'].concat(tsFiles), {stdio: ['ignore', 1, 2]}).on('close', function(code) {
+    child_process.spawn(process.argv[0], [cmd, '--sourcemap', '--module', 'commonjs', '--outDir', '../compiler-build/lib'].concat(tsFiles), {stdio: ['ignore', 1, 2]}).on('close', function(code) {
         if(code) throw code;
       
         // Copy all plain .js files from `lib` to `build`
         glob.sync('**/*.js', {cwd: 'lib'}).forEach(function(file) {
-          fs.writeFileSync(path.join('build', file), fs.readFileSync(path.join('lib', file)));
+          fs.writeFileSync(path.join('../compiler-build/lib', file), fs.readFileSync(path.join('lib', file)));
         });
 
         // Build a minified JS bundle
