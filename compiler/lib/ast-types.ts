@@ -3,6 +3,7 @@
 
 import scope = require('./angl-scope');
 import scopeVariable = require('./scope-variable');
+import ModuleDescriptor = require('./module-descriptor');
 
 export interface AstNode {
     parentNode?: AstNode;
@@ -11,8 +12,21 @@ export interface AstNode {
     globalAnglScope?: scope.AnglScope;
 }
 
+export interface ProjectNode extends AstNode {
+    files: Array<FileNode>;
+}
+
+/**
+ * AST node representing a single .angl file.
+ * Each file is also an AMD module.
+ */
 export interface FileNode extends AstNode {
     stmts: StatementNode[];
+    dependencies: Array<{
+        variable: scopeVariable.AbstractVariable;
+        moduleDescriptor: ModuleDescriptor;
+    }>;
+    moduleDescriptor: ModuleDescriptor;
 }
 
 export interface ExpressionNode extends AstNode {
