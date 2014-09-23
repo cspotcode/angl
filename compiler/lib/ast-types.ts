@@ -16,18 +16,74 @@ export interface ProjectNode extends AstNode {
     files: Array<FileNode>;
 }
 
-/**
- * AST node representing a single .angl file.
- * Each file is also an AMD module.
- */
-export interface FileNode extends AstNode {
+export class FileNode implements AstNode {
+    // Implement AstNode interface
+    parentNode: AstNode;
+    type = 'file';
+    anglScope: scope.AnglScope;
+    globalAnglScope: scope.AnglScope;
+    
     stmts: StatementNode[];
-    dependencies: Array<{
-        variable: scopeVariable.AbstractVariable;
-        moduleDescriptor: ModuleDescriptor;
-    }>;
+    
+    dependencies: 
+
+    /**
+     * Add a dependency on the given module.
+     * It will be require()'d in the generated JS code.
+     */
+    addDependency(moduleDescriptor: ModuleDescriptor) {
+        // TODO implement me
+    }
+
+    /**
+     * Get the local variable on which this dependency is stored when loaded.
+      */
+    getVariableForDependency(moduleDescriptor: ModuleDescriptor) {
+        // TODO implement me
+    }
+
+    /**
+     * Get a local proxy variable that accesses the property on the locally-loaded module.
+     * Create said variable if it does not yet exist.
+     * If addDependency is true, a dependency will be added as necessary.
+     * If addDependency is false and a dependency does not yet exist, throws an error.
+     */
+    getLocalProxyForModuleVariable(variable: Variable, addDependency: boolean = false): Variable {
+        // TODO implement me
+        
+    }
+
     moduleDescriptor: ModuleDescriptor;
+
+    // TODO get rid of this?
+    getAccessedVariablesFromDependency(moduleDescriptor: ModuleDescriptor): AccessedVariablesMap {
+        // TODO implement me
+    };
+
+    /* TODO how do Files handle their exports? */
+    // Is there an export = ...; statement?  That could work...
+
+    constructor(stmts: Array<StatementNode>, modulePath) {
+
+    }
 }
+
+AccessedVariablesMap {
+    getLocalVariableForGlobalVariable
+}
+
+///**
+// * AST node representing a single .angl file.
+// * Each file is also an AMD module.
+// */
+//export interface FileNode extends AstNode {
+//    stmts: StatementNode[];
+//    dependencies: Array<{
+//        variable: scopeVariable.AbstractVariable;
+//        moduleDescriptor: ModuleDescriptor;
+//    }>;
+//    moduleDescriptor: ModuleDescriptor;
+//}
 
 export interface ExpressionNode extends AstNode {
     // If true, this expression is used twice in the generated JavaScript.  To avoid triggering side-effects more than

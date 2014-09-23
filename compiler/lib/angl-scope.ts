@@ -7,7 +7,10 @@
 // It is the scope used when no other scope has a given identifier.
 
 import _ = require('lodash');
-var buckets = require('../../compiler/vendor/buckets');
+import Dict = require('collections/dict');
+// TODO use FastSet?
+import Set = require('collections/set');
+
 import scopeVariable = require('./scope-variable');
 
 var bucketIdProp = '_id' + +new Date;
@@ -51,12 +54,12 @@ export class AnglScope {
     private _namingUid;
 
     constructor() {
-        this._identifiers = new buckets.Dictionary();
-        this._jsIdentifiers = new buckets.Dictionary();
-        this._unnamedVariables = new buckets.Set(idGeneratorFn);
-        this._variables = new buckets.Set(idGeneratorFn);
+        this._identifiers = new Dict();
+        this._jsIdentifiers = new Dict();
+        this._unnamedVariables = new Set();
+        this._variables = new Set();
         this._parentScope = null;
-        this._unshadowableVariables = new buckets.Set(idGeneratorFn);
+        this._unshadowableVariables = new Set();
         this._namingUid = 0;
     }
 
@@ -211,7 +214,7 @@ export class AnglScope {
     assignJsIdentifiers():void {
         var unnamedVariables = this._unnamedVariables.toArray();
         // Create a set of all the identifier names we cannot shadow.
-        var unshadowableNames = new buckets.Set();
+        var unshadowableNames = new Set();
         this._unshadowableVariables.forEach((variable) => {
             // Sanity check that this variable is capable of being shadowed
             if(variable.getAccessType() !== 'BARE') {

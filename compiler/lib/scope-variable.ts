@@ -3,6 +3,8 @@
 
 import _ = require('lodash');
 
+import ModuleDescriptor = require('./module-descriptor');
+
 export interface AbstractVariable {
     awaitingJsIdentifierAssignment():boolean;
     getJsIdentifier():string;
@@ -10,6 +12,13 @@ export interface AbstractVariable {
     getAllocationType():string;
     getAccessType():string;
     getContainingObjectIdentifier():string;
+    /**
+     * If this variable is provided by a module, returns the ModuleDescriptor for
+     * said module.
+     * To be "provided" by the module means that the module must be loaded to use this variable.
+     * For example, with node's `fs.readFile`, the `readFile` variable is provided by the `fs` module.
+     */
+    getProvidedByModule():ModuleDescriptor;
 }
 
 export class Variable implements AbstractVariable {
@@ -20,6 +29,7 @@ export class Variable implements AbstractVariable {
     private _desiredJsIdentifier:string;
     private _jsIdentifier:string;
     private _containingObjectIdentifier:string;
+    private _providedByModule: ModuleDescriptor;
 
     /**
      * Enumeration of possible allocationType values.
@@ -41,18 +51,33 @@ export class Variable implements AbstractVariable {
         this._allocationType = allocationType;
         this._accessType = accessType;
         this._containingObjectIdentifier = null;
+        this._providedByModule = null;
+        this._usesThisBinding = true;
     }
 
     awaitingJsIdentifierAssignment() { return !this._jsIdentifier; }
 
+    /**
+     * Sets the identifier that this variable would like to have in the generated JavaScript.
+     * It may or may not get this identifier, depending on if their are identifier collisions.
+     * @param desiredIdentifier
+     */
     setDesiredJsIdentifier(desiredIdentifier:string) { this._desiredJsIdentifier = desiredIdentifier; }
 
     getDesiredJsIdentifier():string { return this._desiredJsIdentifier; }
 
+    /**
+     * Sets the identifier that this variable will have in the generated JavaScript.
+     * @param jsIdentifier
+     */
     setJsIdentifier(jsIdentifier:string) { this._jsIdentifier = jsIdentifier; }
 
     getJsIdentifier():string { return this._jsIdentifier; }
 
+    /**
+     * Sets the identifier that this variable has in Angl.
+     * @param identifier
+     */
     setIdentifier(identifier:string) { this._identifier = identifier; }
 
     getIdentifier():string { return this._identifier; }
@@ -61,9 +86,19 @@ export class Variable implements AbstractVariable {
 
     getAccessType():string { return this._accessType; }
 
+    /**
+     * Sets the identifier of the containing object (the object that contains this variable).
+     * For a PROP-ACCESS variable, the variable is actually a property of another object.
+     * It is accessed in JavaScript using "containingObject.variableIdentifier"
+     * @param identifier
+     */
     setContainingObjectIdentifier(identifier:string) { this._containingObjectIdentifier = identifier; }
 
     getContainingObjectIdentifier():string { return this._containingObjectIdentifier; }
+    
+    setProvidedByModule(moduleDescriptor: ModuleDescriptor) { this._providedByModule = moduleDescriptor; }
+
+    getProvidedByModule() { return this._providedByModule; }
 }
 
 // A variable that has its own identifier in Angl, but actually maps to the same JS variable as another
