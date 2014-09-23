@@ -3,14 +3,15 @@
 
 // AST transformation phase one
 
+import _ = require('lodash');
+import FastSet = require('collections/fast-set');
+
 import treeWalker = require('./tree-walker');
 import scope = require('./angl-scope');
 import astTypes = require('./ast-types');
 import astUtils = require('./ast-utils');
 import scopeVariable = require('./scope-variable');
 import strings = require('./strings');
-var buckets = require('../../compiler/vendor/buckets');
-import _ = require('lodash');
 var walk = treeWalker.walk;
 
 // Create scopes for all nodes
@@ -229,9 +230,9 @@ export var transform = (ast:astTypes.AstNode) => {
             if (!objectNode.parent) objectNode.parent = strings.SUPER_OBJECT_NAME;
 
             // Initialize some basic containers for storing methods, create, destroy, and property assignments
-            var objectPropertyNames = new buckets.Set();
+            var objectPropertyNames = new FastSet();
             objectNode.properties = [];
-            var objectMethodNames = new buckets.Set();
+            var objectMethodNames = new FastSet();
             objectNode.methods = [];
             // TODO can't have properties with the same names as methods
 
