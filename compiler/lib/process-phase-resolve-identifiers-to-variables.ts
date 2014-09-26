@@ -40,9 +40,13 @@ export var transform = (ast:astTypes.AstNode) => {
                 };
             }
             node.variable = variable;
-            // If this variable is from a parent scope, then we must tell this scope not to shadow it.
-            if(!anglScope.hasVariable(variable)) {
-                anglScope.doNotShadow(variable);
+            // If this variable is from a parent scope, and it could theoretically be shadowed, then we must tell this
+            // scope and parent scopes to avoid shadowing this variable.
+            if(variable.getAccessType() === 'BARE') {
+                // Tell this scope and all parent scopes up to but not including the one that contains the variable.
+                for(var scope = anglScope; !scope.hasVariable(variable); scope = scope.getParentScope()) {
+                    scope.doNotShadow(variable);
+                }
             }
         }
 
