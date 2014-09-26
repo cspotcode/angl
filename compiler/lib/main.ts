@@ -17,7 +17,7 @@ function initializeCompiler() {
     buffer = [];
     print = _.bind(buffer.push, buffer);
     indentationLevel = 0;
-};
+}
 
 function indent() {
     indentationLevel++;

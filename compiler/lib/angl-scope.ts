@@ -38,7 +38,7 @@ export class AnglScope {
      * Scope that contains this AnglScope.  If an identifier is not found in this scope, it may be found in the parent
      * scope.  Identifiers in this scope will shadow a variable with the same name in the parent scope.
      */
-    /*protected*/ _parentScope;
+    /*protected*/ _parentScope: AnglScope;
     /**
      * Set of variables from parent scopes that cannot be shadowed by this scope in the generated JS.
      * This will be taken into account when assigning JS identifiers to variables.
@@ -48,7 +48,7 @@ export class AnglScope {
      * A number appended to identifiers to make them unique.  Only used in case of a naming conflict.
      * Counts up every time it is used.
      */
-    private _namingUid;
+    private _namingUid: number;
 
     constructor() {
         this._identifiers = new Dict<scopeVariable.AbstractVariable>();
@@ -167,42 +167,17 @@ export class AnglScope {
         return ret;
     }
 
-    // Returns an array of all named identifier objects
-    /*
-    getAllIdentifiers() {
-        return this._identifiers.slice();
-    };
+    /**
+     * Returns an array of all Variables
     */
-
-    // Returns an array of all identifier names
-    /*
-    getAllIdentifierNames() {
-        return _.pluck(this._identifiers, 'name');
-    };
-    */
-
-    // Returns an array of all Variables
     getVariablesArray():scopeVariable.AbstractVariable[] { return this._variables.toArray(); }
 
-    setParentScope(parentAnglScope) {
+    setParentScope(parentAnglScope: AnglScope) {
         this._parentScope = parentAnglScope;
     }
 
     getParentScope():AnglScope {
         return this._parentScope;
-    }
-
-    /**
-     * Creates a new identifier in this scope, when you don't care what the name is.  You can specify a
-     * preferred name and, if possible, this unnamed identifier will be assigned that name.  If that name is taken, it
-     * will be modified to make it unique.
-     * Returns an UnnamedIdentifier instance.  When this scope is asked to assign names to all unnamed identifiers, it
-     * will add the assigned names into each UnnamedIdentifier instance.
-     */
-    createUnnamedIdentifier(preferredName, value):UnnamedIdentifier {
-        var unnamedIdentifier = new UnnamedIdentifier(preferredName);
-        this._unnamedVariables.set(unnamedIdentifier, value);
-        return unnamedIdentifier;
     }
 
     /**
@@ -257,6 +232,10 @@ export class AnglScope {
     }
 }
 
+/**
+ * Scope created for each Angl with() {} block.
+ * Angl's `self` and `other` variables are different within a with() {} block.
+ */
 export class WithScope extends AnglScope {
 
     getVariableByIdentifier(identifier:string) { return super.getVariableByIdentifier(identifier) || this._parentScope.getVariableByIdentifier(identifier); }
@@ -293,68 +272,6 @@ export interface Identifier {
     getJsExpression():string;
 }
 
-
-// An identifier that does not need to have any particular name, though it may have a preferred name.
-// These identifiers will be assigned names by the scope, based on the availability of unique names in that scope.
-// Generally this will be used for temporary JavaScript variables needed by implement certain Angl language features.
-// (e.g. a loop counter for Angl's repeat(){} loop)
-export class UnnamedIdentifier implements Identifier {
-
-    private _preferredName;
-    private _assignedName;
-
-    constructor(preferredName) {
-        this._preferredName = preferredName || null;
-    }
-
-    // Returns the name assigned to this identifier, or null if it has not yet been assigned
-    getName():string {
-        return this._assignedName || null;
-    }
-
-    getJsExpression():string {
-        return this.getName();
-    }
-
-    // Returns the preferred
-    getPreferredName():string {
-        return this._preferredName;
-    }
-
-    _assignName(name):void {
-        this._assignedName = name;
-    }
-}
-
-
-// An identifier that has a known name in a known Angl scope but, in JavaScript-land, must exist in the parent scope.
-// Thus this identifier must be assigned a JavaScript name that will be unique in the parent scope.
-export class IdentifierFromParentScope implements Identifier {
-
-    // Name of this identifier in Angl.  If possible, should also have this name in JavaScript.
-    private _anglName:string;
-
-    // UnnamedIdentifier in the parent scope, used to get a unique name
-    private _unnamedIdentifier:UnnamedIdentifier;
-
-    constructor(scope:AnglScope, anglName:string) {
-        this._anglName = anglName;
-        var parentScope = scope.getParentScope();
-        this._unnamedIdentifier = parentScope.createUnnamedIdentifier(anglName, null);
-    }
-
-    getPreferredName():string {
-        return this._anglName;
-    }
-
-    getJsExpression():string {
-        if(!this._unnamedIdentifier.getName()) {
-            throw new Error('Attempted to access JavaScript accessor expression for IdentifierFromParentScope before' +
-                'parent scope has assigned it a name.');
-        }
-        return this._unnamedIdentifier.getJsExpression();
-    }
-}
 
 // Types of identifiers:
 // script const
