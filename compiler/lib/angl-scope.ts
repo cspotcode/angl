@@ -185,7 +185,7 @@ export class AnglScope {
 
     /**
      * Returns an array of all Variables
-    */
+     */
     getVariablesArray():scopeVariable.AbstractVariable[] { return this._variables.toArray(); }
 
     setParentScope(parentAnglScope: AnglScope) {
@@ -196,7 +196,7 @@ export class AnglScope {
         this._parentScope._childScopes.add(this);
     }
 
-    getParentScope():AnglScope {
+    getParentScope(): AnglScope {
         return this._parentScope;
     }
 
@@ -301,8 +301,8 @@ export class WithScope extends AnglScope {
               ? this._identifiers.has(identifier)
               : this.hasIdentifier(identifier)
             ) {
-                    throw new Error('Scope already has an identifier with the name "' + identifier + '"');
-        }
+                throw new Error('Scope already has an identifier with the name "' + identifier + '"');
+            }
         }
         this._addVariable(variable);
     }
