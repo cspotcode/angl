@@ -613,9 +613,7 @@ function generateCase(astNode) {
 };
 
 function generateLocalVariableAllocation(astNode) {
-    var localVariables = _.filter(astUtils.getAnglScope(astNode).getVariablesArray(), (variable) => {
-        return variable.getAllocationType() === 'LOCAL';
-    });
+    var localVariables = astUtils.getAnglScope(astNode).getVariablesThatMustBeAllocatedInThisScope();
     if(localVariables.length) {
         printIndent();
         print('var ');

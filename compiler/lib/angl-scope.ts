@@ -13,6 +13,10 @@ import Set = require('collections/set');
 
 import scopeVariable = require('./scope-variable');
 
+/**
+ * Push all values from the second argument onto the first argument.
+ */
+var pushArray: <T>(a: Array<T>, b: Array<T>)=>number = Array.prototype.push.apply.bind(Array.prototype.push);
 
 export class AnglScope {
 
@@ -54,6 +58,13 @@ export class AnglScope {
      * Set of all scopes that are direct children of this one (scopes for whom _parentScope === this scope)
      */
     private _childScopes: Set<AnglScope>;
+
+    /**
+     * Can this scope allocate its own local variables in JS?  If not, those will need to be
+     * allocated/declared by a parent scope.
+     */
+    canAllocateOwnLocalVariables: boolean;
+
     constructor() {
         this._identifiers = new Dict<scopeVariable.AbstractVariable>();
         this._jsIdentifiers = new Dict<scopeVariable.AbstractVariable>();
@@ -239,7 +250,35 @@ export class AnglScope {
     doNotShadow(variable: scopeVariable.AbstractVariable) {
         this._unshadowableVariables.add(variable);
     }
+
+    /**
+     * Returns an array of all variables that must be allocated by/in this scope.  Some variables
+     * do not need to be allocated at all, and sometimes a scope must allocate variables on behalf
+     * of a child scope.
+     */
+    getVariablesThatMustBeAllocatedInThisScope(): Array<scopeVariable.AbstractVariable> {
+        if(!this.canAllocateOwnLocalVariables) return [];
+        var vars: Array<scopeVariable.AbstractVariable> = [];
+        // Search all child scopes, recursive-descent, for variables that must be allocated by
+        // this scope, because the child scope, for whatever reason, can't allocate its
+        // own variables.
+        var visitedScopes: Array<AnglScope> = [this];
+        var scope;
+        while(scope = visitedScopes.shift()) {
+            // Is this a child scope that can allocate its own local variables?  If so, skip it.
+            if(scope !== this && scope.canAllocateOwnLocalVariables) continue;
+            pushArray(
+                vars,
+                _.filter(scope.getVariablesArray(), (variable: scopeVariable.AbstractVariable) => variable.getAllocationType() === 'LOCAL')
+            );
+            pushArray(visitedScopes, scope._childScopes.toArray());
+        }
+        return vars;
+    }
 }
+
+AnglScope.prototype.canAllocateOwnLocalVariables = true;
+
 
 /**
  * Scope created for each Angl with() {} block.
@@ -273,6 +312,8 @@ export class WithScope extends AnglScope {
     }
 
 }
+
+WithScope.prototype.canAllocateOwnLocalVariables = false;
 
 
 // An identifier that exists in an Angl scope, will refer to a variable in memory at runtime, and knows how that
