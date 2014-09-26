@@ -50,6 +50,10 @@ export class AnglScope {
      */
     private _namingUid: number;
 
+    /**
+     * Set of all scopes that are direct children of this one (scopes for whom _parentScope === this scope)
+     */
+    private _childScopes: Set<AnglScope>;
     constructor() {
         this._identifiers = new Dict<scopeVariable.AbstractVariable>();
         this._jsIdentifiers = new Dict<scopeVariable.AbstractVariable>();
@@ -58,6 +62,7 @@ export class AnglScope {
         this._parentScope = null;
         this._unshadowableVariables = new Set<scopeVariable.AbstractVariable>();
         this._namingUid = 0;
+        this._childScopes = new Set<AnglScope>();
     }
 
     // TODO what types should the identifier and value be?
@@ -173,7 +178,11 @@ export class AnglScope {
     getVariablesArray():scopeVariable.AbstractVariable[] { return this._variables.toArray(); }
 
     setParentScope(parentAnglScope: AnglScope) {
+        if(this._parentScope) {
+            this._parentScope._childScopes.delete(this);
+        }
         this._parentScope = parentAnglScope;
+        this._parentScope._childScopes.add(this);
     }
 
     getParentScope():AnglScope {
