@@ -1,6 +1,66 @@
 var requirejs = require('requirejs');
 var path = require('path');
 
+/**
+ * Gets the path to a module as it would be located when require()'d from another module residing in the given path.
+ * @param moduleName name of module to be located
+ * @param relativeToPath oath to the root directory of a module.
+ * @returns {string} The root path of the module (the directory containing package.json)
+ */
+function getLocationOfModule(moduleName, relativeToPath) {
+    // Backup module.paths and replace it with our search path
+    var newModulePaths = [],
+        oldModulePaths = module.paths,
+        acc = path.resolve(relativeToPath),
+        acc2;
+    while(true) {
+        // Skip "node_modules/node_modules" directories
+        if(!(path.basename(acc) === 'node_modules' && path.extname(acc) === '')) {
+            newModulePaths.push(path.join(acc, 'node_modules'));
+        }
+        // Step up one directory
+        acc2 = path.resolve(acc, '..');
+        // Stop looping if we've reached the filesystem root
+        if(acc2 === acc) break;
+        acc = acc2;
+    }
+    module.paths = newModulePaths;
+    
+    // Query Node's require for the module's location
+    var ret = path.join(require.resolve(moduleName + '/package.json'), '..');
+    
+    // Restore the previous module.paths
+    module.paths = oldModulePaths;
+    
+    return ret;
+}
+
+function describeCommonjsPackage(name, main, resolveFrom) {
+    // Normalize arguments
+    if(!resolveFrom) {
+        resolveFrom = [];
+    }
+    if(typeof resolveFrom === 'string') {
+        resolveFrom = [resolveFrom];
+    }
+    
+    // Find the module's root
+    var location = resolveFrom.reduce(function(location, moduleName) {
+        return getLocationOfModule(moduleName, location);
+    }, '.');
+    location = getLocationOfModule(name, location);
+    
+    var descriptor = {
+        name: name,
+        location: location
+    };
+    if(main) {
+        var main = require(path.join(location, 'package.json')).main;
+        descriptor.main = main ? main.replace(/\.js$/, '') : 'index.js';
+    }
+    return descriptor;
+}
+
 var config = {
     baseUrl: '.',
     out: './out/demo/index.js',
@@ -13,12 +73,9 @@ var config = {
     insertRequire: ['demo/index'],
     // Describe NodeJS packages to Require
     packages: [
-        {
-            name: 'lodash',
-            // This uglyness finds the exact location of the LoDash js file
-            location: path.join(path.relative('.', require.resolve('lodash/package.json')), '..'),
-            main: require('lodash/package.json').main.replace(/\.js$/, '')
-        }
+        describeCommonjsPackage('lodash', true),
+        describeCommonjsPackage('collections'),
+        describeCommonjsPackage('weak-map', true, 'collections')
     ],
     
     // ABOUT PATH MAPPING
@@ -78,6 +135,15 @@ var config = {
         
         // This will be assigned a string below.
         'set-require-config': null
+    },
+    // Some of the collections library's source code declares and uses a function called define().
+    // This prevents RequireJS's cjsTransform option from adding the proper AMD define() wrapper.
+    // Therefore, we add the wrapper manually if it is not present.  Hacky, but it works.
+    onBuildRead: function(moduleName, path, contents) {
+        if(/^collections\//.test(moduleName) && !/^define\(function \(require, exports, module\)/.test(contents)) {
+            return 'define(function (require, exports, module) {\n'+ contents + '\n});';
+        }
+        return contents;
     },
     // Change this to 'uglify2' to minify output.
     optimize: 'none',

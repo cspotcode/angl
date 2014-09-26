@@ -7,33 +7,33 @@
 // It is the scope used when no other scope has a given identifier.
 
 import _ = require('lodash');
-var buckets = require('../../compiler/vendor/buckets');
+import Dict = require('collections/dict');
+// TODO use FastSet?
+import Set = require('collections/set');
+
 import scopeVariable = require('./scope-variable');
 
-var bucketIdProp = '_id' + +new Date;
-
-var idGeneratorFn = (item) => item[bucketIdProp] = item[bucketIdProp] || _.uniqueId();
 
 export class AnglScope {
 
     /**
      * Set of all Variables
      */
-    private _variables;
+    private _variables: Set<scopeVariable.AbstractVariable>;
     /**
      * Dictionary mapping Angl identifiers to Variables.  Not all Variables have an Angl identifier.
      */
-    /*protected*/ _identifiers;
+    /*protected*/ _identifiers: Dict<scopeVariable.AbstractVariable>;
     /**
      * Dictionary mapping Javascript identifiers to Variables.  Not all Variables have a Javascript identifier, though
      * one will eventually have to be assigned to them.
      */
-    /*protected*/ _jsIdentifiers;
+    /*protected*/ _jsIdentifiers: Dict<scopeVariable.AbstractVariable>;
     /**
      * Set containing all Variables that do not have a Javascript identifier.  These identifiers will be assigned to
      * them before Javascript code generation occurs.
      */
-    private _unnamedVariables;
+    private _unnamedVariables: Set<scopeVariable.AbstractVariable>;
     /**
      * Scope that contains this AnglScope.  If an identifier is not found in this scope, it may be found in the parent
      * scope.  Identifiers in this scope will shadow a variable with the same name in the parent scope.
@@ -43,7 +43,7 @@ export class AnglScope {
      * Set of variables from parent scopes that cannot be shadowed by this scope in the generated JS.
      * This will be taken into account when assigning JS identifiers to variables.
      */
-    private _unshadowableVariables;
+    private _unshadowableVariables: Set<scopeVariable.AbstractVariable>;
     /**
      * A number appended to identifiers to make them unique.  Only used in case of a naming conflict.
      * Counts up every time it is used.
@@ -51,12 +51,12 @@ export class AnglScope {
     private _namingUid;
 
     constructor() {
-        this._identifiers = new buckets.Dictionary();
-        this._jsIdentifiers = new buckets.Dictionary();
-        this._unnamedVariables = new buckets.Set(idGeneratorFn);
-        this._variables = new buckets.Set(idGeneratorFn);
+        this._identifiers = new Dict<scopeVariable.AbstractVariable>();
+        this._jsIdentifiers = new Dict<scopeVariable.AbstractVariable>();
+        this._unnamedVariables = new Set<scopeVariable.AbstractVariable>();
+        this._variables = new Set<scopeVariable.AbstractVariable>();
         this._parentScope = null;
-        this._unshadowableVariables = new buckets.Set(idGeneratorFn);
+        this._unshadowableVariables = new Set<scopeVariable.AbstractVariable>();
         this._namingUid = 0;
     }
 
@@ -120,7 +120,7 @@ export class AnglScope {
      * returns true or false if identifier with given name exists or doesn't exist
      */
     hasIdentifier(identifier:string) {
-        return this._identifiers.containsKey(identifier);
+        return this._identifiers.has(identifier);
     }
 
     hasIdentifierInChain(identifier:string) {
@@ -155,14 +155,14 @@ export class AnglScope {
     }
 
     removeVariable(variable:scopeVariable.AbstractVariable):boolean {
-        var ret = this._variables.remove(variable);
+        var ret = this._variables.delete(variable);
         if(ret) {
             var jsIdentifier = variable.getJsIdentifier()
               , identifier = variable.getIdentifier()
               ;
-            identifier !== null && this._identifiers.remove(identifier);
-            jsIdentifier !== null && this._jsIdentifiers.remove(jsIdentifier);
-            this._unnamedVariables.remove(variable);
+            identifier !== null && this._identifiers.delete(identifier);
+            jsIdentifier !== null && this._jsIdentifiers.delete(jsIdentifier);
+            this._unnamedVariables.delete(variable);
         }
         return ret;
     }
@@ -211,7 +211,7 @@ export class AnglScope {
     assignJsIdentifiers():void {
         var unnamedVariables = this._unnamedVariables.toArray();
         // Create a set of all the identifier names we cannot shadow.
-        var unshadowableNames = new buckets.Set();
+        var unshadowableNames = new Set();
         this._unshadowableVariables.forEach((variable) => {
             // Sanity check that this variable is capable of being shadowed
             if(variable.getAccessType() !== 'BARE') {
@@ -245,7 +245,7 @@ export class AnglScope {
     }
 
     _hasJsIdentifier(identifier:string):boolean {
-        return this._jsIdentifiers.containsKey(identifier);
+        return this._jsIdentifiers.has(identifier);
     }
 
     /**
@@ -269,17 +269,19 @@ export class WithScope extends AnglScope {
         // Check that we don't have name conflicts.
         // `self` and `other` are allowed to override `self` and `other` from the parent scope.
         // For everything else, overriding is not allowed.
-        if(identifier !== null &&
-              _.contains(['self', 'other'], identifier)
-            ? this._identifiers.containsKey(identifier)
-            : this.hasIdentifier(identifier)) {
+        if(identifier !== null) {
+            if(_.contains(['self', 'other'], identifier)
+              ? this._identifiers.has(identifier)
+              : this.hasIdentifier(identifier)
+            ) {
                     throw new Error('Scope already has an identifier with the name "' + identifier + '"');
+        }
         }
         this._addVariable(variable);
     }
 
     _hasJsIdentifier(identifier:string):boolean {
-        return this._jsIdentifiers.containsKey(identifier) || this._parentScope._hasJsIdentifier(identifier);
+        return this._jsIdentifiers.has(identifier) || this._parentScope._hasJsIdentifier(identifier);
     }
 
 }
