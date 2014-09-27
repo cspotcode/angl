@@ -29,12 +29,17 @@ export interface FileNode extends AstNode {
     moduleDescriptor: ModuleDescriptor;
 }
 
+
 export interface ExpressionNode extends AstNode {
-    // If true, this expression is used twice in the generated JavaScript.  To avoid triggering side-effects more than
-    // once, we must pre-compute the expression's children.
+    /**
+     * If true, this expression is used twice in the generated JavaScript.  To avoid triggering side-effects more than
+     * once, we must pre-compute the expression's children.
+     */
     isUsedTwice?: boolean;
-    // `requiresPrecomputation` is set on the children of an `isUsedTwice` node.  This indicates that the expression
-    // must be evaluated ahead-of-time, stored in a variable, and referenced.
+    /**
+     * `requiresPrecomputation` is set on the children of an `isUsedTwice` node.  This indicates that the expression
+     * must be evaluated ahead-of-time, stored in a variable, and referenced.
+     */
     requiresPrecomputation?: boolean;
 }
 
@@ -129,8 +134,10 @@ export interface ReturnNode extends StatementNode {
 export interface FuncCallNode extends AstNode {
     expr: ExpressionNode;
     args: ExpressionNode[];
-    // If set to true during AST transformation, JavaScript's automatic `this` binding will occur, and we don't need
-    // to use `.call`
+    /**
+     * If set to true during AST transformation, JavaScript's automatic `this` binding will occur, and we don't need
+     * to use `.call`
+     */
     isMethodCall?: boolean;
 }
 
@@ -141,9 +148,15 @@ export interface JsFuncCallNode extends AstNode {
 
 export interface IdentifierNode extends ExpressionNode {
     // The parser generates nodes with a name
-    name?: string;
     // The compiler generates identifier nodes with only a variable.  It also sets the variable on all identifiers
     // during the identifier resolution phase.
+    /**
+     * Name of this identifier, as it appears in the Angl source.
+     */
+    name?: string;
+    /**
+     * Variable to which this identifier resolves.
+     */
     variable?: scopeVariable.AbstractVariable;
 }
 
@@ -165,7 +178,9 @@ export interface WithNode extends StatementNode {
     allObjectsVariable: scopeVariable.AbstractVariable;
     indexVariable: scopeVariable.AbstractVariable;
     outerOtherVariable: scopeVariable.AbstractVariable;
-    // Used in a processing phase to avoid processing this node twice.
+    /**
+     * Used in a processing phase to avoid processing this node twice.
+     */
     alreadyVisited: boolean;
 }
 

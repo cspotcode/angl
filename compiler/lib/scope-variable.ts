@@ -45,14 +45,27 @@ export class Variable implements AbstractVariable {
 
     awaitingJsIdentifierAssignment() { return !this._jsIdentifier; }
 
+    /**
+     * Sets the identifier that this variable would like to have in the generated JavaScript.
+     * It may or may not get this identifier, depending on if their are identifier collisions.
+     * @param desiredIdentifier
+     */
     setDesiredJsIdentifier(desiredIdentifier:string) { this._desiredJsIdentifier = desiredIdentifier; }
 
     getDesiredJsIdentifier():string { return this._desiredJsIdentifier; }
 
+    /**
+     * Sets the identifier that this variable will have in the generated JavaScript.
+     * @param jsIdentifier
+     */
     setJsIdentifier(jsIdentifier:string) { this._jsIdentifier = jsIdentifier; }
 
     getJsIdentifier():string { return this._jsIdentifier; }
 
+    /**
+     * Sets the identifier that this variable has in Angl.
+     * @param identifier
+     */
     setIdentifier(identifier:string) { this._identifier = identifier; }
 
     getIdentifier():string { return this._identifier; }
@@ -61,6 +74,12 @@ export class Variable implements AbstractVariable {
 
     getAccessType():string { return this._accessType; }
 
+    /**
+     * Sets the identifier of the containing object (the object that contains this variable).
+     * For a PROP-ACCESS variable, the variable is actually a property of another object.
+     * It is accessed in JavaScript using "containingObject.variableIdentifier"
+     * @param identifier
+     */
     setContainingObjectIdentifier(identifier:string) { this._containingObjectIdentifier = identifier; }
 
     getContainingObjectIdentifier():string { return this._containingObjectIdentifier; }
