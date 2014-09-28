@@ -1,18 +1,19 @@
 /// <reference path="../../typings/all.d.ts"/>
 "use strict";
 
+import _ = require('lodash');
+import path = require('path');
+import fs = require('fs');
+
 import angl = require('./angl-parser');
 
 import astTypes = require('./ast-types');
 import globalScope = require('./global-scope');
 import allTransformations = require('./run-all-transformations');
-import path = require('path');
-import fs = require('fs');
 import findGlobals = require('./find-globals');
 import jsGenerator = require('./main');
 import options = require('./options');
 var fileset = require('fileset');
-import _ = require('lodash');
 var defaultOptions = new options.Options();
 
 export function compile(anglSourceCode:string):string {
