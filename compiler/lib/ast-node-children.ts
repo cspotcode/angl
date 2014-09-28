@@ -4,6 +4,10 @@
 var nodeChildNames: {
     [nodeTypes:string]:Array<string>;
 } = {
+    // Angl project comprised of many source files
+    "project": [
+        "files"
+    ],
     // Angl source file
     "file": [
         "stmts"
