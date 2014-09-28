@@ -2,6 +2,8 @@
 "use strict";
 
 import _ = require('lodash');
+import ModuleExportsType = require('./module-exports-type');
+import scopeVariable = require('./scope-variable');
 import identifierManipulations = require('./identifier-manipulations');
 var Ident = identifierManipulations.Identifier;
 
@@ -25,11 +27,26 @@ class ModuleDescriptor {
      * `import math = require('math-routines')`
      */
     preferredIdentifier: string;
+    /**
+     * If this is a multi-export module, this is an array containing each variable it exports.
+     */
+    exports: Array<scopeVariable.AbstractVariable>;
+    /**
+     * If this is a single-export module, this is its only exported variable.
+     */
+    singleExport: scopeVariable.AbstractVariable;
+    /**
+     * Does this module export a single value or multiple values (as properties on an object)?
+     */
+    exportsType: ModuleExportsType;
     
     constructor(name: string, isRelative: boolean, preferredIdentifier?: string) {
         this.name = name;
         this.isRelative = isRelative;
         this.preferredIdentifier = preferredIdentifier || Ident.fromHyphenated(_.last(name.split('/'))).toCamelCase();
+        this.exportsType = ModuleExportsType.UNKNOWN;
+        this.exports = [];
+        this.singleExport = null;
     }
 }
 

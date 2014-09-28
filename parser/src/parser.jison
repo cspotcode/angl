@@ -31,6 +31,7 @@
 "create"                return 'CREATE';
 "destroy"               return 'DESTROY';
 "super"                 return 'SUPER';
+"export"                return 'EXPORT';
 
 /* keyword operators (must appear above identifier) */
 "div"                   return 'DIV';
@@ -126,11 +127,13 @@ top_level_statements
     ;
 
 top_level_statement
-    : script_definition
+    : top_level_script_definition
         { $$ = $1; }
     | object_definition
         { $$ = $1; }
     | const_definition
+        { $$ = $1; }
+    | export_declaration
         { $$ = $1; }
     ;
 
@@ -276,6 +279,15 @@ script_definition
         { $$ = yy.makeScriptStmt($2, $4, $7); }
     ;
 
+top_level_script_definition
+    : script_definition
+        { $$ = $1; }
+    | EXPORT SCRIPT identifier '(' ')' '{' statements '}'
+        { $$ = yy.makeScriptStmt($3, [], $7, true); }
+    | EXPORT SCRIPT identifier '(' definition_arguments ')' '{' statements '}'
+        { $$ = yy.makeScriptStmt($3, $5, $8, true); }
+    ;
+
 definition_arguments
     : identifier ',' definition_arguments
         { $$ = [$1].concat($3); }
@@ -286,6 +298,8 @@ definition_arguments
 const_definition
     : CONST identifier '=' expression ';'
         { $$ = yy.makeConstStmt($2, $4); }
+    | EXPORT CONST identifier '=' expression ';'
+        { $$ = yy.makeConstStmt($3, $5, true); }
     ;
 
 object_definition
@@ -293,6 +307,10 @@ object_definition
         { $$ = yy.makeObjectStmt($2, $4); }
     | OBJECT identifier PARENT identifier '{' class_statements '}'
         { $$ = yy.makeObjectStmt($2, $6, $4); }
+    | EXPORT OBJECT identifier '{' class_statements '}'
+        { $$ = yy.makeObjectStmt($3, $5, null, true); }
+    | EXPORT OBJECT identifier PARENT identifier '{' class_statements '}'
+        { $$ = yy.makeObjectStmt($3, $7, $5, true); }
     ;
 
 class_statements
@@ -313,6 +331,11 @@ class_statement
         { $$ = yy.makeDestroyStmt($3); }
     | identifier '=' expression ';'
         { $$ = yy.makePropertyStmt($1, $3); }
+    ;
+
+export_declaration
+    : EXPORT '=' identifier ';'
+        { $$ = yy.makeExportDeclarationStmt($3); }
     ;
 
 assignment

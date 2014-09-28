@@ -8,6 +8,7 @@ import strings = require('./strings');
 import ops = require('./operator-precedence-and-associativity');
 var OpEnum = ops.JavascriptOperatorsEnum;
 import anglToJsOpMap = require('./angl-to-js-operator-map');
+import ModuleExportsType = require('./module-exports-type');
 
 var buffer,
     print: (text: string)=>void,
@@ -296,7 +297,10 @@ function generateStatement(astNode, omitTerminator: boolean = false, omitIndenta
         case 'scriptdef':
             var scriptDefNode = <astTypes.ScriptDefNode>astNode;
             omitIndentation || printIndent();
-            print(strings.ANGL_GLOBALS_IDENTIFIER + '.' + scriptDefNode.name);
+            generateExpression({
+                type: 'identifier',
+                variable: scriptDefNode.variable
+            }, OpEnum.ASSIGNMENT, ops.Location.LEFT);
             print(' = function(');
             print(scriptDefNode.args.join(', '));
             print(') {\n');
@@ -318,7 +322,10 @@ function generateStatement(astNode, omitTerminator: boolean = false, omitIndenta
         case 'const':
             var constNode = <astTypes.ConstNode>astNode;
             omitIndentation || printIndent();
-            print(strings.ANGL_GLOBALS_IDENTIFIER + '.' + constNode.name);
+            generateExpression({
+                type: 'identifier',
+                variable: constNode.variable
+            }, OpEnum.ASSIGNMENT, ops.Location.LEFT);
             print(' = ');
             generateExpression(constNode.expr, OpEnum.ASSIGNMENT, ops.Location.RIGHT);
             break;
@@ -630,7 +637,7 @@ function generateTopNode(astNode) {
         case 'file':
             var fileNode = <astTypes.FileNode>astNode;
             // RequireJS `define()` call
-            print('define(function(require) {\n');
+            print('define(function(require, exports, module) {\n');
             indent();
             printIndent();
             // Something removes "use strict" from the source code unless I split it up like so.  RequireJS perhaps?
@@ -650,6 +657,27 @@ function generateTopNode(astNode) {
             _.each(fileNode.stmts, (node) => {
                 generateStatement(node);
             });
+            // Export values
+            switch(fileNode.moduleDescriptor.exportsType) {
+                case ModuleExportsType.MULTI:
+                    // Do nothing.  Multi-exports are directly accessed/assigned as properties
+                    // of the exports object (e.g. exports.foo) so they don't need to be exported at
+                    // the end of the file.
+                    break;
+                
+                case ModuleExportsType.SINGLE:
+                    printIndent();
+                    print('module.exports = ');
+                    generateExpression({
+                        type: 'identifier',
+                        variable: fileNode.moduleDescriptor.singleExport
+                    }, OpEnum.ASSIGNMENT, ops.Location.RIGHT);
+                    print(';\n');
+                    break;
+                
+                default:
+                    // Do nothing; apparently this file does not export anything.
+            }
             outdent();
             print('});');
             break;

@@ -20,8 +20,17 @@ export var transform = (ast:types.StatementsNode):types.AstNode => {
     thisVariable.setJsIdentifier('this');
     var otherVariable = new scopeVariable.Variable('other', 'PROP_ASSIGNMENT', 'PROP_ACCESS');
     otherVariable.setContainingObjectIdentifier(strings.ANGL_RUNTIME_IDENTIFIER);
+    var requireVariable = new scopeVariable.Variable(null, 'ARGUMENT', 'BARE');
+    requireVariable.setJsIdentifier('require');
+    var exportsVariable = new scopeVariable.Variable(null, 'ARGUMENT', 'BARE');
+    exportsVariable.setJsIdentifier('exports');
+    var moduleVariable = new scopeVariable.Variable(null, 'ARGUMENT', 'BARE');
+    moduleVariable.setJsIdentifier('module');
     anglScope.addVariable(thisVariable);
     anglScope.addVariable(otherVariable);
+    anglScope.addVariable(requireVariable);
+    anglScope.addVariable(exportsVariable);
+    anglScope.addVariable(moduleVariable);
     var globalAnglScope = ast.globalAnglScope || globalScope.createGlobalScope();
     anglScope.setParentScope(globalAnglScope);
     // Verify that the root node is of type "statements"

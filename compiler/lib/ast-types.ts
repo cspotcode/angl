@@ -144,7 +144,7 @@ export interface StatementNode extends AstNode {
     
 }
 
-export interface ConstNode extends AstNode {
+export interface ConstNode extends AstNode, AbstractExportableNode {
     name: string;
     expr: ExpressionNode;
 }
@@ -252,7 +252,7 @@ export interface SuperNode extends StatementNode {
     args: Array<ExpressionNode>;
 }
 
-export interface ObjectNode extends StatementNode {
+export interface ObjectNode extends StatementNode, AbstractExportableNode {
     name: string;
     parent?: string;
     stmts: Array<StatementNode>;
@@ -288,7 +288,7 @@ export interface DestroyDefNode extends AbstractInvokableNode, AstNode {};
 export interface ScriptNode extends ExpressionNode, AbstractArgsInvokableNode {
 }
 
-export interface ScriptDefNode extends StatementNode, AbstractArgsInvokableNode {
+export interface ScriptDefNode extends StatementNode, AbstractArgsInvokableNode, AbstractExportableNode {
     name: string;
 }
 
@@ -299,10 +299,20 @@ export interface ForNode extends StatementNode {
     stmt: StatementNode;
 }
 
+export interface ExportDeclarationNode extends AstNode {
+    name: string;
+}
+
 export interface AbstractInvokableNode {
     stmts: StatementsNode;
 }
 
 export interface AbstractArgsInvokableNode extends AbstractInvokableNode {
     args: string[];
+}
+
+export interface AbstractExportableNode extends AstNode {
+    exported?: boolean;
+    name: string;
+    variable?: scopeVariable.AbstractVariable;
 }

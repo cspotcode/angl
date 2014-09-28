@@ -12,11 +12,13 @@ import astTypes = require('./ast-types');
 import astUtils = require('./ast-utils');
 import scopeVariable = require('./scope-variable');
 import strings = require('./strings');
+import ModuleExportsType = require('./module-exports-type');
 var walk = treeWalker.walk;
 
 // Create scopes for all nodes
 
 export var transform = (ast:astTypes.AstNode) => {
+    var fileNode: astTypes.FileNode;
     walk(ast, (node:astTypes.AstNode, parent:astTypes.AstNode, locationInParent):any => {
 
         var replacement: Array<astTypes.AstNode>;
@@ -24,15 +26,65 @@ export var transform = (ast:astTypes.AstNode) => {
         // TODO convert all scriptdefs into consts
         // Will be a good test of replacing nodes
 
-        // Script definitions, constants, and object definitions register an identifier into the parent scope
+        // Cache the file node that we currently reside in.
+        if(node.type === 'file') {
+            fileNode = <astTypes.FileNode>node;
+        }
+        
+        // Script definitions, constants, and object definitions might be exported.
+        // If they're exported, they register an identifier into the global scope.
+        // If they're not exported, they register an identifier into the parent scope. 
         if(node.type === 'scriptdef' || node.type === 'const' || node.type === 'object') {
-            var scriptDefNode = <astTypes.ScriptDefNode>node;
-            if(scriptDefNode.parentNode.type !== 'file' && (scriptDefNode.parentNode.type !== 'object' || scriptDefNode.type !== 'scriptdef')) {
-                throw new Error(scriptDefNode.type + ' must be at the root level of a file.');
+            var exportableNode = <astTypes.AbstractExportableNode>node;
+            if(exportableNode.parentNode.type !== 'file' && (exportableNode.parentNode.type !== 'object' || exportableNode.type !== 'scriptdef')) {
+                throw new Error(exportableNode.type + ' must be at the root level of a file.');
             }
-            var globalVar = new scopeVariable.Variable(scriptDefNode.name, 'PROP_ASSIGNMENT', 'PROP_ACCESS');
-            globalVar.setContainingObjectIdentifier(strings.ANGL_GLOBALS_IDENTIFIER);
-            astUtils.getGlobalAnglScope(scriptDefNode).addVariable(globalVar);
+            var variable: scopeVariable.Variable;
+            if(exportableNode.exported) {
+                // This variable is destined for the global scope.
+                // We must make a local version of the variable to be used in local file scope.
+                // This version is attached to the exports object.
+                // Additionally, we must make a global version of the variable to be used by other files.
+                // This second version is set as "provided" by this file, such that other files using
+                // the variable will require() this module/file.
+                variable = new scopeVariable.Variable(exportableNode.name, 'PROP_ASSIGNMENT', 'PROP_ACCESS');
+                variable.setContainingObjectIdentifier('exports');
+                astUtils.getAnglScope(exportableNode).addVariable(variable);
+                var globalVariable = new scopeVariable.Variable(exportableNode.name, 'PROP_ASSIGNMENT', 'PROP_ACCESS');
+                globalVariable.setProvidedByModule(fileNode.moduleDescriptor);
+                astUtils.getGlobalAnglScope(exportableNode).addVariable(globalVariable);
+            } else {
+                // This variable is in local scope
+                variable = new scopeVariable.Variable(exportableNode.name, 'LOCAL', 'BARE');
+                variable.setJsIdentifier(null);
+                variable.setDesiredJsIdentifier(exportableNode.name);
+                astUtils.getAnglScope(exportableNode).addVariable(variable);
+            }
+            exportableNode.variable = variable;
+            
+            if(exportableNode.exported) {
+                if(fileNode.moduleDescriptor.exportsType === ModuleExportsType.UNKNOWN)
+                    fileNode.moduleDescriptor.exportsType = ModuleExportsType.MULTI;
+                if(fileNode.moduleDescriptor.exportsType !== ModuleExportsType.MULTI)
+                    throw new Error('Module cannot have both "export =" and "export object|const|script" statements.');
+                fileNode.moduleDescriptor.exports.push(exportableNode.variable);
+            }
+        }
+        
+        // Notice if this file exports a single export
+        if(node.type === 'export') {
+            var exportDeclarationNode = <astTypes.ExportDeclarationNode>node;
+            if(fileNode.moduleDescriptor.exportsType === ModuleExportsType.SINGLE)
+                throw new Error('Module cannot have multiple "export = " statements.');
+            if(fileNode.moduleDescriptor.exportsType === ModuleExportsType.UNKNOWN)
+                fileNode.moduleDescriptor.exportsType = ModuleExportsType.SINGLE;
+            if(fileNode.moduleDescriptor.exportsType !== ModuleExportsType.SINGLE)
+                throw new Error('Module cannot have both "export =" and "export object|const|script" statements.');
+            fileNode.moduleDescriptor.singleExport = astUtils.getAnglScope(exportDeclarationNode).getVariableByIdentifier(exportDeclarationNode.name);
+            if(!fileNode.moduleDescriptor.singleExport)
+                throw new Error('Cannot export "' + exportDeclarationNode.name + '": no such variable.');
+            fileNode.moduleDescriptor.preferredIdentifier = exportDeclarationNode.name;
+            return null;
         }
 
         // Scripts create a new scope

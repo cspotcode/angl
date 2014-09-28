@@ -44,38 +44,44 @@ parser.yy = {
         };
     },
     // makes script definition structure
-    makeScriptStmt: function (name, args, stmts) {
-        return {
+    makeScriptStmt: function (name, args, stmts, exported) {
+        var node = {
             type: 'scriptdef',
             name: name,
             args: args,
             stmts: stmts
         };
+        if(exported) {
+            node.exported = true;
+        }
+        return node;
     },
     // makes const definition structure
-    makeConstStmt: function (name, expr) {
-        return {
+    makeConstStmt: function (name, expr, exported) {
+        var node = {
             type: 'const',
             name: name,
             expr: expr
         };
+        if(exported) {
+            node.exported = true;
+        }
+        return node;
     },
     // makes object statement structure
-    makeObjectStmt: function (name, stmts, parent) {
-        if (parent) {
-            return {
-                type: 'object',
-                name: name,
-                parent: parent,
-                stmts: stmts
-            };
-        } else {
-            return {
-                type: 'object',
-                name: name,
-                stmts: stmts
-            };
+    makeObjectStmt: function (name, stmts, parent, exported) {
+        var node = {
+            type: 'object',
+            name: name,
+            stmts: stmts
+        };
+        if(parent) {
+            node.parent = parent;
         }
+        if(exported) {
+            node.exported = true;
+        }
+        return node;
     },
     // makes create script definition structure
     makeCreateStmt: function (args, stmts) {
@@ -99,6 +105,12 @@ parser.yy = {
             name: name,
             expr: expr
         };
+    },
+    makeExportDeclarationStmt: function(name) {
+        return {
+            type: 'export',
+            name: name
+        }
     },
     // make binary operator structure
     makeBinaryOp: function (op, expr1, expr2) {
