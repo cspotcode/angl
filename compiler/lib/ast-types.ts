@@ -281,9 +281,9 @@ export interface JsExprNode extends AstNode {
     expr: string;
 }
 
-export interface CreateDefNode extends AbstractArgsInvokableNode, AstNode {};
+export interface CreateDefNode extends AbstractArgsInvokableNode, AstNode {}
 
-export interface DestroyDefNode extends AbstractInvokableNode, AstNode {};
+export interface DestroyDefNode extends AbstractInvokableNode, AstNode {}
 
 export interface ScriptNode extends ExpressionNode, AbstractArgsInvokableNode {
 }
