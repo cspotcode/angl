@@ -177,10 +177,10 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             // construct a new AstNode to replace it.
             // allocate a temporary Javascript counter variable
             var counterVariable = new scopeVariable.Variable();
-            counterVariable.setDesiredJsIdentifier('$i');
+            counterVariable.setDesiredJsIdentifier('i');
             astUtils.getAnglScope(repeatNode).addVariable(counterVariable);
             var timesVariable = new scopeVariable.Variable();
-            timesVariable.setDesiredJsIdentifier('$l');
+            timesVariable.setDesiredJsIdentifier('l');
             astUtils.getAnglScope(repeatNode).addVariable(timesVariable);
             replacement = [
                 {
@@ -253,24 +253,24 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
 
             // Create variable to hold the full list of matched objects to be iterated over
             var allObjectsVariable = new scopeVariable.Variable();
-            allObjectsVariable.setDesiredJsIdentifier('$objects');
+            allObjectsVariable.setDesiredJsIdentifier('wObjects');
             outerScope.addVariable(allObjectsVariable);
 
             // Create variable to hold the index (integer) for iteration over the array of objects
             var indexVariable = new scopeVariable.Variable();
-            indexVariable.setDesiredJsIdentifier('$i');
+            indexVariable.setDesiredJsIdentifier('i');
             outerScope.addVariable(indexVariable);
 
             // Create variable to hold the current subject of iteration, the current `self` value
             var selfVariable = new scopeVariable.Variable();
             selfVariable.setIdentifier('self');
-            selfVariable.setDesiredJsIdentifier('$withSelf');
+            selfVariable.setDesiredJsIdentifier('wSelf');
             innerScope.addVariable(selfVariable);
 
             // Create variable to cache the outer `other` value.  This will be used to restore the value of `other`
             // after `with` has finished looping.
             var outerOtherVariable = new scopeVariable.Variable();
-            outerOtherVariable.setDesiredJsIdentifier('$withOuterOther');
+            outerOtherVariable.setDesiredJsIdentifier('wPrevOther');
             outerScope.addVariable(outerOtherVariable);
 
             // Store variables onto the with node, for using during code generation
