@@ -9,4 +9,11 @@ export class Options {
     
     generateUseStrict: boolean = false;
     
+    stringQuoteStyle: StringQuoteStyle = StringQuoteStyle.SINGLE;
+    
+}
+
+export enum StringQuoteStyle {
+    SINGLE,
+    DOUBLE
 }

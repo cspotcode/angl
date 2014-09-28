@@ -55,6 +55,14 @@ export class JsGenerator {
     getCode() {
         return _.flatten(this.buffer).join('');
     }
+    
+    codeForStringLiteral(value: string) {
+        var code = JSON.stringify(value);
+        if(this.options.stringQuoteStyle === options.StringQuoteStyle.SINGLE) {
+            code = "'" + code.slice(1, -1).replace(/'/g, "\'") + "'";
+        }
+        return code;
+    }
 
     // TODO properly translate all binops and unops:
     //   ones that GML has that JS doesn't have
@@ -192,7 +200,7 @@ export class JsGenerator {
 
             case 'string':
                 var stringNode = <astTypes.StringNode>astNode;
-                this.print(JSON.stringify(stringNode.val));
+                this.print(this.codeForStringLiteral(stringNode.val));
                 // TODO this fails in a select few corner cases.  Use something better,
                 // perhaps stolen from the Jade source code
                 break;
@@ -550,7 +558,7 @@ export class JsGenerator {
                 // already exists.
                 omitIndentation || this.printIndent();
                 this.print(strings.ANGL_RUNTIME_IDENTIFIER + '.createAnglObject(' +
-                    JSON.stringify(objectNode.name) + ', ' + JSON.stringify(objectNode.parent) + ', ');
+                    this.codeForStringLiteral(objectNode.name) + ', ' + this.codeForStringLiteral(objectNode.parent) + ', ');
                 this.print('function() {\n');
                 this.indent();
                 // Generate the constructor function
@@ -665,12 +673,12 @@ export class JsGenerator {
                 }
                 // require modules
                 this.printIndent();
-                this.print('var ' + strings.ANGL_GLOBALS_IDENTIFIER + ' = require(' + JSON.stringify(strings.ANGL_GLOBALS_MODULE) + ');\n');
+                this.print('var ' + strings.ANGL_GLOBALS_IDENTIFIER + ' = require(' + this.codeForStringLiteral(strings.ANGL_GLOBALS_MODULE) + ');\n');
                 this.printIndent();
-                this.print('var ' + strings.ANGL_RUNTIME_IDENTIFIER + ' = require(' + JSON.stringify(strings.ANGL_RUNTIME_MODULE) + ');\n');
+                this.print('var ' + strings.ANGL_RUNTIME_IDENTIFIER + ' = require(' + this.codeForStringLiteral(strings.ANGL_RUNTIME_MODULE) + ');\n');
                 fileNode.dependencies.forEach((variable, moduleDescriptor) => {
                     this.printIndent();
-                    this.print('var ' + variable.getJsIdentifier() + ' = require(' + JSON.stringify(moduleDescriptor.name) + ');\n');
+                    this.print('var ' + variable.getJsIdentifier() + ' = require(' + this.codeForStringLiteral(moduleDescriptor.name) + ');\n');
                 });
                 // allocate local variables
                 this.generateLocalVariableAllocation(fileNode);
