@@ -84,6 +84,10 @@ export var transform = (ast:astTypes.AstNode) => {
             if(!fileNode.moduleDescriptor.singleExport)
                 throw new Error('Cannot export "' + exportDeclarationNode.name + '": no such variable.');
             fileNode.moduleDescriptor.preferredIdentifier = exportDeclarationNode.name;
+            // Since this is an export, add a variable to global scope.
+            var globalVar = new scopeVariable.Variable(exportDeclarationNode.name, 'NONE', 'BARE');
+            globalVar.setProvidedByModule(fileNode.moduleDescriptor);
+            astUtils.getGlobalAnglScope(fileNode).addVariable(globalVar);
             return null;
         }
 
