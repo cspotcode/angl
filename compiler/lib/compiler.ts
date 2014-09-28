@@ -1,6 +1,7 @@
 /// <reference path="../../typings/all.d.ts"/>
 "use strict";
 
+import glob = require('glob');
 import _ = require('lodash');
 import path = require('path');
 import fs = require('fs');
@@ -13,7 +14,6 @@ import allTransformations = require('./run-all-transformations');
 import findGlobals = require('./find-globals');
 import jsGenerator = require('./main');
 import options = require('./options');
-var fileset = require('fileset');
 var defaultOptions = new options.Options();
 
 export function compile(anglSourceCode:string):string {
@@ -32,54 +32,68 @@ export function compileAst(anglAst:astTypes.AstNode, extraGlobalIdentifiers:stri
 }
 
 interface AnglFile {
-    path: string;
+    sourcePath: string;
+    moduleName: string;
     ast?: astTypes.AstNode;
     globals?: string[];
     sourceContent?: string;
     compiledJs?: string;
 }
 
-export function compileDirectory(directoryPath:string, cb:(err, message?:string)=>void) {
+export function compileDirectory(sourcePath: string, destinationPath: string) {
     
-    try {
-        if(!fs.statSync(directoryPath).isDirectory()) throw new Error('"' + directoryPath + '" is not a directory.');
-    } catch(err) {
-        return cb(err);
-    }
+    if(!fs.statSync(sourcePath).isDirectory()) throw new Error('"' + sourcePath + '" is not a directory.');
     
-    fileset(path.join(directoryPath, '**/*.angl'), '', (err, filePaths?:string[]) => {
-        if(err) return cb(err);
-        
-        var files: Array<AnglFile> = _.map(filePaths, (filePath) => {
-            // Create the file object
-            var file:AnglFile = {
-                path: filePath,
-                sourceContent: fs.readFileSync(filePath, 'utf8')
-            };
-            // Generate an AST
-            file.ast = angl.parse(file.sourceContent);
-            return file;
-        });
-        
-        // Find the globals created by each file
-        _.each(files, (file) => {
-            file.globals = findGlobals.getGlobalNames(file.ast);
-        });
-        
-        // Compile each file into JavaScript
-        _.each(files, (file:AnglFile, i) => {
-            // Build the list of global identifiers from *other* files
-            var globalIdentifiers = <Array<string>>_(files).filter((file, i2) => i2 !== i).pluck('globals').flatten().value();
-            console.log(globalIdentifiers);
-            file.compiledJs = compileAst(file.ast, globalIdentifiers);
-        });
-        
-        // Output all of the Javascript to the filesystem
-        _.each(files, (file:AnglFile) => {
-            var outputPath = file.path + '.js';
-            fs.writeFileSync(outputPath, file.compiledJs);
-        });
-        
-        return cb(null, 'Success!');
+    var filePaths = glob.sync('**/*.angl', {cwd: sourcePath});
+    
+    var files: Array<AnglFile> = _.map(filePaths, (filePath) => {
+        // Create the file object
+        var file:AnglFile = {
+            sourcePath: filePath,
+            moduleName: filePath.replace(/\.[^/]+?$/, ''),
+            sourceContent: fs.readFileSync(path.resolve(sourcePath, filePath), 'utf8')
+        };
+        // Generate an AST
+        file.ast = angl.parse(file.sourceContent);
+        return file;
     });
+    
+    // Create a global scope
+    var newGlobalScope = globalScope.createGlobalScope([]);
+    
+    console.log('Performing first transformation phase on each file...');
+    var allFileAsts = <Array<astTypes.FileNode>>_.map(files, (file) => {
+        file.ast.globalAnglScope = newGlobalScope;
+        file.ast = allTransformations.runAllTransformations(file.ast, defaultOptions, 0, 1);
+        var moduleDescriptor = (<astTypes.FileNode>file.ast).moduleDescriptor;
+        moduleDescriptor.name = file.moduleName;
+        moduleDescriptor.preferredIdentifier = _.last(file.moduleName.split('/'));
+        return file.ast;
+    });
+    
+    // Generate a ProjectNode AST containing all files
+    var projectNode: astTypes.ProjectNode = {
+        type: 'project',
+        files: allFileAsts,
+        parentNode: null,
+        anglScope: newGlobalScope,
+        globalAnglScope: newGlobalScope
+    };
+    
+    console.log('Performing remaining transformation phases on project...');
+    projectNode = <astTypes.ProjectNode>allTransformations.runAllTransformations(projectNode, defaultOptions, 1);
+    
+    console.log('Generating JavaScript source code...');
+    _.each(files, (file: AnglFile) => {
+        var jsSource = jsGenerator.generateJs(file.ast, defaultOptions);
+        file.compiledJs = jsSource;
+    });
+
+    console.log('Writing JavaScript code to disc...');
+    // Output all of the Javascript to the filesystem
+    _.each(files, (file:AnglFile) => {
+        var outputPath = path.join(destinationPath, file.moduleName + '.js');
+        fs.writeFileSync(outputPath, file.compiledJs);
+    });
+        
 }

@@ -22,6 +22,12 @@
     },
     "chai/chai.d.ts": {
       "commit": "50dd84eb5d5593787b7686decf1476d094f5e13a"
+    },
+    "glob/glob.d.ts": {
+      "commit": "eef872b96a458fde22571def5a368a867de9901b"
+    },
+    "minimatch/minimatch.d.ts": {
+      "commit": "eef872b96a458fde22571def5a368a867de9901b"
     }
   }
 }

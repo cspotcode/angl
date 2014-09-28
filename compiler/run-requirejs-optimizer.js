@@ -131,7 +131,7 @@ var config = {
     rawText: {
         'fs': '',
         'path': '',
-        'fileset': '',
+        'glob': '',
         
         // This will be assigned a string below.
         'set-require-config': null
