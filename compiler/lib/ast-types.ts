@@ -1,6 +1,8 @@
 /// <reference path="../../typings/all.d.ts"/>
 "use strict";
 
+import Map = require('collections/map');
+
 import scope = require('./angl-scope');
 import scopeVariable = require('./scope-variable');
 import ModuleDescriptor = require('./module-descriptor');
@@ -16,17 +18,74 @@ export interface ProjectNode extends AstNode {
     files: Array<FileNode>;
 }
 
-/**
- * AST node representing a single .angl file.
- * Each file is also an AMD module.
- */
-export interface FileNode extends AstNode {
+export class FileNode implements AstNode {
+    // Implement AstNode interface
+    parentNode: AstNode;
+    type = 'file';
+    anglScope: scope.AnglScope;
+    globalAnglScope: scope.AnglScope;
+    
     stmts: StatementNode[];
-    dependencies: Array<{
-        variable: scopeVariable.AbstractVariable;
-        moduleDescriptor: ModuleDescriptor;
-    }>;
-    moduleDescriptor: ModuleDescriptor;
+
+    /**
+     * Map from ModuleDescriptor instances to their corresponding local variables.
+     */
+    public /*read-only*/ dependencies: Map<ModuleDescriptor, scopeVariable.AbstractVariable>;
+
+    /**
+     * Describes this file's module.  In AMD, each file is a module.
+     */
+    public /*read-only*/ moduleDescriptor: ModuleDescriptor;
+
+    /**
+     * Add a dependency on the given module.
+     * It will be require()'d in the generated JS code.
+     * For convenience, returns the local variable into which the dependency will be stored.
+     */
+    addDependency(moduleDescriptor: ModuleDescriptor): scopeVariable.AbstractVariable {
+        // TODO throw an error?  Or silently succeed?
+        if(this.dependencies.has(moduleDescriptor)) {
+            throw new Error('File already has a dependency on module: ' + moduleDescriptor.name);
+        }
+        var variable = new scopeVariable.Variable(null, 'IMPORT', 'BARE');
+        variable.setDesiredJsIdentifier(moduleDescriptor.preferredIdentifier);
+        this.anglScope.addVariable(variable);
+        this.dependencies.set(moduleDescriptor, variable);
+        return variable;
+    }
+
+    /**
+     * Returns the local variable on which this dependency is stored when loaded.
+     * Returns undefined if we do not have a dependency on the given module.
+     */
+    getVariableForDependency(moduleDescriptor: ModuleDescriptor): scopeVariable.AbstractVariable {
+        return this.dependencies.get(moduleDescriptor, undefined);
+    }
+
+    /**
+     * Get a local proxy variable that accesses the property on the locally-loaded module.
+     * Create said variable if it does not yet exist.
+     * If addDependency is true, a dependency will be added as necessary.
+     * If addDependency is false and a dependency does not yet exist, throws an error.
+     */
+    getLocalProxyForModuleVariable(variable: scopeVariable.AbstractVariable, addDependency: boolean = false): scopeVariable.AbstractVariable {
+        var providedByModule = variable.getProvidedByModule();
+        var moduleVariable = this.getVariableForDependency(providedByModule);
+        if(!moduleVariable) {
+            if(!addDependency) throw new Error('File does not already have a dependency on the appropriate module.');
+            moduleVariable = this.addDependency(providedByModule);
+        }
+        // create local proxy variable and add it to scope
+        var proxyVariable = new scopeVariable.ProxyToModuleProvidedVariable(variable, moduleVariable);
+        this.anglScope.addVariable(proxyVariable);
+        return proxyVariable;
+    }
+
+    constructor(stmts: Array<StatementNode>, modulePath: string) {
+        this.stmts = stmts.slice();
+        this.moduleDescriptor = new ModuleDescriptor(modulePath, false);
+        this.dependencies = new Map<ModuleDescriptor, scopeVariable.AbstractVariable>();
+    }
 }
 
 

@@ -628,6 +628,7 @@ function generateTopNode(astNode) {
     switch(astNode.type) {
 
         case 'file':
+            var fileNode = <astTypes.FileNode>astNode;
             // RequireJS `define()` call
             print('define(function(require) {\n');
             indent();
@@ -639,10 +640,14 @@ function generateTopNode(astNode) {
             print('var ' + strings.ANGL_GLOBALS_IDENTIFIER + ' = require(' + JSON.stringify(strings.ANGL_GLOBALS_MODULE) + ');\n');
             printIndent();
             print('var ' + strings.ANGL_RUNTIME_IDENTIFIER + ' = require(' + JSON.stringify(strings.ANGL_RUNTIME_MODULE) + ');\n');
+            fileNode.dependencies.forEach((variable, moduleDescriptor) => {
+                printIndent();
+                print('var ' + variable.getJsIdentifier() + ' = require(' + JSON.stringify(moduleDescriptor.name) + ');\n');
+            });
             // allocate local variables
-            generateLocalVariableAllocation(astNode);
+            generateLocalVariableAllocation(fileNode);
             // delegate to the statement generator
-            _.each(astNode.stmts, (node) => {
+            _.each(fileNode.stmts, (node) => {
                 generateStatement(node);
             });
             outdent();

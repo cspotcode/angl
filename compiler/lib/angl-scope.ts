@@ -255,6 +255,8 @@ export class AnglScope {
      * Returns an array of all variables that must be allocated by/in this scope.  Some variables
      * do not need to be allocated at all, and sometimes a scope must allocate variables on behalf
      * of a child scope.
+     * Imports (`var mod = require('mod')` or `import mod = require('mod')` are excluded; they are handled
+     * separately.
      */
     getVariablesThatMustBeAllocatedInThisScope(): Array<scopeVariable.AbstractVariable> {
         if(!this.canAllocateOwnLocalVariables) return [];

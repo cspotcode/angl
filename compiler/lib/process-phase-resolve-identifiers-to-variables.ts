@@ -11,7 +11,13 @@ var walk = treeWalker.walk;
 
 // Create scopes for all nodes
 export var transform = (ast:astTypes.AstNode) => {
+    var fileNode: astTypes.FileNode;
     walk(ast, (node, parent, locationInParent:string) => {
+        // Cache the file node that we are currently within.  This is useful later when adding proxy
+        // variables to the file's scope.
+        if(node.type === 'file') {
+            fileNode = node;
+        }
         if(node.type === 'identifier') {
             // If this identifier node is actually a property name for property access (e.g. the `bar` in `foo.bar`)
             // then it does *not* resolve to a variable in scope.
@@ -38,6 +44,11 @@ export var transform = (ast:astTypes.AstNode) => {
                     },
                     expr2: astUtils.cleanNode(node)
                 };
+            }
+            // If this is a module-provided variable, create a new proxy variable in file scope and resolve the
+            // identifier to that proxy variable.
+            if(variable.getProvidedByModule()) {
+                variable = fileNode.getLocalProxyForModuleVariable(variable, true);
             }
             node.variable = variable;
             // If this variable is from a parent scope, and it could theoretically be shadowed, then we must tell this

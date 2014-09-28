@@ -3,6 +3,8 @@
 
 import _ = require('lodash');
 
+import ModuleDescriptor = require('./module-descriptor');
+
 export interface AbstractVariable {
     awaitingJsIdentifierAssignment():boolean;
     getJsIdentifier():string;
@@ -10,6 +12,13 @@ export interface AbstractVariable {
     getAllocationType():string;
     getAccessType():string;
     getContainingObjectIdentifier():string;
+    /**
+     * If this variable is provided by a module, returns the ModuleDescriptor for
+     * said module.
+     * To be "provided" by the module means that the module must be loaded to use this variable.
+     * For example, with node's `fs.readFile`, the `readFile` variable is provided by the `fs` module.
+     */
+    getProvidedByModule():ModuleDescriptor;
 }
 
 export class Variable implements AbstractVariable {
@@ -20,12 +29,13 @@ export class Variable implements AbstractVariable {
     private _desiredJsIdentifier:string;
     private _jsIdentifier:string;
     private _containingObjectIdentifier:string;
+    private _providedByModule: ModuleDescriptor;
 
     /**
      * Enumeration of possible allocationType values.
      * TODO should this be split into allocationType and assignmentType?  Or is that unnecessary complexity/over-engineering?
      */
-    private static allocationTypes = ['LOCAL', 'ARGUMENT', 'PROP_ASSIGNMENT', 'NONE'];
+    private static allocationTypes = ['LOCAL', 'ARGUMENT', 'PROP_ASSIGNMENT', 'IMPORT', 'NONE'];
     /**
      * Enumeration of possible accessType values.
      */
@@ -41,6 +51,7 @@ export class Variable implements AbstractVariable {
         this._allocationType = allocationType;
         this._accessType = accessType;
         this._containingObjectIdentifier = null;
+        this._providedByModule = null;
     }
 
     awaitingJsIdentifierAssignment() { return !this._jsIdentifier; }
@@ -83,6 +94,46 @@ export class Variable implements AbstractVariable {
     setContainingObjectIdentifier(identifier:string) { this._containingObjectIdentifier = identifier; }
 
     getContainingObjectIdentifier():string { return this._containingObjectIdentifier; }
+    
+    setProvidedByModule(moduleDescriptor: ModuleDescriptor) { this._providedByModule = moduleDescriptor; }
+
+    getProvidedByModule() { return this._providedByModule; }
+}
+
+/**
+ * A variable created in a File scope that proxies to the corresponding variable in a module.
+ * For example, if module "foo-module" exposes a property "bar" (for our purposes, module properties
+ * == module variables) and is loaded as follows:
+ *     `var foo = require('foo');`
+ * the ProxyToModuleVariable for bar would generate code that looks like:
+ *     `foo.bar`
+ * It knows the local variable for that module (foo) so it can generate the correct code.  This local
+ * variable (foo) can potentially be different in different files, which is why ProxyToModuleVariable
+ * instances are created.
+ */
+export class ProxyToModuleProvidedVariable implements AbstractVariable {
+    private _moduleVariable: AbstractVariable;
+    private _moduleProvidedVariable: AbstractVariable;
+    
+    constructor(moduleProvidedVariable: AbstractVariable, moduleVariable: AbstractVariable) {
+        this._moduleVariable = moduleVariable;
+        this._moduleProvidedVariable = moduleProvidedVariable;
+    }
+    
+    awaitingJsIdentifierAssignment() { return false; }
+    
+    getJsIdentifier() { return this._moduleProvidedVariable.getJsIdentifier(); }
+    
+    getIdentifier() { return this._moduleProvidedVariable.getIdentifier(); }
+    
+    getAllocationType() { return 'NONE'; }
+    
+    getAccessType() { return 'PROP_ACCESS'; }
+    
+    getContainingObjectIdentifier() { return this._moduleVariable.getJsIdentifier(); }
+    
+    getProvidedByModule() { return null; }
+    
 }
 
 // A variable that has its own identifier in Angl, but actually maps to the same JS variable as another
@@ -109,5 +160,7 @@ export class LinkedVariable implements AbstractVariable {
     getAccessType():string { return this._linkedToVariable.getAccessType(); }
 
     getContainingObjectIdentifier():string { return this._linkedToVariable.getContainingObjectIdentifier(); }
+    
+    getProvidedByModule() { return this._linkedToVariable.getProvidedByModule(); }
 
 }

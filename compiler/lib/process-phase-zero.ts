@@ -28,13 +28,10 @@ export var transform = (ast:types.StatementsNode):types.AstNode => {
     if(ast.type !== 'statements') {
         throw new Error('Unexpected root node from Angl parser. Expected type "statements", got "' + ast.type + '".');
     }
-    var fileNode:types.FileNode = {
-        type: "file",
-        stmts: ast.list,
-        globalAnglScope: globalAnglScope,
-        anglScope: anglScope,
-        dependencies: [],
-        moduleDescriptor: new ModuleDescriptor('main', true)
-    };
+    var fileNode = new types.FileNode(ast.list, 'main');
+    
+    fileNode.anglScope = anglScope;
+    fileNode.globalAnglScope = globalAnglScope;
+    
     return fileNode;
 };
