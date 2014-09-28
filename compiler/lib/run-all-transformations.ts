@@ -13,6 +13,6 @@ export var transformers = [
     require('./process-phase-assign-js-identifiers').transform
 ];
 
-export function runAllTransformations(ast: types.AstNode, options: options.Options): types.AstNode {
-    return _.reduce(transformers, (ast:types.AstNode, transformer) => ( transformer(ast, options) || ast ), ast);
+export function runAllTransformations(ast: types.AstNode, options: options.Options, startPhase: number = 0, endPhase: number = Infinity): types.AstNode {
+    return _.reduce(transformers.slice(startPhase, endPhase), (ast:types.AstNode, transformer) => ( transformer(ast, options) || ast ), ast);
 };
