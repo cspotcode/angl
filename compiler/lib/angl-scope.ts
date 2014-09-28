@@ -49,12 +49,6 @@ export class AnglScope {
      */
     private _unshadowableVariables: Set<scopeVariable.AbstractVariable>;
     /**
-     * A number appended to identifiers to make them unique.  Only used in case of a naming conflict.
-     * Counts up every time it is used.
-     */
-    private _namingUid: number;
-
-    /**
      * Set of all scopes that are direct children of this one (scopes for whom _parentScope === this scope)
      */
     private _childScopes: Set<AnglScope>;
@@ -72,7 +66,6 @@ export class AnglScope {
         this._variables = new Set<scopeVariable.AbstractVariable>();
         this._parentScope = null;
         this._unshadowableVariables = new Set<scopeVariable.AbstractVariable>();
-        this._namingUid = 0;
         this._childScopes = new Set<AnglScope>();
     }
 
@@ -227,9 +220,10 @@ export class AnglScope {
             var namePrefix = variable.getDesiredJsIdentifier() || '__a';
             var nameSuffix = '';
             // While the name is already in use, create a new name by using a different suffix
+            var uid = 2;
             while(this._hasJsIdentifier(namePrefix + nameSuffix) || unshadowableNames.contains(namePrefix + nameSuffix)) {
-                nameSuffix = '' + this._namingUid;
-                this._namingUid++;
+                nameSuffix = '' + uid;
+                uid++;
             }
             // Found a unique name!  Assign it.
             var name = namePrefix + nameSuffix;
