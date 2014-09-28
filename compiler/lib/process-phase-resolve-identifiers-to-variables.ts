@@ -7,10 +7,13 @@ import treeWalker = require('./tree-walker');
 import scope = require('./angl-scope');
 import astTypes = require('./ast-types');
 import astUtils = require('./ast-utils');
+import options = require('./options');
+import identifierManipulations = require('./identifier-manipulations');
+var Ident = identifierManipulations.Identifier;
 var walk = treeWalker.walk;
 
 // Create scopes for all nodes
-export var transform = (ast:astTypes.AstNode) => {
+export var transform = (ast:astTypes.AstNode, options: options.Options) => {
     var fileNode: astTypes.FileNode;
     walk(ast, (node, parent, locationInParent:string) => {
         // Cache the file node that we are currently within.  This is useful later when adding proxy
@@ -35,6 +38,9 @@ export var transform = (ast:astTypes.AstNode) => {
             // (e.g. `this.bar`)
             if(!variable) {
                 // Replace this identifier node with a `this.bar` node
+                // If this identifier looks like an under_score, rename it to camelCase
+                if(options.renameUnderscoreToCamelCase && /[^_-]_/.test(node.name))
+                    node.name = Ident.fromUnderscores(node.name).toCamelCase();
                 return {
                     type: 'binop',
                     op: '.',

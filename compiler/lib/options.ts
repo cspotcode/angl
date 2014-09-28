@@ -3,6 +3,10 @@
 
 export class Options {
     
+    renameUnderscoreToCamelCase: boolean = true;
+    
+    renameUnderscoreToCamelCaseForGlobals: boolean = true;
+    
     spacesPerIndentationLevel: number = 4;
     
     generateAmdWrapper: boolean = false;

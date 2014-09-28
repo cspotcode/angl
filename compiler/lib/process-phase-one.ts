@@ -13,11 +13,14 @@ import astUtils = require('./ast-utils');
 import scopeVariable = require('./scope-variable');
 import strings = require('./strings');
 import ModuleExportsType = require('./module-exports-type');
+import options = require('./options');
+import identifierManipulations = require('./identifier-manipulations');
+var Ident = identifierManipulations.Identifier;
 var walk = treeWalker.walk;
 
 // Create scopes for all nodes
 
-export var transform = (ast:astTypes.AstNode) => {
+export var transform = (ast:astTypes.AstNode, options: options.Options) => {
     var fileNode: astTypes.FileNode;
     walk(ast, (node:astTypes.AstNode, parent:astTypes.AstNode, locationInParent):any => {
 
@@ -39,6 +42,10 @@ export var transform = (ast:astTypes.AstNode) => {
             if(exportableNode.parentNode.type !== 'file' && (exportableNode.parentNode.type !== 'object' || exportableNode.type !== 'scriptdef')) {
                 throw new Error(exportableNode.type + ' must be at the root level of a file.');
             }
+            var jsIdentifier: string;
+            if(options.renameUnderscoreToCamelCaseForGlobals && /[^_-]_/.test(exportableNode.name)) {
+                jsIdentifier = Ident.fromUnderscores(exportableNode.name).toCamelCase();
+            }
             var variable: scopeVariable.Variable;
             if(exportableNode.exported) {
                 // This variable is destined for the global scope.
@@ -48,16 +55,24 @@ export var transform = (ast:astTypes.AstNode) => {
                 // This second version is set as "provided" by this file, such that other files using
                 // the variable will require() this module/file.
                 variable = new scopeVariable.Variable(exportableNode.name, 'PROP_ASSIGNMENT', 'PROP_ACCESS');
+                if(jsIdentifier) {
+                    variable.setJsIdentifier(null);
+                    variable.setDesiredJsIdentifier(jsIdentifier);
+                }
                 variable.setContainingObjectIdentifier('exports');
                 astUtils.getAnglScope(exportableNode).addVariable(variable);
                 var globalVariable = new scopeVariable.Variable(exportableNode.name, 'PROP_ASSIGNMENT', 'PROP_ACCESS');
+                if(jsIdentifier) {
+                    globalVariable.setJsIdentifier(null);
+                    globalVariable.setDesiredJsIdentifier(jsIdentifier);
+                }
                 globalVariable.setProvidedByModule(fileNode.moduleDescriptor);
                 astUtils.getGlobalAnglScope(exportableNode).addVariable(globalVariable);
             } else {
                 // This variable is in local scope
                 variable = new scopeVariable.Variable(exportableNode.name, 'LOCAL', 'BARE');
                 variable.setJsIdentifier(null);
-                variable.setDesiredJsIdentifier(exportableNode.name);
+                variable.setDesiredJsIdentifier(jsIdentifier || exportableNode.name);
                 astUtils.getAnglScope(exportableNode).addVariable(variable);
             }
             exportableNode.variable = variable;
@@ -119,6 +134,12 @@ export var transform = (ast:astTypes.AstNode) => {
                     throw new Error('Attempt to declare local variable with the name ' + JSON.stringify(var_item.name) + ' more than once.');
                 }
                 var localVar = new scopeVariable.Variable(var_item.name);
+                localVar.setJsIdentifier(null);
+                localVar.setDesiredJsIdentifier(
+                    options.renameUnderscoreToCamelCase && /[^_-]_/.test(var_item.name)
+                    ? Ident.fromUnderscores(var_item.name).toCamelCase()
+                    : var_item.name
+                );
                 astUtils.getAnglScope(varNode).addVariable(localVar);
                 if(var_item.expr) {
                     replacement.push({
