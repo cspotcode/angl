@@ -524,7 +524,7 @@ export class JsGenerator {
                 this.generateStatement(withNode.stmt);
                 this.outdent();
                 omitIndentation || this.printIndent();
-                this.print('};\n');
+                this.print('}\n');
                 // Restore the outer value of `other`
                 omitIndentation || this.printIndent();
                 this.print(strings.ANGL_RUNTIME_IDENTIFIER + '.other = ');
@@ -611,9 +611,10 @@ export class JsGenerator {
         // except for a few exceptions.
         // Also, in certain contexts we want to omit this termination
         // (e.g., initializer statement of a for loop)
-        if(!_.contains(['nop', 'statements'], astNode.type) && !omitTerminator) {
-            this.print(';\n');
-        }
+        if(!_.contains(['nop', 'statements', 'if', 'ifelse', 'while', 'for', 'switch'], astNode.type) && !omitTerminator)
+            this.print(';');
+        if(!_.contains(['nop', 'statements'], astNode.type) && !omitTerminator)
+            this.print('\n');
     }
 
     generateCase(astNode) {
