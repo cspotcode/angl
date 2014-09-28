@@ -25,7 +25,7 @@ export function compileAst(anglAst:astTypes.AstNode, extraGlobalIdentifiers:stri
     // Manually create and assign a global scope to the AST
     var newGlobalScope = globalScope.createGlobalScope(extraGlobalIdentifiers);
     anglAst.globalAnglScope = newGlobalScope;
-    anglAst = allTransformations.runAllTransformations(anglAst);
+    anglAst = allTransformations.runAllTransformations(anglAst, defaultOptions);
     var jsSource = jsGenerator.generateJs(anglAst, defaultOptions);
     return jsSource;
 }
