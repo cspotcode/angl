@@ -9,17 +9,26 @@ import ops = require('./operator-precedence-and-associativity');
 var OpEnum = ops.JavascriptOperatorsEnum;
 import anglToJsOpMap = require('./angl-to-js-operator-map');
 import ModuleExportsType = require('./module-exports-type');
+import options = require('./options');
 
 export class JsGenerator {
     
     private buffer: Array<any>;
     private indentationLevel: number;
+    private options: options.Options;
     private indentationString: string;
+    
+    constructor(options: options.Options) {
+        this.options = options;
+    }
     
     initialize() {
         this.buffer = [];
         this.indentationLevel = 0;
-        this.indentationString = '    ';
+        this.indentationString = '';
+        _.times(this.options.spacesPerIndentationLevel, () => {
+            this.indentationString += ' ';
+        });
     }
     
     print(text) {
@@ -644,12 +653,16 @@ export class JsGenerator {
 
             case 'file':
                 var fileNode = <astTypes.FileNode>astNode;
-                // RequireJS `define()` call
-                this.print('define(function(require, exports, module) {\n');
-                this.indent();
+                if(this.options.generateAmdWrapper) {
+                    // RequireJS `define()` call
+                    this.print('define(function(require, exports, module) {\n');
+                    this.indent();
+                }
                 this.printIndent();
-                // Something removes "use strict" from the source code unless I split it up like so.  RequireJS perhaps?
-                this.print('"use' + ' strict";\n');
+                if(this.options.generateUseStrict) {
+                    // Something removes "use strict" from the source code unless I split it up like so.  RequireJS perhaps?
+                    this.print('"use' + ' strict";\n');
+                }
                 // require modules
                 this.printIndent();
                 this.print('var ' + strings.ANGL_GLOBALS_IDENTIFIER + ' = require(' + JSON.stringify(strings.ANGL_GLOBALS_MODULE) + ');\n');
@@ -686,8 +699,10 @@ export class JsGenerator {
                     default:
                     // Do nothing; apparently this file does not export anything.
                 }
-                this.outdent();
-                this.print('});');
+                if(this.options.generateAmdWrapper) {
+                    this.outdent();
+                    this.print('});');
+                }
                 break;
 
             default:
@@ -696,8 +711,8 @@ export class JsGenerator {
     }
 }
 
-export function generateJs(transformedAst: astTypes.AstNode) {
-    var generator = new JsGenerator();
+export function generateJs(transformedAst: astTypes.AstNode, options: options.Options) {
+    var generator = new JsGenerator(options);
     generator.initialize();
     generator.generateTopNode(transformedAst);
     return generator.getCode();

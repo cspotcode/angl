@@ -10,8 +10,10 @@ import path = require('path');
 import fs = require('fs');
 import findGlobals = require('./find-globals');
 import jsGenerator = require('./main');
+import options = require('./options');
 var fileset = require('fileset');
 import _ = require('lodash');
+var defaultOptions = new options.Options();
 
 export function compile(anglSourceCode:string):string {
     // Parse the angl source code into an AST
@@ -24,7 +26,7 @@ export function compileAst(anglAst:astTypes.AstNode, extraGlobalIdentifiers:stri
     var newGlobalScope = globalScope.createGlobalScope(extraGlobalIdentifiers);
     anglAst.globalAnglScope = newGlobalScope;
     anglAst = allTransformations.runAllTransformations(anglAst);
-    var jsSource = jsGenerator.generateJs(anglAst);
+    var jsSource = jsGenerator.generateJs(anglAst, defaultOptions);
     return jsSource;
 }
 
