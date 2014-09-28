@@ -4,6 +4,7 @@
 import _ = require('lodash');
 
 import ModuleDescriptor = require('./module-descriptor');
+import ModuleExportsType = require('./module-exports-type');
 
 export interface AbstractVariable {
     awaitingJsIdentifierAssignment():boolean;
@@ -122,15 +123,40 @@ export class ProxyToModuleProvidedVariable implements AbstractVariable {
     
     awaitingJsIdentifierAssignment() { return false; }
     
-    getJsIdentifier() { return this._moduleProvidedVariable.getJsIdentifier(); }
+    getJsIdentifier() {
+        if(this._moduleProvidedVariable.getProvidedByModule().exportsType === ModuleExportsType.MULTI) {
+            return this._moduleProvidedVariable.getJsIdentifier();
+        } else {
+            return this._moduleVariable.getJsIdentifier();
+        }
+    }
     
-    getIdentifier() { return this._moduleProvidedVariable.getIdentifier(); }
+    getIdentifier() {
+        if(this._moduleProvidedVariable.getProvidedByModule().exportsType === ModuleExportsType.MULTI) {
+            return this._moduleProvidedVariable.getIdentifier();
+        } else {
+            return this._moduleVariable.getIdentifier();
+        }
+    }
     
     getAllocationType() { return 'NONE'; }
     
-    getAccessType() { return 'PROP_ACCESS'; }
+    getAccessType() {
+        if(this._moduleProvidedVariable.getProvidedByModule().exportsType === ModuleExportsType.MULTI) {
+            return 'PROP_ACCESS';
+        } else {
+            return 'BARE';
+        }
+        
+    }
     
-    getContainingObjectIdentifier() { return this._moduleVariable.getJsIdentifier(); }
+    getContainingObjectIdentifier() {
+        if(this._moduleProvidedVariable.getProvidedByModule().exportsType === ModuleExportsType.MULTI) {
+            return this._moduleVariable.getJsIdentifier();
+        } else {
+            return null;
+        }
+    }
     
     getProvidedByModule() { return null; }
     
