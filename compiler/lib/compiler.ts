@@ -9,7 +9,7 @@ import allTransformations = require('./run-all-transformations');
 import path = require('path');
 import fs = require('fs');
 import findGlobals = require('./find-globals');
-var jsGenerator = require('./main');
+import jsGenerator = require('./main');
 var fileset = require('fileset');
 import _ = require('lodash');
 
