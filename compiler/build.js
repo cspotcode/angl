@@ -35,9 +35,17 @@ stylus(input).render(function(err, output) {
     child_process.spawn(process.argv[0], [cmd, '--sourcemap', '--module', 'commonjs', '--outDir', '../compiler-build/lib'].concat(tsFiles), {stdio: ['ignore', 1, 2]}).on('close', function(code) {
         if(code) throw code;
       
-        // Copy all plain .js files from `lib` to `build`
+        // Copy all plain .js files from `lib`
         glob.sync('**/*.js', {cwd: 'lib'}).forEach(function(file) {
-          fs.writeFileSync(path.join('../compiler-build/lib', file), fs.readFileSync(path.join('lib', file)));
+            var dest = path.join('../compiler-build/lib', file);
+            mkdir('-p', path.dirname(dest));
+            fs.writeFileSync(dest, fs.readFileSync(path.join('lib', file)));
+        });
+        // Copy everything from `resources`
+        glob.sync('**/*', {cwd: 'resource'}).forEach(function(file) {
+            var dest = path.join('../compiler-build/resource', file);
+            mkdir('-p', path.dirname(dest));
+            fs.writeFileSync(dest, fs.readFileSync(path.join('resource', file)));
         });
 
         // Build a minified JS bundle
