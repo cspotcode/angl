@@ -5,6 +5,9 @@ import _ = require('lodash');
 
 import ModuleDescriptor = require('./module-descriptor');
 import ModuleExportsType = require('./module-exports-type');
+import astTypes = require('./ast-types');
+import operators = require('./operator-precedence-and-associativity');
+import jsGenerator = require('./main');
 
 export interface AbstractVariable {
     awaitingJsIdentifierAssignment():boolean;
@@ -20,6 +23,42 @@ export interface AbstractVariable {
      * For example, with node's `fs.readFile`, the `readFile` variable is provided by the `fs` module.
      */
     getProvidedByModule():ModuleDescriptor;
+    /**
+     * True if this variable, when invoked as a function, will need its `this` value bound to the
+     * calling scope's `self` value.
+     *   `theVariable.call(this, arg0, arg1, ...)`
+     * If false, the `this` value does not need to be set, and the function can be invoked with less overhead.
+     *   `theVariable(arg0, arg1, ...)`
+     */
+    getUsesThisBinding():boolean;
+    /**
+     * Called by the JS code generator whenever the generated code must invoke this variable as a function.
+     * This method can:
+     * * return true after generating the function invocation code itself.
+     * * return false, in which case default function invocation code will be generated.
+     * @param args
+     * @param opts
+     * @returns {boolean}
+     */
+    generateInvocation(args: Array<astTypes.ExpressionNode>, codeGenerator: jsGenerator.JsGenerator, parentExpressionType: operators.JavascriptOperatorsEnum, locationInParentExpression: operators.Location): boolean;
+    /**
+     * Called by the JS code generator whenever the generated code must get the value of this variable.
+     * This method can:
+     * * return true after generating the getter expression.
+     * * return false, in which case a default getter expression will be generated.
+     * @param opts
+     * @returns {boolean}
+     */
+    generateGetter(codeGenerator: jsGenerator.JsGenerator, parentExpressionType: operators.JavascriptOperatorsEnum, locationInParentExpression: operators.Location): boolean;
+    /**
+     * Called by the JS code generator whenever the generated code must set the value of this variable.
+     * This method can:
+     * * return true after generating the setting code.
+     * * return false, in which case a default setting code will be generated.
+     * @param opts
+     * @returns {boolean}
+     */
+    generateSetter(valueToBeSet: astTypes.ExpressionNode, codeGenerator: jsGenerator.JsGenerator): boolean;
 }
 
 export class Variable implements AbstractVariable {
@@ -31,6 +70,7 @@ export class Variable implements AbstractVariable {
     private _jsIdentifier:string;
     private _containingObjectIdentifier:string;
     private _providedByModule: ModuleDescriptor;
+    private _usesThisBinding: boolean;
 
     /**
      * Enumeration of possible allocationType values.
@@ -53,6 +93,7 @@ export class Variable implements AbstractVariable {
         this._accessType = accessType;
         this._containingObjectIdentifier = null;
         this._providedByModule = null;
+        this._usesThisBinding = true;
     }
 
     awaitingJsIdentifierAssignment() { return !this._jsIdentifier; }
@@ -99,6 +140,23 @@ export class Variable implements AbstractVariable {
     setProvidedByModule(moduleDescriptor: ModuleDescriptor) { this._providedByModule = moduleDescriptor; }
 
     getProvidedByModule() { return this._providedByModule; }
+
+    getUsesThisBinding() { return this._usesThisBinding; }
+
+    setUsesThisBinding(usesThisBinding: boolean) { this._usesThisBinding = usesThisBinding; }
+
+    generateInvocation(args: Array<astTypes.ExpressionNode>, codeGenerator: jsGenerator.JsGenerator, parentExpressionType: operators.JavascriptOperatorsEnum, locationInParentExpression: operators.Location): boolean {
+        return false;
+    }
+    
+    generateGetter(codeGenerator: jsGenerator.JsGenerator, parentExpressionType: operators.JavascriptOperatorsEnum, locationInParentExpression: operators.Location): boolean {
+        return false;
+    }
+
+    generateSetter(valueToBeSet: astTypes.ExpressionNode, codeGenerator: jsGenerator.JsGenerator): boolean {
+        return false;
+    }
+
 }
 
 /**
@@ -160,33 +218,18 @@ export class ProxyToModuleProvidedVariable implements AbstractVariable {
     
     getProvidedByModule() { return null; }
     
-}
-
-// A variable that has its own identifier in Angl, but actually maps to the same JS variable as another
-// AbstractVariable.
-export class LinkedVariable implements AbstractVariable {
-
-    private _linkedToVariable:AbstractVariable;
-    private _identifier:string;
-
-    constructor(identifier: string, linkedToVariable:AbstractVariable) {
-        this._identifier = identifier;
-        this._linkedToVariable = linkedToVariable;
-    }
-
-    awaitingJsIdentifierAssignment() { return false; }
-
-    getJsIdentifier():string { return this._linkedToVariable.getJsIdentifier(); }
-
-    getIdentifier():string { return this._identifier; }
-
-    // Linked variables are never allocated because they point at another variable that *is* allocated.
-    getAllocationType():string { return 'NONE'; }
-
-    getAccessType():string { return this._linkedToVariable.getAccessType(); }
-
-    getContainingObjectIdentifier():string { return this._linkedToVariable.getContainingObjectIdentifier(); }
+    getUsesThisBinding() { return this._moduleProvidedVariable.getUsesThisBinding(); }
     
-    getProvidedByModule() { return this._linkedToVariable.getProvidedByModule(); }
-
+    generateGetter(codeGenerator, parentExpressionType, locationInParentExpression) {
+        return this._moduleProvidedVariable.generateGetter(codeGenerator, parentExpressionType, locationInParentExpression);
+    }
+    
+    generateSetter(valueToSet, codeGenerator) {
+        return this._moduleProvidedVariable.generateSetter(valueToSet, codeGenerator);
+    }
+    
+    generateInvocation(args, codeGenerator, parentExpressionType, locationInParentExpression) {
+        return this._moduleProvidedVariable.generateInvocation(args, codeGenerator, parentExpressionType, locationInParentExpression);
+    }
+    
 }

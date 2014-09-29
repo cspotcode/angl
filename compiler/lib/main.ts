@@ -63,6 +63,10 @@ export class JsGenerator {
         }
         return code;
     }
+    
+    getOptions(): options.Options {
+        return this.options;
+    }
 
     // TODO properly translate all binops and unops:
     //   ones that GML has that JS doesn't have
@@ -77,13 +81,26 @@ export class JsGenerator {
             case 'identifier':
                 var identifierNode = <astTypes.IdentifierNode>astNode;
                 var variable = identifierNode.variable;
+                // Some variables implement custom code generators to write the JS code for getting, settings, and/or
+                // invoking the variable as a function.
+                // If we are dealing with one such variable, and we've reached this point, assume that we are generating
+                // code to get the value of this expression. (not set, not invoke)
+                // The other two cases (setting the value and invoking the variable as a function) are handled elsewhere
+                // and prevent this code path from being executed.
+                var writeDefaultGetter = true;
+
                 if(variable) {
-                    if(variable.getAccessType() === 'PROP_ACCESS') {
-                        this.print(variable.getContainingObjectIdentifier() + '.');
+                    writeDefaultGetter = !variable.generateGetter(this, parentExpressionType, locationInParentExpression);
+                }
+                if(writeDefaultGetter) {
+                    if(variable) {
+                        if(variable.getAccessType() === 'PROP_ACCESS') {
+                            this.print(variable.getContainingObjectIdentifier() + '.');
+                        }
+                        this.print(variable.getJsIdentifier());
+                    } else {
+                        this.print(identifierNode.name);
                     }
-                    this.print(variable.getJsIdentifier());
-                } else {
-                    this.print(identifierNode.name);
                 }
                 // TODO will this ever need to be enclosed in parentheses?
                 // How should I be handling this in the general case?
@@ -223,25 +240,43 @@ export class JsGenerator {
 
             case 'funccall':
                 var funcCallNode = <astTypes.FuncCallNode>astNode;
-                var opType = funcCallNode.isMethodCall ? OpEnum.FUNCTION_CALL : OpEnum.MEMBER_ACCESS;
-                this.generateExpression(funcCallNode.expr, opType, ops.Location.LEFT);
-                if(funcCallNode.isMethodCall) {
-                    // Method calls: `self`/`this` is automatically set to the object to which the method belongs
-                    this.print('(');
-                } else {
-                    // Function calls: Function's `self` and `other` are the local `self` and `other` values
-                    this.print('.call(');
-                    this.generateExpression({
-                        type: 'identifier',
-                        variable: astUtils.getAnglScope(funcCallNode).getVariableByIdentifierInChain('self')
-                    }, OpEnum.COMMA, ops.Location.N_A);
+                var funcIdentifierNode = <astTypes.IdentifierNode>funcCallNode.expr;
+                var mustBindThis =
+                    funcCallNode.isMethodCall
+                    || (funcIdentifierNode.type === 'identifier'
+                    && funcIdentifierNode.variable
+                    && !funcIdentifierNode.variable.getUsesThisBinding());
+                var opType = mustBindThis ? OpEnum.FUNCTION_CALL : OpEnum.MEMBER_ACCESS;
+                /**
+                 * Should we generate our regular function invocation code?  Maybe not if the variable decides
+                 * to generate the code itself.
+                 */
+                var writeDefaultInvocation = true;
+                if(funcCallNode.expr.type === 'identifier') {
+                    if(funcIdentifierNode.variable) {
+                        writeDefaultInvocation = !funcIdentifierNode.variable.generateInvocation(funcCallNode.args, this, parentExpressionType, locationInParentExpression);
+                    }
                 }
-                _.each(funcCallNode.args, (arg, i, args) => {
-                    if(i || !funcCallNode.isMethodCall) this.print(', ');
-                    this.generateExpression(arg, OpEnum.COMMA, ops.Location.N_A);
-                });
-                this.print(')');
-                break;
+                if(writeDefaultInvocation) {
+                    this.generateExpression(funcCallNode.expr, opType, ops.Location.LEFT);
+                    if(!mustBindThis) {
+                        // Method calls: `self`/`this` is automatically set to the object to which the method belongs
+                        this.print('(');
+                    } else {
+                        // Function calls: Function's `self` and `other` are the local `self` and `other` values
+                        this.print('.call(');
+                        this.generateExpression({
+                            type: 'identifier',
+                            variable: astUtils.getAnglScope(funcCallNode).getVariableByIdentifierInChain('self')
+                        }, OpEnum.COMMA, ops.Location.N_A);
+                    }
+                    _.each(funcCallNode.args, (arg, i, args) => {
+                        if(i || mustBindThis) this.print(', ');
+                        this.generateExpression(arg, OpEnum.COMMA, ops.Location.N_A);
+                    });
+                    this.print(')');
+                }
+                break; 
 
             case 'script':
                 var scriptNode = <astTypes.ScriptNode>astNode;
@@ -314,9 +349,22 @@ export class JsGenerator {
             case 'assign':
                 var assignNode = <astTypes.AssignNode>astNode;
                 omitIndentation || this.printIndent();
-                this.generateExpression(assignNode.lval, OpEnum.ASSIGNMENT, ops.Location.LEFT);
-                this.print(' = ');
-                this.generateExpression(assignNode.rval, OpEnum.ASSIGNMENT, ops.Location.RIGHT);
+                // Should we generate our ordinary setter code?  Maybe not if the variable
+                // decides to generate its own setter code.
+                var writeDefaultSetter = true;
+                // Is the lval a variable?
+                if(assignNode.lval.type === 'identifier') {
+                    var lvalIdentifierNode = <astTypes.IdentifierNode>assignNode.lval;
+                    // It may have custom setter logic
+                    if(lvalIdentifierNode.variable) {
+                        writeDefaultSetter = !lvalIdentifierNode.variable.generateSetter(assignNode.rval, this);
+                    }
+                }
+                if(writeDefaultSetter) {
+                    this.generateExpression(assignNode.lval, OpEnum.ASSIGNMENT, ops.Location.LEFT);
+                    this.print(' = ');
+                    this.generateExpression(assignNode.rval, OpEnum.ASSIGNMENT, ops.Location.RIGHT);
+                }
                 break;
 
             case 'scriptdef':

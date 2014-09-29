@@ -5,6 +5,7 @@ import _ = require('lodash');
 import scope = require('./angl-scope');
 import scopeVariable = require('./scope-variable');
 import strings = require('./strings');
+import ModuleDescriptor = require('./module-descriptor');
 var anglGlobalsNamespace = require('../../runtime/src/angl-globals-namespace');
 // Trigger loading of all globals onto the globals namespace
 require('../../runtime/src/angl-globals');
@@ -13,6 +14,14 @@ require('../../runtime/src/angl-globals');
 export function createGlobalScope(extraGlobalIdentifiers:string[] = []):scope.AnglScope {
     var globalScope = new scope.AnglScope();
 
+    var showMessageVariable = new scopeVariable.Variable('show_message');
+    showMessageVariable.setProvidedByModule(new ModuleDescriptor('window', false, 'window'));
+    showMessageVariable.generateGetter = function(jsGenerator, exprType, exprLocation) {
+        jsGenerator.print('alert');
+        return true;
+    };
+    globalScope.addVariable(showMessageVariable);
+    
     // Grab the list of all global identifiers from the runtime
     var globalIdentifiers:Array<string> = _.keys(anglGlobalsNamespace);
     
