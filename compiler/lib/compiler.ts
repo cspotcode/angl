@@ -24,7 +24,7 @@ export function compile(anglSourceCode:string, options: options.Options):string 
 
 export function compileAst(anglAst:astTypes.AstNode, extraGlobalIdentifiers:string[] = [], options: options.Options = defaultOptions):string {
     // Manually create and assign a global scope to the AST
-    var newGlobalScope = globalScope.createGlobalScope(extraGlobalIdentifiers);
+    var newGlobalScope = globalScope.createGlobalScope(options, extraGlobalIdentifiers);
     anglAst.globalAnglScope = newGlobalScope;
     anglAst = allTransformations.runAllTransformations(anglAst, options);
     var jsSource = jsGenerator.generateJs(anglAst, options);
@@ -59,7 +59,7 @@ export function compileDirectory(sourcePath: string, destinationPath: string, op
     });
     
     // Create a global scope
-    var newGlobalScope = globalScope.createGlobalScope([]);
+    var newGlobalScope = globalScope.createGlobalScope(options);
     
     console.log('Performing first transformation phase on each file...');
     var allFileAsts = <Array<astTypes.FileNode>>_.map(files, (file) => {

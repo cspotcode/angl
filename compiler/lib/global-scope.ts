@@ -9,9 +9,10 @@ import ModuleDescriptor = require('./module-descriptor');
 var anglGlobalsNamespace = require('../../runtime/src/angl-globals-namespace');
 // Trigger loading of all globals onto the globals namespace
 require('../../runtime/src/angl-globals');
+import options = require('./options');
 
 
-export function createGlobalScope(extraGlobalIdentifiers:string[] = []):scope.AnglScope {
+export function createGlobalScope(opts: options.Options, extraGlobalIdentifiers:string[] = []): scope.AnglScope {
     var globalScope = new scope.AnglScope();
 
     var showMessageVariable = new scopeVariable.Variable('show_message');
@@ -24,9 +25,22 @@ export function createGlobalScope(extraGlobalIdentifiers:string[] = []):scope.An
     
     // Grab the list of all global identifiers from the runtime
     var globalIdentifiers:Array<string> = _.keys(anglGlobalsNamespace);
+    globalIdentifiers = _.difference(globalIdentifiers, ['true', 'false']);
     
     // Add any user-supplied global identifiers
     globalIdentifiers = globalIdentifiers.concat(extraGlobalIdentifiers);
+    
+    // Add variables for `true` and `false` to global scope.
+    ['true', 'false'].forEach((name) => {
+        var variable;
+        if(opts.trueAndFalseAreNumberConstants) {
+            variable = new scopeVariable.Variable(name, 'NONE', 'PROP_ACCESS');
+            variable.setContainingObjectIdentifier(strings.ANGL_GLOBALS_IDENTIFIER);
+        } else {
+            variable = new scopeVariable.Variable(name, 'NONE', 'BARE');
+        }
+        globalScope.addVariable(variable);
+    });
     
     // Add all global identifiers into global scope
     _.each(globalIdentifiers, (globalIdentifier) => {

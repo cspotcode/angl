@@ -36,6 +36,20 @@ export class Options {
      */
     coerceBooleanLogicToNumber: boolean = false;
 
+    /**
+     * In GML, true is a global variable storing the value 1, and
+     * false is a global variable that stores the value 0.
+     * In JavaScript, true and false are primitive boolean values,
+     * not numbers.
+     * 
+     * If this option is true, all references to true and false in Angl
+     * will resolve to the true and false constants, like in GML.
+     * If this option is false, all references to true and false in Angl
+     * will resolve to the Javascript versions of true and false.
+     * @type {boolean}
+     */
+    trueAndFalseAreNumberConstants: boolean = false;
+
     stringQuoteStyle: StringQuoteStyle = StringQuoteStyle.SINGLE;
     
 }

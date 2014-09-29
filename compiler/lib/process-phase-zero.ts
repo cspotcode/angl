@@ -7,10 +7,11 @@ import AnglScope = require('./angl-scope');
 import scopeVariable = require('./scope-variable');
 import strings = require('./strings');
 import ModuleDescriptor = require('./module-descriptor');
+import options = require('./options');
 
 // Wrap the entire AST in a "file" node
 // TODO fix typing of ast argument
-export var transform = (ast:types.StatementsNode):types.AstNode => {
+export var transform = (ast:types.StatementsNode, opts: options.Options):types.AstNode => {
     // Sanity-check that we were, in fact, passed a StatementsNode
     if(ast.type !== 'statements')
         throw new Error('Transformation phase expected a statements node, got a ' + ast.type + ' node instead.');
@@ -31,7 +32,7 @@ export var transform = (ast:types.StatementsNode):types.AstNode => {
     anglScope.addVariable(requireVariable);
     anglScope.addVariable(exportsVariable);
     anglScope.addVariable(moduleVariable);
-    var globalAnglScope = ast.globalAnglScope || globalScope.createGlobalScope();
+    var globalAnglScope = ast.globalAnglScope || globalScope.createGlobalScope(opts);
     anglScope.setParentScope(globalAnglScope);
     // Verify that the root node is of type "statements"
     if(ast.type !== 'statements') {

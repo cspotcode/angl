@@ -7,8 +7,7 @@ import chai = require('chai');
 import sinon = require('sinon');
 var expect = chai.expect;
 
-import vm = require('vm');
-
+import util = require('./util');
 import compiler = require('../lib/compiler');
 import options = require('../lib/options');
 
@@ -31,22 +30,8 @@ describe('Logical operators', () => {
         '}'
     ].join('\n');
         
-    function createSandbox() {
-        var exports = {};
-        return {
-            require: function() {
-                return null;
-            },
-            module: {exports: exports},
-            exports: exports
-        };
-    }
-    
     function compileAndLoad() {
-        var jsCode = compiler.compile(anglSource, opts);
-        var sandbox = createSandbox();
-        vm.runInNewContext(jsCode, sandbox);
-        return sandbox.module.exports;
+        return util.compileAndLoad(anglSource, opts);
     }
     
     var opts: options.Options;
