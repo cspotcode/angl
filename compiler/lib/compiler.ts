@@ -16,18 +16,18 @@ import jsGenerator = require('./main');
 import options = require('./options');
 var defaultOptions = new options.Options();
 
-export function compile(anglSourceCode:string):string {
+export function compile(anglSourceCode:string, options: options.Options):string {
     // Parse the angl source code into an AST
     var ast = angl.parse(anglSourceCode);
-    return compileAst(ast);
+    return compileAst(ast, null, options);
 }
 
-export function compileAst(anglAst:astTypes.AstNode, extraGlobalIdentifiers:string[] = []):string {
+export function compileAst(anglAst:astTypes.AstNode, extraGlobalIdentifiers:string[] = [], options: options.Options = defaultOptions):string {
     // Manually create and assign a global scope to the AST
     var newGlobalScope = globalScope.createGlobalScope(extraGlobalIdentifiers);
     anglAst.globalAnglScope = newGlobalScope;
-    anglAst = allTransformations.runAllTransformations(anglAst, defaultOptions);
-    var jsSource = jsGenerator.generateJs(anglAst, defaultOptions);
+    anglAst = allTransformations.runAllTransformations(anglAst, options);
+    var jsSource = jsGenerator.generateJs(anglAst, options);
     return jsSource;
 }
 
@@ -40,7 +40,7 @@ interface AnglFile {
     compiledJs?: string;
 }
 
-export function compileDirectory(sourcePath: string, destinationPath: string) {
+export function compileDirectory(sourcePath: string, destinationPath: string, options: options.Options = defaultOptions) {
     
     if(!fs.statSync(sourcePath).isDirectory()) throw new Error('"' + sourcePath + '" is not a directory.');
     
@@ -64,7 +64,7 @@ export function compileDirectory(sourcePath: string, destinationPath: string) {
     console.log('Performing first transformation phase on each file...');
     var allFileAsts = <Array<astTypes.FileNode>>_.map(files, (file) => {
         file.ast.globalAnglScope = newGlobalScope;
-        file.ast = allTransformations.runAllTransformations(file.ast, defaultOptions, 0, 1);
+        file.ast = allTransformations.runAllTransformations(file.ast, options, 0, 1);
         var moduleDescriptor = (<astTypes.FileNode>file.ast).moduleDescriptor;
         moduleDescriptor.name = file.moduleName;
         moduleDescriptor.preferredIdentifier = _.last(file.moduleName.split('/'));
@@ -81,11 +81,11 @@ export function compileDirectory(sourcePath: string, destinationPath: string) {
     };
     
     console.log('Performing remaining transformation phases on project...');
-    projectNode = <astTypes.ProjectNode>allTransformations.runAllTransformations(projectNode, defaultOptions, 1);
+    projectNode = <astTypes.ProjectNode>allTransformations.runAllTransformations(projectNode, options, 1);
     
     console.log('Generating JavaScript source code...');
     _.each(files, (file: AnglFile) => {
-        var jsSource = jsGenerator.generateJs(file.ast, defaultOptions);
+        var jsSource = jsGenerator.generateJs(file.ast, options);
         file.compiledJs = jsSource;
     });
 
