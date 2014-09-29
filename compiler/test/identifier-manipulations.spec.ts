@@ -52,6 +52,25 @@ describe('identifier-manipulations', () => {
         });
         
     });
+    describe('autoConvertUnderscoreToCamel', () => {
+        it('should convert under_score identifiers to camelCase', () => {
+            expect(identifierManipulations.autoConvertUnderscoreToCamel('under_score_ident')).to.equal('underScoreIdent');
+        });
+        it('should leave CONST_VALUE identifiers intact', () => {
+            expect(identifierManipulations.autoConvertUnderscoreToCamel('CONST_VALUE')).to.equal(null);
+        });
+        it('should convert identifiers with leading underscores', () => {
+            expect(identifierManipulations.autoConvertUnderscoreToCamel('_leading_underscore')).to.equal('_leadingUnderscore');
+        });
+        it('should not convert identifiers whose only underscore is a leading underscore', () => {
+            expect(identifierManipulations.autoConvertUnderscoreToCamel('_leadingunderscore')).to.equal(null);
+        });
+        it('should return unmodified identifier when passed true, return null otherwise', () => {
+            expect(identifierManipulations.autoConvertUnderscoreToCamel('foo-bar', true)).to.equal('foo-bar');
+            expect(identifierManipulations.autoConvertUnderscoreToCamel('foo-bar', false)).to.equal(null);
+            expect(identifierManipulations.autoConvertUnderscoreToCamel('foo-bar')).to.equal(null);
+        });
+    });
 });
 
 //// hyphen-to-camel

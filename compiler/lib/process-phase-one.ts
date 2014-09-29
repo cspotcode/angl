@@ -43,8 +43,8 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                 throw new Error(exportableNode.type + ' must be at the root level of a file.');
             }
             var jsIdentifier: string;
-            if(options.renameUnderscoreToCamelCaseForGlobals && /[^_-]_/.test(exportableNode.name)) {
-                jsIdentifier = Ident.fromUnderscores(exportableNode.name).toCamelCase();
+            if(options.renameUnderscoreToCamelCaseForGlobals) {
+                jsIdentifier = identifierManipulations.autoConvertUnderscoreToCamel(exportableNode.name);
             }
             var variable: scopeVariable.Variable;
             if(exportableNode.exported) {
@@ -136,8 +136,8 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                 var localVar = new scopeVariable.Variable(var_item.name);
                 localVar.setJsIdentifier(null);
                 localVar.setDesiredJsIdentifier(
-                    options.renameUnderscoreToCamelCase && /[^_-]_/.test(var_item.name)
-                    ? Ident.fromUnderscores(var_item.name).toCamelCase()
+                    options.renameUnderscoreToCamelCase
+                    ? identifierManipulations.autoConvertUnderscoreToCamel(var_item.name, true)
                     : var_item.name
                 );
                 astUtils.getAnglScope(varNode).addVariable(localVar);

@@ -74,3 +74,17 @@ export class Identifier {
     private _prefix: string;
     
 }
+
+export function autoConvertUnderscoreToCamel(identifier: string, returnUnmodifiedIdentifier: boolean = false) {
+    // Test if this identifier appears to be a candidate for conversion from under_score to camelCase
+    // Criteria:
+    // * Contains an underscore following some non-underscore and non-hyphen character (in other words, we ignore leading underscores)
+    // * Is not entirely uppercase.  Identifiers such as UPPER_CASE should not be renamed.
+    if(/[^_-]_/.test(identifier) && identifier.toUpperCase() != identifier) {
+        // Convert the identifier and return the result
+        return Identifier.fromUnderscores(identifier).toCamelCase();
+    } else {
+        if(returnUnmodifiedIdentifier) return identifier;
+        return null;
+    }
+}

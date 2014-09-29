@@ -38,9 +38,6 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             // (e.g. `this.bar`)
             if(!variable) {
                 // Replace this identifier node with a `this.bar` node
-                // If this identifier looks like an under_score, rename it to camelCase
-                if(options.renameUnderscoreToCamelCase && /[^_-]_/.test(node.name))
-                    node.name = Ident.fromUnderscores(node.name).toCamelCase();
                 return {
                     type: 'binop',
                     op: '.',
