@@ -3,3 +3,5 @@
 
 /// <reference path="from-tsd/mocha/mocha.d.ts" />
 /// <reference path="from-tsd/chai/chai.d.ts" />
+/// <reference path="from-tsd/sinon/sinon.d.ts" />
+/// <reference path="from-tsd/sinon-chai/sinon-chai.d.ts" />

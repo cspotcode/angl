@@ -21,6 +21,9 @@
     "nomnom": "~1.6.1",
     "requirejs": "~2.1.5",
     "shelljs": "~0.1.2",
+    "sinon": "^1.10.3",
+    "sinon-chai": "^2.5.0",
+    "source-map-support": "^0.2.7",
     "stylus": "~0.32.0",
     "typescript": "^1.0.1"
   },

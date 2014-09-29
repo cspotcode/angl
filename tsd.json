@@ -28,6 +28,12 @@
     },
     "minimatch/minimatch.d.ts": {
       "commit": "eef872b96a458fde22571def5a368a867de9901b"
+    },
+    "sinon-chai/sinon-chai.d.ts": {
+      "commit": "bcbf87b84243f481de5e3893c1214c3dc2d1d3b3"
+    },
+    "sinon/sinon.d.ts": {
+      "commit": "bcbf87b84243f481de5e3893c1214c3dc2d1d3b3"
     }
   }
 }
