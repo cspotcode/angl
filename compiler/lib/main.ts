@@ -584,9 +584,8 @@ export class JsGenerator {
                 // TODO is there ever a situation where a Javascript 'return' won't do what we want?
                 // For example, inside a _.each() iterator function
                 omitIndentation || this.printIndent();
-                this.print('return (');
-                this.generateExpression(returnNode.expr);
-                this.print(')');
+                this.print('return ');
+                this.generateExpression(returnNode.expr, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A);
                 break;
 
             case 'exit':
