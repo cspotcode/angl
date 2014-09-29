@@ -539,10 +539,6 @@ export class JsGenerator {
 
             case 'with':
                 var withNode = <astTypes.WithNode>astNode;
-                var indexIdentifier = {
-                    type: 'identifier',
-                    variable: withNode.indexVariable
-                };
                 var allObjectsIdentifier = {
                     type: 'identifier',
                     variable: withNode.allObjectsVariable
@@ -568,26 +564,15 @@ export class JsGenerator {
                 this.print(strings.ANGL_RUNTIME_IDENTIFIER + '.other = ');
                 this.generateExpression(outerSelfIdentifier);
                 this.print(';\n');
-                // Start the for loop that iterates over all matched instances
+                // Start the while loop that iterates over all matching objects
                 omitIndentation || this.printIndent();
-                this.print('for(');
-                this.generateExpression(indexIdentifier);
-                this.print(' = 0; ');
-                this.generateExpression(indexIdentifier);
-                this.print(' < ');
-                this.generateExpression(allObjectsIdentifier);
-                this.print('.length; ');
-                this.generateExpression(indexIdentifier);
-                this.print('++) {\n');
-                this.indent();
-                // Assign the value of inner `self`
-                omitIndentation || this.printIndent();
+                this.print('while(');
+                // Assign the value of inner `self` to the next object returned by the iterator
                 this.generateExpression(innerSelfIdentifier);
                 this.print(' = ');
                 this.generateExpression(allObjectsIdentifier);
-                this.print('[');
-                this.generateExpression(indexIdentifier);
-                this.print('];\n');
+                this.print('.next()) {\n');
+                this.indent();
                 // Generate all statements within the with loop
                 this.generateStatement(withNode.stmt);
                 this.outdent();

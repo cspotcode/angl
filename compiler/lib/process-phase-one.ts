@@ -256,11 +256,6 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             allObjectsVariable.setDesiredJsIdentifier('wObjects');
             outerScope.addVariable(allObjectsVariable);
 
-            // Create variable to hold the index (integer) for iteration over the array of objects
-            var indexVariable = new scopeVariable.Variable();
-            indexVariable.setDesiredJsIdentifier('i');
-            outerScope.addVariable(indexVariable);
-
             // Create variable to hold the current subject of iteration, the current `self` value
             var selfVariable = new scopeVariable.Variable();
             selfVariable.setIdentifier('self');
@@ -275,7 +270,6 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
 
             // Store variables onto the with node, for using during code generation
             withNode.allObjectsVariable = allObjectsVariable;
-            withNode.indexVariable = indexVariable;
             withNode.outerOtherVariable = outerOtherVariable;
 
             // Prepend with() AST node with an assignment statement that creates the array of matched objects.
