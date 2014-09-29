@@ -108,6 +108,8 @@ export class JsGenerator {
 
             case 'binop':
                 var binOpNode = <astTypes.BinOpNode>astNode;
+                var shortCircuit = this.options.generateShortCircuitBooleanLogic;
+                var coerceToNumber = this.options.coerceBooleanLogicToNumber;
                 switch(binOpNode.op) {
                     // special-case the dot operator - no brackets!
                     case '.':
@@ -138,41 +140,53 @@ export class JsGenerator {
                         break;
 
                     case '||':
-                        // Implement OR without short-circuit evaluation
+                        // To implement OR without short-circuit evaluation, we:
                         // Coerce both sides to booleans, add them, coerce that to a boolean, then coerce that to a number
-                        writeParens = ops.needsParentheses(OpEnum.BITWISE_OR, parentExpressionType, locationInParentExpression);
+                        var opts:Array<any> = shortCircuit ? coerceToNumber ? [OpEnum.BITWISE_OR,  OpEnum.LOGICAL_OR,  ops.Location.LEFT,  OpEnum.LOGICAL_OR,  ops.Location.RIGHT, '( ',  ' || ',  ' )|0']
+                                                                            : [OpEnum.LOGICAL_OR,  OpEnum.LOGICAL_OR,  ops.Location.LEFT,  OpEnum.LOGICAL_OR,  ops.Location.RIGHT, '',    ' || ',  ''    ]
+                                                           : coerceToNumber ? [OpEnum.BITWISE_OR,  OpEnum.LOGICAL_NOT, ops.Location.RIGHT, OpEnum.LOGICAL_NOT, ops.Location.RIGHT, '!(! ', ' *! ', ' )|0']
+                                                                            : [OpEnum.LOGICAL_NOT, OpEnum.LOGICAL_NOT, ops.Location.RIGHT, OpEnum.LOGICAL_NOT, ops.Location.RIGHT, '!(! ', ' *! ', ' )'  ],
+                        writeParens = ops.needsParentheses(opts[0], parentExpressionType, locationInParentExpression);
                         writeParens && this.print('(');
-                        this.print('!!(!! ');
-                        this.generateExpression(binOpNode.expr1, OpEnum.LOGICAL_NOT, ops.Location.RIGHT);
-                        this.print(' +!! ');
-                        this.generateExpression(binOpNode.expr2, OpEnum.LOGICAL_NOT, ops.Location.RIGHT);
-                        this.print(' )|0');
+                        this.print(opts[5]);
+                        this.generateExpression(binOpNode.expr1, opts[1], opts[2]);
+                        this.print(opts[6]);
+                        this.generateExpression(binOpNode.expr2, opts[3], opts[4]);
+                        this.print(opts[7]);
                         writeParens && this.print(')');
                         break;
 
                     case '&&':
-                        // Implement AND without short-circuit evaluation
+                        // To implement AND without short-circuit evaluation, we:
                         // Coerce both sides to booleans, then multiply them
-                        writeParens = ops.needsParentheses(OpEnum.MULTIPLICATION, parentExpressionType, locationInParentExpression);
+                        var opts:Array<any> = shortCircuit ? coerceToNumber ? [OpEnum.BITWISE_OR,     OpEnum.LOGICAL_AND, ops.Location.LEFT,  OpEnum.LOGICAL_AND, ops.Location.RIGHT, '( ',  ' && ',  ' )|0']
+                                                                            : [OpEnum.LOGICAL_AND,    OpEnum.LOGICAL_AND, ops.Location.LEFT,  OpEnum.LOGICAL_AND, ops.Location.RIGHT, '',    ' && ',  ''    ]
+                                                           : coerceToNumber ? [OpEnum.MULTIPLICATION, OpEnum.LOGICAL_NOT, ops.Location.RIGHT, OpEnum.LOGICAL_NOT, ops.Location.RIGHT, '!! ', ' *!! ', ''    ]
+                                                                            : [OpEnum.LOGICAL_NOT,    OpEnum.LOGICAL_NOT, ops.Location.RIGHT, OpEnum.LOGICAL_NOT, ops.Location.RIGHT, '!(! ', ' +! ', ' )'  ],
+                        writeParens = ops.needsParentheses(opts[0], parentExpressionType, locationInParentExpression);
                         writeParens && this.print('(');
-                        this.print('!! ');
-                        this.generateExpression(binOpNode.expr1, OpEnum.LOGICAL_NOT, ops.Location.RIGHT);
-                        this.print(' *!! ');
-                        this.generateExpression(binOpNode.expr2, OpEnum.LOGICAL_NOT, ops.Location.RIGHT);
-                        this.print(' ');
+                        this.print(opts[5]);
+                        this.generateExpression(binOpNode.expr1, opts[1], opts[2]);
+                        this.print(opts[6]);
+                        this.generateExpression(binOpNode.expr2, opts[3], opts[4]);
+                        this.print(opts[7]);
                         writeParens && this.print(')');
                         break;
 
                     case '^^':
                         // Implement XOR without short-circuit evaluation
                         // Coerce both sides to boolean and "not" them, add them, subtract 1, coerce to boolean and "not", coerce to number
-                        writeParens = ops.needsParentheses(OpEnum.BITWISE_OR, parentExpressionType, locationInParentExpression);
+                        writeParens = ops.needsParentheses(
+                            coerceToNumber ? OpEnum.BITWISE_OR : OpEnum.LOGICAL_NOT,
+                            parentExpressionType,
+                            locationInParentExpression);
                         writeParens && this.print('(');
-                        this.print('!((! ');
+                        this.print('!(! ');
                         this.generateExpression(binOpNode.expr1, OpEnum.LOGICAL_NOT, ops.Location.RIGHT);
                         this.print(' +! ');
                         this.generateExpression(binOpNode.expr2, OpEnum.LOGICAL_NOT, ops.Location.RIGHT);
-                        this.print(' )-1)|0');
+                        this.print(' -1)');
+                        coerceToNumber && this.print('|0');
                         writeParens && this.print(')');
                         break;
 
@@ -191,11 +205,17 @@ export class JsGenerator {
 
             case 'unop':
                 var unOpNode = <astTypes.UnOpNode> astNode;
-                var unOpType = anglToJsOpMap.anglToJsUnOps[unOpNode.op];
-                writeParens = ops.needsParentheses(unOpType, parentExpressionType, locationInParentExpression);
+                var unOpType = anglToJsOpMap.anglToJsUnOps[unOpNode.op];this.options
+                var coerceToNumber = this.options.coerceBooleanLogicToNumber;
+                // Special case: for the ! (not) operator, we might need to coerce the output to a number.
+                writeParens = ops.needsParentheses(
+                    unOpNode.op === '!' && coerceToNumber ? OpEnum.BITWISE_OR : unOpType,
+                    parentExpressionType,
+                    locationInParentExpression);
                 writeParens && this.print('(');
                 this.print(unOpNode.op);
                 this.generateExpression(unOpNode.expr, unOpType, ops.Location.RIGHT);
+                unOpNode.op === '!' && coerceToNumber && this.print('|0');
                 writeParens && this.print(')');
                 break;
 
