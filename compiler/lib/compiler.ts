@@ -68,6 +68,7 @@ export function compileDirectory(sourcePath: string, destinationPath: string, op
         var moduleDescriptor = (<astTypes.FileNode>file.ast).moduleDescriptor;
         moduleDescriptor.name = file.moduleName;
         moduleDescriptor.preferredIdentifier = _.last(file.moduleName.split('/'));
+        moduleDescriptor.isRelative = true;
         return file.ast;
     });
     

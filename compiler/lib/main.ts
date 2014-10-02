@@ -10,6 +10,7 @@ var OpEnum = ops.JavascriptOperatorsEnum;
 import anglToJsOpMap = require('./angl-to-js-operator-map');
 import ModuleExportsType = require('./module-exports-type');
 import options = require('./options');
+import pathUtils = require('./path-utils');
 
 export class JsGenerator {
     
@@ -731,7 +732,9 @@ export class JsGenerator {
                 this.print('var ' + strings.ANGL_RUNTIME_IDENTIFIER + ' = require(' + this.codeForStringLiteral(strings.ANGL_RUNTIME_MODULE) + ');\n');
                 fileNode.dependencies.forEach((variable, moduleDescriptor) => {
                     this.printIndent();
-                    this.print('var ' + variable.getJsIdentifier() + ' = require(' + this.codeForStringLiteral(moduleDescriptor.name) + ');\n');
+                    this.print('var ' + variable.getJsIdentifier() + ' = require(');
+                    this.print(this.codeForStringLiteral(moduleDescriptor.isRelative ? pathUtils.relativeModule(fileNode.moduleDescriptor.name, moduleDescriptor.name) : moduleDescriptor.name));
+                    this.print(');\n');
                 });
                 // allocate local variables
                 this.generateLocalVariableAllocation(fileNode);
