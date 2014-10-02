@@ -51,5 +51,5 @@ export function createGlobalScope(opts: options.Options, extraGlobalIdentifiers:
     });
 
     return globalScope;
-};
+}
 

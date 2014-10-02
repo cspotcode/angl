@@ -348,7 +348,7 @@ export class JsGenerator {
     }
 
     generateStatement(astNode, omitTerminator:boolean = false, omitIndentation:boolean = false) {
-        if(arguments.length < 2) omitTerminator = false;
+        
         switch(astNode.type) {
 
             case 'var':

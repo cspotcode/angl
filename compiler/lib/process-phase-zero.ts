@@ -34,10 +34,6 @@ export var transform = (ast:types.StatementsNode, opts: options.Options):types.A
     anglScope.addVariable(moduleVariable);
     var globalAnglScope = ast.globalAnglScope || globalScope.createGlobalScope(opts);
     anglScope.setParentScope(globalAnglScope);
-    // Verify that the root node is of type "statements"
-    if(ast.type !== 'statements') {
-        throw new Error('Unexpected root node from Angl parser. Expected type "statements", got "' + ast.type + '".');
-    }
     var fileNode = new types.FileNode(ast.list, 'main');
     
     fileNode.anglScope = anglScope;
