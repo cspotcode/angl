@@ -12,10 +12,36 @@ export interface AstNode {
     type: string;
     anglScope?: scope.AnglScope;
     globalAnglScope?: scope.AnglScope;
+    location?: NodeLocation;
+    comments?: {
+        before: Array<CommentNode>;
+        after: Array<CommentNode>;
+    }
+}
+
+export interface NodeLocation {
+    first_line: number;
+    first_column: number;
+    last_line: number;
+    last_column: number;
+}
+
+export interface CommentNode {
+    text: string;
+    location: NodeLocation;
 }
 
 export interface ProjectNode extends AstNode {
     files: Array<FileNode>;
+}
+
+/**
+ * SimpleFileNode is created by the parser.
+ * The compiler quickly replaces it with an instance of FileNode during AST transformation.
+ */
+export interface SimpleFileNode extends AstNode {
+    stmts: Array<StatementNode>;
+    allComments: Array<CommentNode>;
 }
 
 export class FileNode implements AstNode {

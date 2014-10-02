@@ -52,6 +52,62 @@ export class JsGenerator {
             this.print(this.indentationString);
         });
     }
+
+    /**
+     * Print all comments that should occur immediately before this node.
+     */
+    beginNode(node: astTypes.AstNode, indent: boolean = false, trailingNewline: boolean = false) {
+        if(node.comments) {
+            this._printComments(node.comments.before, indent, trailingNewline);
+        }
+    }
+
+    /**
+     * Print all comments that should occur immediately after this node.
+     */
+    endNode(node: astTypes.AstNode) {
+        if(node.comments) {
+            this._printComments(node.comments.after, false, false);
+        }
+    }
+    
+    _printComments(comments: Array<astTypes.CommentNode>, indent: boolean, trailingNewline: boolean) {
+        var printedIndent = false;
+        var printedAComment = false;
+        
+        // Combine all comments
+        var allComments = _.map(comments, (comment) => /[^[\t ]+$]/.test(comment.text) ? '' : comment.text).join('');
+        // Remove all leading and trailing whitespace, and all whitespace preceding or following a newline
+        allComments = allComments.replace(/[ \t]*\n[ \t]*/g, '\n').replace(/(^[\t ]*|[\t ]*$)/g, '');
+        // Remove a leading newline from comments, since our code generator outputs newlines between statements anyway
+        allComments = allComments/*.replace(/\n$/, '')*/.replace(/^\n/, '');
+        var commentLines = allComments.split('\n');
+        
+        if(allComments) {
+            var l = commentLines.length;
+            _.each(commentLines, (line, i) => {
+                if(indent || i) this.printIndent();
+                this.print(line);
+                if(trailingNewline || i < l - 1) this.print('\n');
+            });
+            
+        }
+        
+//        _.each(comments, (comment: astTypes.CommentNode) => {
+//            var text = comment.text;
+//            // Purely whitespace comments should only output carriage returns; no spaces or indentation.
+//            if(/^\s+$/.test(text)) text = text.replace(/[\t ]+/g, '');
+//            if(indent && !printedIndent) {
+//                this.printIndent();
+//                printedIndent = false;
+//            }
+//            this.print(text);
+//            printedAComment = true;
+//        });
+//        if(printedAComment && trailingNewline) {
+//            this.print('\n');
+//        }
+    }
     
     getCode() {
         return _.flatten(this.buffer).join('');
@@ -76,6 +132,8 @@ export class JsGenerator {
     //   how does GML do type coercion (42 + "hello world")?  Do I need to emulate that behavior?
     generateExpression(astNode:astTypes.ExpressionNode, parentExpressionType:ops.JavascriptOperatorsEnum = OpEnum.GROUPING, locationInParentExpression:ops.Location = ops.Location.N_A, omitIndentation:boolean = false) {
         var writeParens:boolean;
+        
+        this.beginNode(astNode);
 
         switch(astNode.type) {
 
@@ -345,6 +403,8 @@ export class JsGenerator {
             default:
                 throw new Error('Unknown expression type: "' + astNode.type + '"');
         }
+        
+        this.endNode(astNode);
     }
 
     generateStatement(astNode, omitTerminator:boolean = false, omitIndentation:boolean = false) {
@@ -354,6 +414,7 @@ export class JsGenerator {
             case 'var':
                 var varNode = <astTypes.VarDeclarationNode>astNode;
                 omitIndentation || this.printIndent();
+                this.beginNode(astNode);
                 this.print('var ');
                 _.each(varNode.list, (varItemNode, i, args) => {
                     this.print(varItemNode.name);
@@ -370,6 +431,7 @@ export class JsGenerator {
             case 'assign':
                 var assignNode = <astTypes.AssignNode>astNode;
                 omitIndentation || this.printIndent();
+                this.beginNode(astNode);
                 // Should we generate our ordinary setter code?  Maybe not if the variable
                 // decides to generate its own setter code.
                 var writeDefaultSetter = true;
@@ -391,6 +453,7 @@ export class JsGenerator {
             case 'scriptdef':
                 var scriptDefNode = <astTypes.ScriptDefNode>astNode;
                 omitIndentation || this.printIndent();
+                this.beginNode(astNode);
                 this.generateExpression({
                     type: 'identifier',
                     variable: scriptDefNode.variable
@@ -416,6 +479,7 @@ export class JsGenerator {
             case 'const':
                 var constNode = <astTypes.ConstNode>astNode;
                 omitIndentation || this.printIndent();
+                this.beginNode(astNode);
                 this.generateExpression({
                     type: 'identifier',
                     variable: constNode.variable
@@ -427,6 +491,7 @@ export class JsGenerator {
             case 'switch':
                 var switchNode = <astTypes.SwitchNode>astNode;
                 omitIndentation || this.printIndent();
+                this.beginNode(astNode);
                 this.print('switch(');
                 this.generateExpression(switchNode.expr, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A);
                 this.print(') {\n');
@@ -442,6 +507,7 @@ export class JsGenerator {
             case 'for':
                 var forNode = <astTypes.ForNode>astNode;
                 omitIndentation || this.printIndent();
+                this.beginNode(astNode);
                 this.print('for(');
                 this.generateStatement(forNode.initstmt, true, true);
                 this.print('; ');
@@ -460,6 +526,7 @@ export class JsGenerator {
             case 'ifelse':
                 var ifElseNode = <astTypes.IfElseNode>astNode;
                 omitIndentation || this.printIndent();
+                this.beginNode(astNode);
                 this.print('if(');
                 this.generateExpression(ifElseNode.expr, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A);
                 this.print(') {\n');
@@ -485,12 +552,14 @@ export class JsGenerator {
                     expr: ifNode.expr,
                     stmt1: ifNode.stmt,
                     stmt2: null,
+                    comments: ifNode.comments
                 }, omitTerminator, omitIndentation);
                 break;
 
             case 'while':
                 var whileNode = <astTypes.WhileNode>astNode;
                 omitIndentation || this.printIndent();
+                this.beginNode(astNode);
                 this.print('while(');
                 this.generateExpression(whileNode.expr, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A);
                 this.print(') {\n');
@@ -504,6 +573,7 @@ export class JsGenerator {
             case 'dountil':
                 var doUntilNode = <astTypes.DoUntilNode>astNode;
                 omitIndentation || this.printIndent();
+                this.beginNode(astNode);
                 this.print('do {\n');
                 this.indent();
                 this.generateStatement(doUntilNode.stmt);
@@ -516,18 +586,21 @@ export class JsGenerator {
 
             case 'break':
                 omitIndentation || this.printIndent();
+                this.beginNode(astNode);
                 this.print('break');
                 // TODO are break semantics ever different in Angl than they are in JS?
                 break;
 
             case 'continue':
                 omitIndentation || this.printIndent();
+                this.beginNode(astNode);
                 this.print('continue');
                 // TODO are continue semantics ever different in Angl than they are in JS?
                 break;
 
             case 'statements':
                 var statementsNode = <astTypes.StatementsNode>astNode;
+                this.beginNode(astNode, true, true);
                 _.each(statementsNode.list, (statement) => {
                     this.generateStatement(statement);
                 });
@@ -537,6 +610,7 @@ export class JsGenerator {
             case 'jsfunccall':
                 // Delegate to the expression generator
                 omitIndentation || this.printIndent();
+                this.beginNode(astNode);
                 this.generateExpression(astNode);
                 break;
 
@@ -560,6 +634,7 @@ export class JsGenerator {
                 };
                 // Cache the outer `other` value
                 omitIndentation || this.printIndent();
+                this.beginNode(astNode);
                 this.generateExpression(outerOtherIdentifier);
                 this.print(' = ' + strings.ANGL_RUNTIME_IDENTIFIER + '.other;\n');
                 // Set the new `other` value
@@ -592,6 +667,7 @@ export class JsGenerator {
                 // TODO is there ever a situation where a Javascript 'return' won't do what we want?
                 // For example, inside a _.each() iterator function
                 omitIndentation || this.printIndent();
+                this.beginNode(astNode);
                 this.print('return ');
                 this.generateExpression(returnNode.expr, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A);
                 break;
@@ -599,6 +675,7 @@ export class JsGenerator {
             case 'exit':
                 // TODO same caveats as 'return'
                 omitIndentation || this.printIndent();
+                this.beginNode(astNode);
                 this.print('return');
                 break;
 
@@ -612,6 +689,7 @@ export class JsGenerator {
                 // The Angl runtime will take care of creating objects in the proper order, so that the parent object
                 // already exists.
                 omitIndentation || this.printIndent();
+                this.beginNode(astNode);
                 this.print(strings.ANGL_RUNTIME_IDENTIFIER + '.createAnglObject(' +
                     this.codeForStringLiteral(objectNode.name) + ', ' + this.codeForStringLiteral(objectNode.parent) + ', ');
                 this.print('function() {\n');
@@ -670,9 +748,14 @@ export class JsGenerator {
             this.print(';');
         if(!_.contains(['nop', 'statements'], astNode.type) && !omitTerminator)
             this.print('\n');
+        
+        this.endNode(astNode);
     }
 
     generateCase(astNode) {
+        
+        this.beginNode(astNode);
+        
         switch(astNode.type) {
 
             case 'case':
@@ -698,6 +781,9 @@ export class JsGenerator {
             default:
                 throw new Error('Unknown case type: "' + astNode.type + '"');
         }
+        
+        this.endNode(astNode);
+        
     }
 
     generateLocalVariableAllocation(astNode) {
@@ -713,6 +799,9 @@ export class JsGenerator {
     }
 
     generateTopNode(astNode) {
+        
+        this.beginNode(astNode);
+        
         switch(astNode.type) {
 
             case 'file':
@@ -774,6 +863,9 @@ export class JsGenerator {
             default:
                 throw new Error('Unknown root node type: "' + astNode.type + '"');
         }
+        
+        this.endNode(astNode);
+        
     }
 }
 

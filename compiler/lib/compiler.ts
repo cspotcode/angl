@@ -14,6 +14,9 @@ import allTransformations = require('./run-all-transformations');
 import findGlobals = require('./find-globals');
 import jsGenerator = require('./main');
 import options = require('./options');
+import identifierManipulations = require('./identifier-manipulations');
+var Ident = identifierManipulations.Identifier;
+
 var defaultOptions = new options.Options();
 
 export function compile(anglSourceCode:string, options: options.Options):string {
@@ -64,7 +67,7 @@ export function compileDirectory(sourcePath: string, destinationPath: string, op
     console.log('Performing first transformation phase on each file...');
     var allFileAsts = <Array<astTypes.FileNode>>_.map(files, (file) => {
         file.ast.globalAnglScope = newGlobalScope;
-        file.ast = allTransformations.runAllTransformations(file.ast, options, 0, 1);
+        file.ast = allTransformations.runAllTransformations(file.ast, options, 0, 2);
         var moduleDescriptor = (<astTypes.FileNode>file.ast).moduleDescriptor;
         moduleDescriptor.name = file.moduleName;
         moduleDescriptor.preferredIdentifier = _.last(file.moduleName.split('/'));
@@ -82,7 +85,7 @@ export function compileDirectory(sourcePath: string, destinationPath: string, op
     };
     
     console.log('Performing remaining transformation phases on project...');
-    projectNode = <astTypes.ProjectNode>allTransformations.runAllTransformations(projectNode, options, 1);
+    projectNode = <astTypes.ProjectNode>allTransformations.runAllTransformations(projectNode, options, 2);
     
     console.log('Generating JavaScript source code...');
     _.each(files, (file: AnglFile) => {

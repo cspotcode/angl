@@ -2,6 +2,9 @@
 
 var parser = require('./parser').parser,
     fs = require('fs');
+
+var commentNodes;
+
 parser.yy = {
     // makes number literal structure from decimal token
     makeNumVal: function (yytext) {
@@ -317,10 +320,42 @@ parser.yy = {
             expr: expr,
             stmt: stmt
         };
+    },
+    // makes file structure
+    makeSimpleFile: function(stmts, comments) {
+        return {
+            type: 'simple_file',
+            stmts: stmts,
+            allComments: comments
+        };
+    },
+    // Set location property of a node
+    setLocation: function(node, startLocation, endLocation) {
+        if(!endLocation) endLocation = startLocation;
+        node.location = {
+            first_line: startLocation.first_line,
+            first_column: startLocation.first_column,
+            last_line: endLocation.last_line,
+            last_column: endLocation.last_column
+        };
+        return node;
+    },
+    // save the content and location of a comment
+    saveComment: function(text, location) {
+        commentNodes.push({
+            text: text,
+            location: location
+        });
+    },
+    // returns the full list of parsed comment and whitespace nodes
+    getComments: function() {
+        return commentNodes;
     }
 };
 
 exports.parse = function (input) {
+    // Reset the list of comments and whitespace
+    commentNodes = [];
     return parser.parse(input);
 };
 

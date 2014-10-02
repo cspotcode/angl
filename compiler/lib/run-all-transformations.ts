@@ -6,6 +6,7 @@ import types = require('./ast-types');
 import options = require('./options');
 
 export var transformers = [
+    require('./process-phase-assign-comments-to-nodes').transform,
     require('./process-phase-zero').transform,
     require('./process-phase-one').transform,
     require('./process-phase-resolve-identifiers-to-variables').transform,

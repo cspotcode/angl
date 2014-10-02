@@ -11,10 +11,10 @@ import options = require('./options');
 
 // Wrap the entire AST in a "file" node
 // TODO fix typing of ast argument
-export var transform = (ast:types.StatementsNode, opts: options.Options):types.AstNode => {
+export var transform = (ast:types.SimpleFileNode, opts: options.Options):types.AstNode => {
     // Sanity-check that we were, in fact, passed a StatementsNode
-    if(ast.type !== 'statements')
-        throw new Error('Transformation phase expected a statements node, got a ' + ast.type + ' node instead.');
+    if(ast.type !== 'simple_file')
+        throw new Error('Unexpected root node from Angl parser. Expected type "statements", got "' + ast.type + '".');
     
     var anglScope = new AnglScope.AnglScope();
     var thisVariable = new scopeVariable.Variable('self', 'ARGUMENT');
@@ -34,7 +34,8 @@ export var transform = (ast:types.StatementsNode, opts: options.Options):types.A
     anglScope.addVariable(moduleVariable);
     var globalAnglScope = ast.globalAnglScope || globalScope.createGlobalScope(opts);
     anglScope.setParentScope(globalAnglScope);
-    var fileNode = new types.FileNode(ast.list, 'main');
+    
+    var fileNode = new types.FileNode(ast.stmts, 'main');
     
     fileNode.anglScope = anglScope;
     fileNode.globalAnglScope = globalAnglScope;

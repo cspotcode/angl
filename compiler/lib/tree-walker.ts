@@ -58,6 +58,15 @@ function _walk(node, fn) {
                 if(_.isObject(ret) && !_.isArray(ret)) ret = [ret];
                 // Array means node must be replaced by the array of node objects
                 if(_.isArray(ret)) {
+                    // Migrate comments from the old node to its replacement
+                    if(ret.length) {
+                        migrateComments(<types.AstNode>_.first(ret), child, true, false);
+                        migrateComments(<types.AstNode>_.last(ret), child, false, true);
+                    } else {
+                        // TODO migrate comments onto the next peer node?
+                        // What if there are no more peer nodes?  Then attach to the preceding node?
+                        // What if there are no more preceding ndoes?  Then attach to the parent node?
+                    }
                     var args = [i, 1].concat(ret);
                     children.splice.apply(children, args);
                     // Since this node has been replaced, we should immediately revisit it.
@@ -85,6 +94,18 @@ function _walk(node, fn) {
                             type: 'statements',
                             list: ret || []
                         };
+                        // Migrate comments
+                        if(_.isArray(ret) && ret.length) {
+                            // We are migrating comments from the child onto a non-empty array of replacement nodes
+                            // Migrate before comments to the first replacement
+                            migrateComments(<types.AstNode>_.first(ret), child, true, false);
+                            // Migrate after comments to the last replacement
+                            migrateComments(<types.AstNode>_.last(ret), child, false, true);
+                        } else {
+                            // We are replacing the previous node with nothing (either null or empty array)
+                            // Therefore, migrate comments onto the replacement StatementsNode
+                            migrateComments(statementsNode, child);
+                        }
                         // Replace node with new StatementsNode
                         child = statementsNode;
                         node[childName] = statementsNode;
@@ -102,6 +123,8 @@ function _walk(node, fn) {
                     throw new Error('Cannot replace child node with multiple nodes, from parent type "' + node.type + '" at position "' + childName + '"');
                 }
                 if(_.isObject(ret)) {
+                    // Migrate comments from the old node to the new one
+                    migrateComments(ret, child);
                     // Replace node with returned object
                     child = ret;
                     node[childName] = child;
@@ -115,3 +138,21 @@ function _walk(node, fn) {
     });
 }
 
+/*
+ * TODO what do we do if we're copying comments to a node that already has comments?
+ * Do we prepend or append to the existing comments list?
+ */
+
+function migrateComments(target: types.AstNode, source: types.AstNode, migrateBefore: boolean = true, migrateAfter: boolean = true) {
+    if(!target.comments) {
+        target.comments = {
+            before: [],
+            after: []
+        };
+    }
+    
+    if(source.comments) {
+        if(migrateBefore && source.comments.before) target.comments.before = source.comments.before;
+        if(migrateAfter && source.comments.after) target.comments.after = source.comments.after;
+    }
+}
