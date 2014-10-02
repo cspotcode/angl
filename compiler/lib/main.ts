@@ -467,11 +467,13 @@ export class JsGenerator {
                 this.generateStatement(ifElseNode.stmt1);
                 this.outdent();
                 omitIndentation || this.printIndent();
-                this.print('} else {\n');
-                this.indent();
-                this.generateStatement(ifElseNode.stmt2);
-                this.outdent();
-                omitIndentation || this.printIndent();
+                if(ifElseNode.stmt2) {
+                    this.print('} else {\n');
+                    this.indent();
+                    this.generateStatement(ifElseNode.stmt2);
+                    this.outdent();
+                    omitIndentation || this.printIndent();
+                }
                 this.print('}');
                 break;
 
@@ -482,7 +484,7 @@ export class JsGenerator {
                     type: 'ifelse',
                     expr: ifNode.expr,
                     stmt1: ifNode.stmt,
-                    stmt2: {type: 'nop'}
+                    stmt2: null,
                 }, omitTerminator, omitIndentation);
                 break;
 
