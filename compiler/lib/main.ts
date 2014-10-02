@@ -827,12 +827,21 @@ export class JsGenerator {
                     this.print(this.codeForStringLiteral(moduleDescriptor.isRelative ? pathUtils.relativeModule(fileNode.moduleDescriptor.name, moduleDescriptor.name) : moduleDescriptor.name));
                     this.print(');\n');
                 });
+                // blank line
+                this.printIndent();
+                this.print('\n');
                 // allocate local variables
                 this.generateLocalVariableAllocation(fileNode);
+                // blank line
+                this.printIndent();
+                this.print('\n');
                 // delegate to the statement generator
                 _.each(fileNode.stmts, (node) => {
                     this.generateStatement(node);
                 });
+                // blank line
+                this.printIndent();
+                this.print('\n');
                 // Export values
                 switch(fileNode.moduleDescriptor.exportsType) {
                     case ModuleExportsType.MULTI:
