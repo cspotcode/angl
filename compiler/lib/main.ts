@@ -875,8 +875,8 @@ export class JsGenerator {
                     this.print('define(function(require, exports, module) {\n');
                     this.indent();
                 }
-                this.printIndent();
                 if(this.options.generateUseStrict) {
+                    this.printIndent();
                     // Something removes "use strict" from the source code unless I split it up like so.  RequireJS perhaps?
                     this.print('"use' + ' strict";\n');
                 }
