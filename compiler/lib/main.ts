@@ -870,6 +870,11 @@ export class JsGenerator {
 
             case 'file':
                 var fileNode = <astTypes.FileNode>astNode;
+                if(this.options.typeScriptReferencePath) {
+                    this.print('/// <reference path="');
+                    this.print(pathUtils.relativeModule(fileNode.moduleDescriptor.name, this.options.typeScriptReferencePath));
+                    this.print('" />\n');
+                }
                 if(this.options.generateAmdWrapper) {
                     // RequireJS `define()` call
                     this.print('define(function(require, exports, module) {\n');

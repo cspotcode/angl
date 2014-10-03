@@ -58,6 +58,8 @@ export class Options {
      */
     generateTypeScript: boolean = true;
     
+    typeScriptReferencePath: string = 'typings.d.ts';
+    
 }
 
 export enum StringQuoteStyle {
