@@ -69,6 +69,7 @@ var nodeChildNames: {
     ],
     // Objects
     "object": [
+        "parentIdentifier",
         "stmts",
         "propertyinitscript",
         "createscript",

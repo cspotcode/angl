@@ -51,6 +51,12 @@ export class Options {
     trueAndFalseAreNumberConstants: boolean = false;
 
     stringQuoteStyle: StringQuoteStyle = StringQuoteStyle.SINGLE;
+
+    /**
+     * Should we generate TypeScript instead of JavaScript?
+     * @type {boolean}
+     */
+    generateTypeScript: boolean = true;
     
 }
 

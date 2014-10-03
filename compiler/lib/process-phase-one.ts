@@ -14,6 +14,7 @@ import scopeVariable = require('./scope-variable');
 import strings = require('./strings');
 import ModuleExportsType = require('./module-exports-type');
 import options = require('./options');
+import operators = require('./operator-precedence-and-associativity');
 import identifierManipulations = require('./identifier-manipulations');
 var Ident = identifierManipulations.Identifier;
 var walk = treeWalker.walk;
@@ -70,7 +71,13 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                 astUtils.getGlobalAnglScope(exportableNode).addVariable(globalVariable);
             } else {
                 // This variable is in local scope
-                variable = new scopeVariable.Variable(exportableNode.name, 'LOCAL', 'BARE');
+                if(options.generateTypeScript) {
+                    // No need for a "var" declaration in TypeScript; we use a declarative syntax that automatically
+                    // creates the local variable.
+                    variable = new scopeVariable.Variable(exportableNode.name, 'NONE', 'BARE');
+                } else {
+                    variable = new scopeVariable.Variable(exportableNode.name, 'LOCAL', 'BARE');
+                }
                 variable.setJsIdentifier(null);
                 variable.setDesiredJsIdentifier(jsIdentifier || exportableNode.name);
                 astUtils.getAnglScope(exportableNode).addVariable(variable);
@@ -299,6 +306,11 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             var objectNode = <astTypes.ObjectNode>node;
             // If no parent is specified, use the default
             if (!objectNode.parent) objectNode.parent = strings.SUPER_OBJECT_NAME;
+            // Create parentIdentifier node
+            objectNode.parentIdentifier = {
+                type: 'identifier',
+                name: objectNode.parent
+            };
 
             // Initialize some basic containers for storing methods, create, destroy, and property assignments
             var objectPropertyNames = new FastSet();
@@ -419,6 +431,7 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             var containingObjectNode = <astTypes.ObjectNode>astUtils.findParent(methodNode, (parentNode) => parentNode.type === 'object');
             var methodName = methodNode.methodname;
             var parentName = containingObjectNode.parent;
+            var parentIdentifier = containingObjectNode.parentIdentifier;
 
             // Special case for destroy() scripts: Since an object's destroy script can't have arguments, the super()
             // call can't have arguments either.
@@ -429,11 +442,31 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             // replace `super` calls with a funccall node that calls the parent object's method
             var replacementForSuper: astTypes.FuncCallNode = {
                 type: 'funccall',
-                expr: {
-                    type: 'jsexpr',
-                    expr: strings.ANGL_GLOBALS_IDENTIFIER + '.' + parentName + '.prototype.' + methodName
-                },
-                args: superNode.args
+                expr: options.generateTypeScript
+                    ?   {
+                            type: 'jsexpr',
+                            expr: 'super.' + methodName,
+                            op: operators.JavascriptOperatorsEnum.MEMBER_ACCESS
+                        }
+                    :   {
+                            type: 'binop',
+                            op: '.',
+                            expr1: {
+                                type: 'binop',
+                                op: '.',
+                                expr1: parentIdentifier,
+                                expr2: {
+                                    type: 'identifier',
+                                    name: 'prototype'
+                                }
+                            },
+                            expr2: {
+                                type: 'identifier',
+                                name: methodName
+                            }
+                        },
+                args: superNode.args,
+                isMethodCall: options.generateTypeScript
             };
             return replacementForSuper;
         }

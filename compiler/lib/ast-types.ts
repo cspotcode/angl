@@ -282,6 +282,7 @@ export interface SuperNode extends StatementNode {
 export interface ObjectNode extends StatementNode, AbstractExportableNode {
     name: string;
     parent?: string;
+    parentIdentifier?: IdentifierNode;
     stmts: Array<StatementNode>;
     properties: Array<AssignNode>;
     methods: Array<MethodNode>;
@@ -331,11 +332,11 @@ export interface ExportDeclarationNode extends AstNode {
     name: string;
 }
 
-export interface AbstractInvokableNode {
+export interface AbstractInvokableNode extends AstNode {
     stmts: StatementsNode;
 }
 
-export interface AbstractArgsInvokableNode extends AbstractInvokableNode {
+export interface AbstractArgsInvokableNode extends AbstractInvokableNode, AstNode {
     args: string[];
 }
 

@@ -360,22 +360,7 @@ export class JsGenerator {
             case 'script':
                 var scriptNode = <astTypes.ScriptNode>astNode;
                 // Do not write any wrapping parentheses because this is a function literal, not an operator.
-                this.print('function(');
-                this.print(scriptNode.args.join(', '));
-                this.print(') {\n');
-                this.indent();
-                this.generateLocalVariableAllocation(scriptNode);
-                // TODO this part of the AST doesn't seem quite right, suggesting there are
-                // possibilities I'm not aware of.
-                // These sanity checks will reject anything unexpected.
-                /*if(!(_.isObject(astNode.stmts) && _(_.keys(astNode.stmts).sort()).isEqual(['list', 'type']) && astNode.stmts.type === 'statements' && _.isArray(astNode.stmts.list))) {
-                 throw new Error('Failed sanity checks on stmts!')
-                 }
-                 _.each(astNode.stmts.list, generateStatement)*/
-                this.generateStatement(scriptNode.stmts);
-                this.outdent();
-                omitIndentation || this.printIndent();
-                this.print('}');
+                this.generateFunction(scriptNode);
                 break;
 
             case 'jsfunccall':
@@ -408,6 +393,33 @@ export class JsGenerator {
         }
         
         this.endNode(astNode);
+    }
+    
+    generateFunction(astNode: astTypes.AbstractArgsInvokableNode, writeFunctionKeyword: boolean = true, functionName?: string) {
+        // This function can generate a function for either a 'script' or 'scriptdef' node
+        if(!_.contains(['script', 'scriptdef'], astNode.type)) throw new Error('Expected "script" or "scriptdef" node; got "' + astNode.type + '" node.');
+
+        var scriptNode = <astTypes.ScriptNode>astNode;
+        // Do not write any wrapping parentheses because this is a function literal, not an operator.
+        if(writeFunctionKeyword) this.print('function');
+        if(writeFunctionKeyword && functionName) this.print(' ');
+        if(functionName) this.print(functionName);
+        this.print('(');
+        this.print(scriptNode.args.join(', '));
+        this.print(') {\n');
+        this.indent();
+        this.generateLocalVariableAllocation(scriptNode);
+        // TODO this part of the AST doesn't seem quite right, suggesting there are
+        // possibilities I'm not aware of.
+        // These sanity checks will reject anything unexpected.
+        /*if(!(_.isObject(astNode.stmts) && _(_.keys(astNode.stmts).sort()).isEqual(['list', 'type']) && astNode.stmts.type === 'statements' && _.isArray(astNode.stmts.list))) {
+         throw new Error('Failed sanity checks on stmts!')
+         }
+         _.each(astNode.stmts.list, generateStatement)*/
+        this.generateStatement(scriptNode.stmts);
+        this.outdent();
+        this.printIndent();
+        this.print('}');
     }
 
     generateStatement(astNode, omitTerminator:boolean = false, omitIndentation:boolean = false) {
@@ -457,26 +469,17 @@ export class JsGenerator {
                 var scriptDefNode = <astTypes.ScriptDefNode>astNode;
                 omitIndentation || this.printIndent();
                 this.beginNode(astNode);
-                this.generateExpression({
-                    type: 'identifier',
-                    variable: scriptDefNode.variable
-                }, OpEnum.ASSIGNMENT, ops.Location.LEFT);
-                this.print(' = function(');
-                this.print(scriptDefNode.args.join(', '));
-                this.print(') {\n');
-                this.indent();
-                this.generateLocalVariableAllocation(scriptDefNode);
-                // TODO this part of the AST doesn't seem quite right, suggesting there are
-                // possibilities I'm not aware of.
-                // These sanity checks will reject anything unexpected.
-                /*if(!(_.isObject(astNode.stmts) && _(_.keys(astNode.stmts).sort()).isEqual(['list', 'type']) && astNode.stmts.type === 'statements' && _.isArray(astNode.stmts.list))) {
-                 throw new Error('Failed sanity checks on stmts!')
-                 }
-                 _.each(astNode.stmts.list, generateStatement)*/
-                this.generateStatement(scriptDefNode.stmts);
-                this.outdent();
-                omitIndentation || this.printIndent();
-                this.print('}');
+                if(this.options.generateTypeScript) {
+                    if(scriptDefNode.exported) this.print('export ');
+                    this.generateFunction(scriptDefNode, true, scriptDefNode.variable.getJsIdentifier());
+                } else {
+                    this.generateExpression({
+                        type: 'identifier',
+                        variable: scriptDefNode.variable
+                    }, OpEnum.ASSIGNMENT, ops.Location.LEFT);
+                    this.print(' = ');
+                    this.generateFunction(scriptDefNode);
+                }
                 break;
 
             case 'const':
@@ -684,55 +687,111 @@ export class JsGenerator {
 
             case 'object':
                 var objectNode = <astTypes.ObjectNode>astNode;
-                var objectExpr = strings.ANGL_GLOBALS_IDENTIFIER + '.' + objectNode.name;
-                var protoExpr = objectExpr + '.prototype';
-                var parentObjectExpr = strings.ANGL_GLOBALS_IDENTIFIER + '.' + objectNode.parent;
-                var parentProtoExpr = parentObjectExpr + '.prototype';
+                var objectExpr = {
+                    type: 'identifier',
+                    variable: objectNode.variable
+                };
+                /*var protoExpr = objectExpr + '.prototype';*/
+                var parentObjectExpr = /*strings.ANGL_GLOBALS_IDENTIFIER + '.' + objectNode.parent;*/objectNode.parentIdentifier;
+                var protoExpr = {
+                    type: 'binop',
+                    op: '.',
+                    expr1: objectExpr,
+                    expr2: {
+                        type: 'identifier',
+                        name: 'prototype'
+                    }
+                };
                 // Wrap object creation within a closure, and pass that closure into the proper runtime method.
                 // The Angl runtime will take care of creating objects in the proper order, so that the parent object
                 // already exists.
                 omitIndentation || this.printIndent();
                 this.beginNode(astNode);
-                this.print(strings.ANGL_RUNTIME_IDENTIFIER + '.createAnglObject(' +
-                    this.codeForStringLiteral(objectNode.name) + ', ' + this.codeForStringLiteral(objectNode.parent) + ', ');
-                this.print('function() {\n');
+                if(this.options.generateTypeScript) {
+                    if(objectNode.exported) this.print('export ');
+                    this.print('class ' + objectNode.name + ' extends ');
+                    this.generateExpression(objectNode.parentIdentifier);
+                    this.print(' {\n');
+                    // TODO properly import the parent
+                    // TODO properly output the local variable name of the parent
+                } else {
+                    this.print(strings.ANGL_RUNTIME_IDENTIFIER + '.createAnglObject(' +
+                        this.codeForStringLiteral(objectNode.name) + ', ' + this.codeForStringLiteral(objectNode.parent) + ', ');
+                    this.print('function() {\n');
+                }
                 this.indent();
                 // Generate the constructor function
-                omitIndentation || this.printIndent();
-                this.print(objectExpr + ' = function() { ' + parentObjectExpr + '.apply(this, arguments); };\n');
+                if(this.options.generateTypeScript) {
+                    // TypeScript will generate the necessary constructor as long as we omit it.
+                } else {
+                    omitIndentation || this.printIndent();
+                    this.generateExpression(objectExpr);
+                    this.print(' = function() { ');
+                    this.generateExpression(parentObjectExpr);
+                    this.print('.apply(this, arguments); };\n');
+                }
                 // Set up inheritance
-                omitIndentation || this.printIndent();
-                this.print(strings.ANGL_RUNTIME_IDENTIFIER + '.inherit(' + objectExpr + ', ' + parentObjectExpr + ');\n');
+                if(!this.options.generateTypeScript) {
+                    omitIndentation || this.printIndent();
+                    this.print(strings.ANGL_RUNTIME_IDENTIFIER + '.inherit(');
+                    this.generateExpression(objectExpr);
+                    this.print(', ');
+                    this.generateExpression(parentObjectExpr);
+                    this.print(');\n');
+                }
                 // Generate the property initialization function
                 omitIndentation || this.printIndent();
-                this.print(protoExpr + '.' + strings.OBJECT_INITPROPERTIES_METHOD_NAME + ' = ');
-                this.generateExpression(objectNode.propertyinitscript);
-                this.print(';\n');
+                if(this.options.generateTypeScript) {
+                    this.generateFunction(objectNode.propertyinitscript, false, strings.OBJECT_INITPROPERTIES_METHOD_NAME);
+                    this.print('\n');
+                } else {
+                    this.generateExpression(protoExpr);
+                    this.print('.' + strings.OBJECT_INITPROPERTIES_METHOD_NAME + ' = ');
+                    this.generateExpression(objectNode.propertyinitscript);
+                    this.print(';\n');
+                }
                 // Generate the create event, if specified
                 if(objectNode.createscript) {
                     omitIndentation || this.printIndent();
-                    this.print(protoExpr + '.$create = ');
-                    this.generateExpression(objectNode.createscript);
-                    this.print(';\n');
+                    if(this.options.generateTypeScript) {
+                        this.generateFunction(objectNode.createscript, false, '$create');
+                    } else {
+                        this.generateExpression(protoExpr);
+                        this.print('.$create = ');
+                        this.generateExpression(objectNode.createscript);
+                        this.print(';');
+                    }
+                    this.print('\n');
                 }
                 // Generate the destroy event, if specified
                 if(objectNode.destroyscript) {
                     omitIndentation || this.printIndent();
-                    this.print(protoExpr + '.$destroy = ');
-                    this.generateExpression(objectNode.destroyscript);
-                    this.print(';\n');
+                    if(this.options.generateTypeScript) {
+                        this.generateFunction(objectNode.destroyscript, false, '$destroy');
+                    } else {
+                        this.generateExpression(protoExpr);
+                        this.print('.$destroy = ');
+                        this.generateExpression(objectNode.destroyscript);
+                        this.print(';');
+                    }
+                    this.print('\n');
                 }
                 // Generate all methods
                 _.each(objectNode.methods, (method) => {
                     omitIndentation || this.printIndent();
-                    this.print(protoExpr + '.' + method.methodname + ' = ');
-                    this.generateExpression(method);
-                    this.print(';\n');
+                    if(this.options.generateTypeScript) {
+                        this.generateFunction(method, false, method.methodname);
+                    } else {
+                        this.generateExpression(protoExpr);
+                        this.print('.' + method.methodname + ' = ');
+                        this.generateExpression(method);
+                        this.print(';');
+                    }
+                    this.print('\n');
                 });
                 this.outdent();
                 omitIndentation || this.printIndent();
-                this.print('})');
-                break;
+                this.print(this.options.generateTypeScript ? '}' : '})');
                 break;
 
             case 'nop':
@@ -747,7 +806,9 @@ export class JsGenerator {
         // except for a few exceptions.
         // Also, in certain contexts we want to omit this termination
         // (e.g., initializer statement of a for loop)
-        if(!_.contains(['nop', 'statements', 'if', 'ifelse', 'while', 'for', 'switch'], astNode.type) && !omitTerminator)
+        if(!_.contains(['nop', 'statements', 'if', 'ifelse', 'while', 'for', 'switch'], astNode.type)
+                && (!this.options.generateTypeScript || !_.contains(['scriptdef', 'object'], astNode.type))
+                && !omitTerminator)
             this.print(';');
         if(!_.contains(['nop', 'statements'], astNode.type) && !omitTerminator)
             this.print('\n');
@@ -821,12 +882,15 @@ export class JsGenerator {
                 }
                 // require modules
                 this.printIndent();
-                this.print('var ' + strings.ANGL_GLOBALS_IDENTIFIER + ' = require(' + this.codeForStringLiteral(strings.ANGL_GLOBALS_MODULE) + ');\n');
+                this.print(this.options.generateTypeScript ? 'import ' : 'var ');
+                this.print(strings.ANGL_GLOBALS_IDENTIFIER + ' = require(' + this.codeForStringLiteral(strings.ANGL_GLOBALS_MODULE) + ');\n');
                 this.printIndent();
-                this.print('var ' + strings.ANGL_RUNTIME_IDENTIFIER + ' = require(' + this.codeForStringLiteral(strings.ANGL_RUNTIME_MODULE) + ');\n');
+                this.print(this.options.generateTypeScript ? 'import ' : 'var ');
+                this.print(strings.ANGL_RUNTIME_IDENTIFIER + ' = require(' + this.codeForStringLiteral(strings.ANGL_RUNTIME_MODULE) + ');\n');
                 fileNode.dependencies.forEach((variable, moduleDescriptor) => {
                     this.printIndent();
-                    this.print('var ' + variable.getJsIdentifier() + ' = require(');
+                    this.print(this.options.generateTypeScript ? 'import ' : 'var ');
+                    this.print(variable.getJsIdentifier() + ' = require(');
                     this.print(this.codeForStringLiteral(moduleDescriptor.isRelative ? pathUtils.relativeModule(fileNode.moduleDescriptor.name, moduleDescriptor.name) : moduleDescriptor.name));
                     this.print(');\n');
                 });
@@ -855,7 +919,7 @@ export class JsGenerator {
 
                     case ModuleExportsType.SINGLE:
                         this.printIndent();
-                        this.print('module.exports = ');
+                        this.print(this.options.generateTypeScript ? 'export = ' : 'module.exports = ');
                         this.generateExpression({
                             type: 'identifier',
                             variable: fileNode.moduleDescriptor.singleExport
