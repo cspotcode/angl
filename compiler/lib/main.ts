@@ -321,11 +321,11 @@ export class JsGenerator {
                 var funcCallNode = <astTypes.FuncCallNode>astNode;
                 var funcIdentifierNode = <astTypes.IdentifierNode>funcCallNode.expr;
                 var mustBindThis =
-                    funcCallNode.isMethodCall
-                    || (funcIdentifierNode.type === 'identifier'
-                    && funcIdentifierNode.variable
-                    && !funcIdentifierNode.variable.getUsesThisBinding());
-                var opType = mustBindThis ? OpEnum.FUNCTION_CALL : OpEnum.MEMBER_ACCESS;
+                    !(funcCallNode.isMethodCall
+                      || (funcIdentifierNode.type === 'identifier'
+                          && funcIdentifierNode.variable
+                          && !funcIdentifierNode.variable.getUsesThisBinding()));
+                var opType = mustBindThis ? OpEnum.MEMBER_ACCESS : OpEnum.FUNCTION_CALL;
                 /**
                  * Should we generate our regular function invocation code?  Maybe not if the variable decides
                  * to generate the code itself.
