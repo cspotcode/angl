@@ -55,12 +55,16 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                 // Additionally, we must make a global version of the variable to be used by other files.
                 // This second version is set as "provided" by this file, such that other files using
                 // the variable will require() this module/file.
-                variable = new scopeVariable.Variable(exportableNode.name, 'PROP_ASSIGNMENT', 'PROP_ACCESS');
+                if(options.generateTypeScript) {
+                    variable = new scopeVariable.Variable(exportableNode.name, 'NONE', 'BARE');
+                } else {
+                    variable = new scopeVariable.Variable(exportableNode.name, 'PROP_ASSIGNMENT', 'PROP_ACCESS');
+                    variable.setContainingObjectIdentifier('exports');
+                }
                 if(jsIdentifier) {
                     variable.setJsIdentifier(null);
                     variable.setDesiredJsIdentifier(jsIdentifier);
                 }
-                variable.setContainingObjectIdentifier('exports');
                 astUtils.getAnglScope(exportableNode).addVariable(variable);
                 var globalVariable = new scopeVariable.Variable(exportableNode.name, 'PROP_ASSIGNMENT', 'PROP_ACCESS');
                 if(jsIdentifier) {

@@ -89,16 +89,17 @@ export function compileDirectory(sourcePath: string, destinationPath: string, op
     console.log('Performing remaining transformation phases on project...');
     projectNode = <astTypes.ProjectNode>allTransformations.runAllTransformations(projectNode, options, 2);
     
-    console.log('Generating JavaScript source code...');
+    console.log('Generating code...');
     _.each(files, (file: AnglFile) => {
         var jsSource = jsGenerator.generateJs(file.ast, options);
         file.compiledJs = jsSource;
     });
 
-    console.log('Writing JavaScript code to disc...');
+    console.log('Writing code to disc...');
+    var extension = options.generateTypeScript ? '.ts' : 'js';
     // Output all of the Javascript to the filesystem
     _.each(files, (file:AnglFile) => {
-        var outputPath = path.join(destinationPath, file.moduleName + '.js');
+        var outputPath = path.join(destinationPath, file.moduleName + extension);
         fs.writeFileSync(outputPath, file.compiledJs);
     });
         
