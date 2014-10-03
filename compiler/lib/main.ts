@@ -381,8 +381,11 @@ export class JsGenerator {
             case 'jsfunccall':
                 var jsFuncCallNode = <astTypes.JsFuncCallNode>astNode;
                 writeParens = ops.needsParentheses(OpEnum.FUNCTION_CALL, parentExpressionType, locationInParentExpression);
+                var writeParensAroundFuncExpr = ops.needsParentheses(jsFuncCallNode.op, OpEnum.FUNCTION_CALL, ops.Location.RIGHT);
                 writeParens && this.print('(');
+                writeParensAroundFuncExpr && this.print('(');
                 this.print(jsFuncCallNode.expr);
+                writeParensAroundFuncExpr && this.print(')');
                 this.print('(');
                 _.each(jsFuncCallNode.args, (arg, i) => {
                     if(i) this.print(', ');
@@ -394,10 +397,10 @@ export class JsGenerator {
 
             case 'jsexpr':
                 var jsExprNode = <astTypes.JsExprNode>astNode;
-                // Writing parentheses because we have no idea what the operator is.
-                this.print('(');
+                writeParens = ops.needsParentheses(jsExprNode.op, parentExpressionType, locationInParentExpression);
+                writeParens && this.print('(');
                 this.print(jsExprNode.expr);
-                this.print(')');
+                writeParens && this.print(')');
                 break;
 
             default:
@@ -611,7 +614,7 @@ export class JsGenerator {
                 // Delegate to the expression generator
                 omitIndentation || this.printIndent();
                 this.beginNode(astNode);
-                this.generateExpression(astNode);
+                this.generateExpression(astNode, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A);
                 break;
 
             case 'with':

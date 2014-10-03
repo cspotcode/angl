@@ -452,7 +452,8 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                 var assignReplacement:astTypes.JsFuncCallNode = {
                     type: 'jsfunccall',
                     expr: strings.ANGL_RUNTIME_IDENTIFIER + '.arrowAssign',
-                    args: [arrowLeft, fieldString, assignNode.rval]
+                    args: [arrowLeft, fieldString, assignNode.rval],
+                    op: operators.JavascriptOperatorsEnum.MEMBER_ACCESS
                 };
                 return assignReplacement;
             }
@@ -464,7 +465,8 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             var resolveCall:astTypes.JsFuncCallNode = {
                 type: 'jsfunccall',
                 expr: strings.ANGL_RUNTIME_IDENTIFIER + '.arrowResolve',
-                args: [arrowNode.expr1]
+                args: [arrowNode.expr1],
+                op: operators.JavascriptOperatorsEnum.MEMBER_ACCESS
             };
             var arrowReplacement:astTypes.BinOpNode = {
                 type: 'binop',

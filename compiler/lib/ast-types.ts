@@ -6,6 +6,7 @@ import Map = require('collections/map');
 import scope = require('./angl-scope');
 import scopeVariable = require('./scope-variable');
 import ModuleDescriptor = require('./module-descriptor');
+import operators = require('./operator-precedence-and-associativity');
 
 export interface AstNode {
     parentNode?: AstNode;
@@ -229,6 +230,7 @@ export interface FuncCallNode extends AstNode {
 export interface JsFuncCallNode extends AstNode {
     expr: string;
     args: ExpressionNode[];
+    op: operators.JavascriptOperatorsEnum;
 }
 
 export interface IdentifierNode extends ExpressionNode {
@@ -304,6 +306,7 @@ export interface MethodNode extends ScriptNode {
 
 export interface JsExprNode extends AstNode {
     expr: string;
+    op: operators.JavascriptOperatorsEnum;
 }
 
 export interface CreateDefNode extends AbstractArgsInvokableNode, AstNode {}
