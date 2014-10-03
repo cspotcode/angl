@@ -16,6 +16,8 @@ import astTypes = require('./ast-types');
 export function needsParentheses(operator: JavascriptOperatorsEnum, parentOperator: JavascriptOperatorsEnum, locationInParent: Location) {
     var operatorInfo = JavascriptOperators[operator];
     var parentOperatorInfo = JavascriptOperators[parentOperator];
+    
+    var operators = [operator, parentOperator];
 
     // Exception: if the NEW_SANS_ARGS and FUNCTION_CALL operators are nested, parentheses *must* be included.
     // Otherwise it will parse as a NEW_WITH_ARGS
@@ -24,9 +26,17 @@ export function needsParentheses(operator: JavascriptOperatorsEnum, parentOperat
     // Without the parentheses, it's:
     //   new Foo()
     // ...which is a different thing entirely.
-    var operators = [operator, parentOperator];
     if(_.contains(operators, JavascriptOperatorsEnum.NEW_SANS_ARGS) && _.contains(operators, JavascriptOperatorsEnum.FUNCTION_CALL)) {
         return true;
+    }
+    
+    // Exception: if the MEMBER_ACCESS and FUNCTION_CALL nodes are nested, parentheses are never required.
+    // This is because JavaScript syntax prevents the parser from ever needing to use operator precedence rules;
+    // there is only one valid interpretation.
+    // For example: a.b() is equivalent to (a.b)(), and a.(b()) is invalid syntax.
+    // Similarly, a().b is equivalent to (a()).b, and a(().b) does not make any sense.
+    if(_.contains(operators, JavascriptOperatorsEnum.MEMBER_ACCESS) && _.contains(operators, JavascriptOperatorsEnum.FUNCTION_CALL)) {
+        return false;
     }
     
     // If the operator has higher precedence than its parent, then no parentheses are required.
