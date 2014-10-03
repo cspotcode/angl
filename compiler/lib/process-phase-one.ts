@@ -294,7 +294,8 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                 rval: {
                     type: 'jsfunccall',
                     expr: strings.ANGL_RUNTIME_IDENTIFIER + '.resolveWithExpression',
-                    args: [ astUtils.cleanNode(withNode.expr) ]
+                    args: [ astUtils.cleanNode(withNode.expr) ],
+                    op: operators.JavascriptOperatorsEnum.MEMBER_ACCESS
                 }
             };
 
