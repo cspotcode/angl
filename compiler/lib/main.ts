@@ -123,7 +123,7 @@ export class JsGenerator {
     codeForStringLiteral(value: string) {
         var code = JSON.stringify(value);
         if(this.options.stringQuoteStyle === options.StringQuoteStyle.SINGLE) {
-            code = "'" + code.slice(1, -1).replace(/'/g, "\'") + "'";
+            code = "'" + code.slice(1, -1).replace(/\\"/g, '"').replace(/'/g, "\\'") + "'";
         }
         return code;
     }
