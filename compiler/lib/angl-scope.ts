@@ -12,6 +12,7 @@ import Dict = require('collections/dict');
 import Set = require('collections/set');
 
 import scopeVariable = require('./scope-variable');
+import reservedWords = require('./reserved-words');
 
 /**
  * Push all values from the second argument onto the first argument.
@@ -198,8 +199,9 @@ export class AnglScope {
      */
     assignJsIdentifiers():void {
         var unnamedVariables = this._unnamedVariables.toArray();
-        // Create a set of all the identifier names we cannot shadow.
-        var unshadowableNames = new Set();
+        // Create a set of all the identifier names we cannot use.
+        var forbiddenNames = new Set();
+        // Add all the identifier names we cannot shadow.
         this._unshadowableVariables.forEach((variable) => {
             // Sanity check that this variable is capable of being shadowed
             if(variable.getAccessType() !== 'BARE') {
@@ -210,8 +212,12 @@ export class AnglScope {
             if(variable.awaitingJsIdentifierAssignment() || !variable.getJsIdentifier()) {
                 throw new Error('Variable should not be shadowed, yet it has not been assigned a JS identifier.');
             }
-            unshadowableNames.add(variable.getJsIdentifier());
+            forbiddenNames.add(variable.getJsIdentifier());
         });
+        // Add names that are not allowed because they are TypeScript / JavaScript keywords
+        forbiddenNames.addEach(reservedWords.typeScriptReservedWords);
+        forbiddenNames.addEach(reservedWords.javaScriptReservedWords);
+        
         _.each(unnamedVariables, (variable:scopeVariable.Variable) => {
             // Some variables might be unnamed but don't want us to assign them a name.
             if(!variable.awaitingJsIdentifierAssignment()) return;
@@ -221,7 +227,7 @@ export class AnglScope {
             var nameSuffix = '';
             // While the name is already in use, create a new name by using a different suffix
             var uid = 2;
-            while(this._hasJsIdentifier(namePrefix + nameSuffix) || unshadowableNames.contains(namePrefix + nameSuffix)) {
+            while(this._hasJsIdentifier(namePrefix + nameSuffix) || forbiddenNames.contains(namePrefix + nameSuffix)) {
                 nameSuffix = '' + uid;
                 uid++;
             }
