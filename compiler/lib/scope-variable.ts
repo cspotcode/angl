@@ -197,6 +197,10 @@ export class ProxyToModuleProvidedVariable implements AbstractVariable {
     constructor(moduleProvidedVariable: AbstractVariable, moduleVariable: AbstractVariable) {
         this._moduleVariable = moduleVariable;
         this._moduleProvidedVariable = moduleProvidedVariable;
+        // Sanity-check that we know the export type of the module providing this variable (SINGLE or MULTI).
+        // UNKNOWN is not allowed.
+        if(this._moduleProvidedVariable.getProvidedByModule().exportsType === ModuleExportsType.UNKNOWN)
+            throw new Error('Cannot create proxyToModuleProvidedVariable for a module with exportsType UNKNOWN.');
     }
     
     awaitingJsIdentifierAssignment() { return false; }
