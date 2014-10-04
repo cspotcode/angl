@@ -15,7 +15,25 @@ export interface AbstractVariable {
     getIdentifier():string;
     getAllocationType():string;
     getAccessType():string;
-    getContainingObjectIdentifier():string;
+    /**
+     * Returns the identifier of the object which this variable is a property of.
+     * Some variables are actually properties of another object.
+     * E.g. `foo.bar`: this method returns "foo"
+     * Otherwise returns null.
+     */
+    getContainingObjectIdentifier(): string;
+    /**
+     * Returns the variable representing the object which this variable is a property of.
+     * Some variables are actually properties of another object. (e.g. `foo.bar`: `bar`
+     * is a property of another variable `foo`)  If that other object (`foo`)
+     * is represented by an instance of AbstractVariable, this method returns that AbstractVariable.
+     * 
+     * If this variable is not a property of another object, or if the containing object is
+     * not represented by an instance of AbstractVariable, this method returns null.
+     * 
+     * See also: getContainingObjectIdentifier
+     */
+    getContainingObjectVariable(): AbstractVariable;
     /**
      * If this variable is provided by a module, returns the ModuleDescriptor for
      * said module.
@@ -137,6 +155,8 @@ export class Variable implements AbstractVariable {
 
     getContainingObjectIdentifier():string { return this._containingObjectIdentifier; }
     
+    getContainingObjectVariable() { return null; }
+    
     setProvidedByModule(moduleDescriptor: ModuleDescriptor) { this._providedByModule = moduleDescriptor; }
 
     getProvidedByModule() { return this._providedByModule; }
@@ -208,9 +228,21 @@ export class ProxyToModuleProvidedVariable implements AbstractVariable {
         
     }
     
+    private _isPropertyOfModuleVariable(): boolean {
+        return this._moduleProvidedVariable.getProvidedByModule().exportsType === ModuleExportsType.MULTI;
+    }
+    
     getContainingObjectIdentifier() {
-        if(this._moduleProvidedVariable.getProvidedByModule().exportsType === ModuleExportsType.MULTI) {
+        if(this._isPropertyOfModuleVariable()) {
             return this._moduleVariable.getJsIdentifier();
+        } else {
+            return null;
+        }
+    }
+    
+    getContainingObjectVariable() {
+        if(this._isPropertyOfModuleVariable()) {
+            return this._moduleVariable;
         } else {
             return null;
         }

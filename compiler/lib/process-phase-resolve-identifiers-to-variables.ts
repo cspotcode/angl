@@ -8,6 +8,7 @@ import scope = require('./angl-scope');
 import astTypes = require('./ast-types');
 import astUtils = require('./ast-utils');
 import options = require('./options');
+import scopeVariable = require('./scope-variable');
 import identifierManipulations = require('./identifier-manipulations');
 var Ident = identifierManipulations.Identifier;
 var walk = treeWalker.walk;
@@ -57,12 +58,22 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             // If this variable is from a parent scope, and it could theoretically be shadowed, then we must tell this
             // scope and parent scopes to avoid shadowing this variable.
             if(variable.getAccessType() === 'BARE') {
-                // Tell this scope and all parent scopes up to but not including the one that contains the variable.
-                for(var scope = anglScope; !scope.hasVariable(variable); scope = scope.getParentScope()) {
-                    scope.doNotShadow(variable);
-                }
+                doNotShadow(anglScope, variable);
+            }
+            // If this is a module-provided variable, and the module's variable could theoretically be shadowed, then we must
+            // tell this scope and parent scopes to avoid shadowing this variable.
+            var containingObjectVariable = variable.getContainingObjectVariable();
+            if(containingObjectVariable) {
+                doNotShadow(anglScope, containingObjectVariable);
             }
         }
 
     });
+}
+
+function doNotShadow(anglScope: scope.AnglScope, variable: scopeVariable.AbstractVariable) {
+    // Tell this scope and all parent scopes up to but not including the one that contains the variable.
+    for(var scope = anglScope; !scope.hasVariable(variable); scope = scope.getParentScope()) {
+        scope.doNotShadow(variable);
+    }
 }
