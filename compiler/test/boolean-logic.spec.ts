@@ -40,6 +40,7 @@ describe('Logical operators', () => {
     
     beforeEach(() => {
         opts = new options.Options();
+        opts.generateTypeScript = false;
     });
 
     function resetSpies(aVal, bVal) {

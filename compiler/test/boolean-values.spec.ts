@@ -28,6 +28,7 @@ describe('boolean values', () => {
     
     beforeEach(() => {
         opts = new options.Options();
+        opts.generateTypeScript = false;
         modules = {};
         modules[strings.ANGL_GLOBALS_MODULE] = {
             true: trueValue,
