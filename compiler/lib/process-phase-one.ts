@@ -372,7 +372,7 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                         var propertyStmt = <astTypes.PropertyNode>stmt;
                         
                         if (objectPropertyNames.contains(propertyStmt.name)) {
-                            throw new Error('Cannot initialize object property ' + JSON.stringify(propertyStmt.name) + 'more than once for object ' + JSON.stringify(objectNode.name));
+                            throw new Error('Cannot initialize object property ' + JSON.stringify(propertyStmt.name) + ' more than once for object ' + JSON.stringify(objectNode.name));
                         }
                         objectPropertyNames.add(propertyStmt.name);
                         objectNode.properties.push({
