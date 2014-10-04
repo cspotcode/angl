@@ -8,8 +8,7 @@
 
 import _ = require('lodash');
 import Dict = require('collections/dict');
-// TODO use FastSet?
-import Set = require('collections/set');
+import FastSet = require('collections/fast-set');
 
 import scopeVariable = require('./scope-variable');
 import reservedWords = require('./reserved-words');
@@ -24,7 +23,7 @@ export class AnglScope {
     /**
      * Set of all Variables
      */
-    private _variables: Set<scopeVariable.AbstractVariable>;
+    private _variables: FastSet<scopeVariable.AbstractVariable>;
     /**
      * Dictionary mapping Angl identifiers to Variables.  Not all Variables have an Angl identifier.
      */
@@ -38,7 +37,7 @@ export class AnglScope {
      * Set containing all Variables that do not have a Javascript identifier.  These identifiers will be assigned to
      * them before Javascript code generation occurs.
      */
-    private _unnamedVariables: Set<scopeVariable.AbstractVariable>;
+    private _unnamedVariables: FastSet<scopeVariable.AbstractVariable>;
     /**
      * Scope that contains this AnglScope.  If an identifier is not found in this scope, it may be found in the parent
      * scope.  Identifiers in this scope will shadow a variable with the same name in the parent scope.
@@ -48,11 +47,11 @@ export class AnglScope {
      * Set of variables from parent scopes that cannot be shadowed by this scope in the generated JS.
      * This will be taken into account when assigning JS identifiers to variables.
      */
-    private _unshadowableVariables: Set<scopeVariable.AbstractVariable>;
+    private _unshadowableVariables: FastSet<scopeVariable.AbstractVariable>;
     /**
      * Set of all scopes that are direct children of this one (scopes for whom _parentScope === this scope)
      */
-    private _childScopes: Set<AnglScope>;
+    private _childScopes: FastSet<AnglScope>;
 
     /**
      * Can this scope allocate its own local variables in JS?  If not, those will need to be
@@ -63,11 +62,11 @@ export class AnglScope {
     constructor() {
         this._identifiers = new Dict<scopeVariable.AbstractVariable>();
         this._jsIdentifiers = new Dict<scopeVariable.AbstractVariable>();
-        this._unnamedVariables = new Set<scopeVariable.AbstractVariable>();
-        this._variables = new Set<scopeVariable.AbstractVariable>();
+        this._unnamedVariables = new FastSet<scopeVariable.AbstractVariable>();
+        this._variables = new FastSet<scopeVariable.AbstractVariable>();
         this._parentScope = null;
-        this._unshadowableVariables = new Set<scopeVariable.AbstractVariable>();
-        this._childScopes = new Set<AnglScope>();
+        this._unshadowableVariables = new FastSet<scopeVariable.AbstractVariable>();
+        this._childScopes = new FastSet<AnglScope>();
     }
 
     // TODO what types should the identifier and value be?
@@ -200,7 +199,7 @@ export class AnglScope {
     assignJsIdentifiers():void {
         var unnamedVariables = this._unnamedVariables.toArray();
         // Create a set of all the identifier names we cannot use.
-        var forbiddenNames = new Set();
+        var forbiddenNames = new FastSet();
         // Add all the identifier names we cannot shadow.
         this._unshadowableVariables.forEach((variable) => {
             // Sanity check that this variable is capable of being shadowed
