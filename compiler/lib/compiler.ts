@@ -30,7 +30,7 @@ export function compileAst(anglAst:astTypes.AstNode, extraGlobalIdentifiers:stri
     var newGlobalScope = globalScope.createGlobalScope(options, extraGlobalIdentifiers);
     anglAst.globalAnglScope = newGlobalScope;
     anglAst = allTransformations.runAllTransformations(anglAst, options);
-    var jsSource = jsGenerator.generateJs(anglAst, options);
+    var jsSource = jsGenerator.generateCode(anglAst, options);
     return jsSource;
 }
 
@@ -91,7 +91,7 @@ export function compileDirectory(sourcePath: string, destinationPath: string, op
     
     console.log('Generating code...');
     _.each(files, (file: AnglFile) => {
-        var jsSource = jsGenerator.generateJs(file.ast, options);
+        var jsSource = jsGenerator.generateCode(file.ast, options);
         file.compiledJs = jsSource;
     });
 

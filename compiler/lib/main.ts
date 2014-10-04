@@ -11,6 +11,9 @@ import anglToJsOpMap = require('./angl-to-js-operator-map');
 import ModuleExportsType = require('./module-exports-type');
 import options = require('./options');
 import pathUtils = require('./path-utils');
+import scopeVariable = require('./scope-variable');
+import scope = require('./angl-scope');
+import FastSet = require('collections/fast-set');
 
 export class JsGenerator {
     
@@ -30,6 +33,10 @@ export class JsGenerator {
         _.times(this.options.spacesPerIndentationLevel, () => {
             this.indentationString += ' ';
         });
+
+        // tracking usages of global variables
+        this._referencedGlobalVariables = new FastSet<scopeVariable.AbstractVariable>();
+        this._globalScope = null;
     }
     
     print(text) {
@@ -124,6 +131,22 @@ export class JsGenerator {
     getOptions(): options.Options {
         return this.options;
     }
+    
+    _referencedGlobalVariables: FastSet<scopeVariable.AbstractVariable>;
+    _globalScope: scope.AnglScope;
+
+    /**
+     * Call this with every variable that is referenced in the output code
+      */
+    logReferenceToVariable(variable) {
+        if(this._globalScope.hasVariable(variable)) {
+            this._referencedGlobalVariables.add(variable);
+        }
+    }
+    
+    getReferencedGlobalVariables(): Array<scopeVariable.AbstractVariable> {
+        return this._referencedGlobalVariables.toArray();
+    }
 
     // TODO properly translate all binops and unops:
     //   ones that GML has that JS doesn't have
@@ -149,6 +172,9 @@ export class JsGenerator {
                 var writeDefaultGetter = true;
 
                 if(variable) {
+                    if(this.options.trackReferencedGlobalVariables) {
+                        this.logReferenceToVariable(variable);
+                    }
                     writeDefaultGetter = !variable.generateGetter(this, parentExpressionType, locationInParentExpression);
                 }
                 if(writeDefaultGetter) {
@@ -872,6 +898,9 @@ export class JsGenerator {
         switch(astNode.type) {
 
             case 'file':
+                // Tracking usages of global variables
+                this._globalScope = astNode.globalAnglScope;
+
                 var fileNode = <astTypes.FileNode>astNode;
                 if(this.options.typeScriptReferencePath) {
                     this.print('/// <reference path="');
@@ -953,10 +982,26 @@ export class JsGenerator {
     }
 }
 
-export function generateJs(transformedAst: astTypes.AstNode, options: options.Options) {
+export function generateCode(transformedAst: astTypes.AstNode, options: options.Options) {
+    return generate(transformedAst, options).code;
+}
+
+export function generate(transformedAst: astTypes.AstNode, options: options.Options): GenerationResult {
     var generator = new JsGenerator(options);
     generator.initialize();
     generator.generateTopNode(transformedAst);
-    return generator.getCode();
+    var result: GenerationResult = {
+        code: generator.getCode()
+    };
+    if(options.trackReferencedGlobalVariables)
+        result.referencedGlobalVariables = generator.getReferencedGlobalVariables();
+    return result;
 }
 
+/**
+ * The result of generating code from a transformed AST.
+ */
+export interface GenerationResult {
+    code: string;
+    referencedGlobalVariables?: Array<scopeVariable.AbstractVariable>;
+}

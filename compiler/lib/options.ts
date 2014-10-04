@@ -59,6 +59,14 @@ export class Options {
     generateTypeScript: boolean = true;
     
     typeScriptReferencePath: string = 'typings.d.ts';
+
+    /**
+     * Should the code generator return a list of every global variable that is actually referenced by the code?
+     * This is useful for determining which global functions must actually be implemented in order to execute the
+     * generated code.
+     * @type {boolean}
+     */
+    trackReferencedGlobalVariables: boolean = true;
     
 }
 
