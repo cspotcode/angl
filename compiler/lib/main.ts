@@ -486,6 +486,9 @@ export class JsGenerator {
                 var constNode = <astTypes.ConstNode>astNode;
                 omitIndentation || this.printIndent();
                 this.beginNode(astNode);
+                if(this.options.generateTypeScript && constNode.exported) {
+                    this.print('export var ');
+                }
                 this.generateExpression({
                     type: 'identifier',
                     variable: constNode.variable
