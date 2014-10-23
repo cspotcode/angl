@@ -62,7 +62,11 @@ export function compileDirectory(sourcePath: string, destinationPath: string, op
             sourceContent: fs.readFileSync(path.resolve(sourcePath, filePath), 'utf8')
         };
         // Generate an AST
-        file.ast = angl.parse(file.sourceContent);
+        try {
+            file.ast = angl.parse(file.sourceContent);
+        } catch(e) {
+            throw new Error('Parser error while parsing ' + file.sourcePath + ':\n' + e.message);
+        }
         return file;
     });
     
