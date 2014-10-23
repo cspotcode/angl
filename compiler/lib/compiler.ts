@@ -5,6 +5,7 @@ import glob = require('glob');
 import _ = require('lodash');
 import path = require('path');
 import fs = require('fs');
+import mkdirp = require('mkdirp');
 
 import angl = require('./angl-parser');
 
@@ -100,6 +101,7 @@ export function compileDirectory(sourcePath: string, destinationPath: string, op
     // Output all of the Javascript to the filesystem
     _.each(files, (file:AnglFile) => {
         var outputPath = path.join(destinationPath, file.moduleName + extension);
+        mkdirp.sync(path.dirname(outputPath));
         fs.writeFileSync(outputPath, file.compiledJs);
     });
         

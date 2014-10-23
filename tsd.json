@@ -34,6 +34,9 @@
     },
     "sinon/sinon.d.ts": {
       "commit": "bcbf87b84243f481de5e3893c1214c3dc2d1d3b3"
+    },
+    "mkdirp/mkdirp.d.ts": {
+      "commit": "bd9a1922e44ddf35953587a92c5caf4242bf6ea5"
     }
   }
 }

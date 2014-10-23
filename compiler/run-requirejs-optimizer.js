@@ -132,6 +132,7 @@ var config = {
         'fs': '',
         'path': '',
         'glob': '',
+        'mkdirp': '',
         
         // This will be assigned a string below.
         'set-require-config': null
