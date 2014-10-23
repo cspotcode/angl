@@ -772,6 +772,7 @@ export class JsGenerator {
                         name: 'prototype'
                     }
                 };
+                
                 // Wrap object creation within a closure, and pass that closure into the proper runtime method.
                 // The Angl runtime will take care of creating objects in the proper order, so that the parent object
                 // already exists.

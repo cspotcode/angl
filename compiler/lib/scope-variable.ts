@@ -79,6 +79,9 @@ export interface AbstractVariable {
     generateSetter(valueToBeSet: astTypes.ExpressionNode, codeGenerator: jsGenerator.JsGenerator, astContext: astTypes.AstNode): boolean;
 }
 
+/**
+ * Basic implementation of AbstractVariable.
+ */
 export class Variable implements AbstractVariable {
 
     private _identifier:string;
