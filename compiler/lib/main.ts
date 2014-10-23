@@ -198,6 +198,14 @@ export class JsGenerator {
     getReferencedGlobalVariables(): Array<scopeVariable.AbstractVariable> {
         return this._referencedGlobalVariables.toArray();
     }
+    
+    generateVariable(variable: scopeVariable.AbstractVariable, parentExpressionType: ops.JavascriptOperatorsEnum = OpEnum.GROUPING, locationInParentExpression: ops.Location = ops.Location.N_A, omitIndentation: boolean = false) {
+        var identifierNode: astTypes.IdentifierNode = {
+            type: 'identifier',
+            variable: variable
+        }
+        this.generateExpression(identifierNode, parentExpressionType, locationInParentExpression, omitIndentation);
+    }
 
     // TODO properly translate all binops and unops:
     //   ones that GML has that JS doesn't have
@@ -421,10 +429,11 @@ export class JsGenerator {
                     } else {
                         // Function calls: Function's `self` and `other` are the local `self` and `other` values
                         this.print('.call(');
-                        this.generateExpression({
-                            type: 'identifier',
-                            variable: astUtils.getAnglScope(funcCallNode).getVariableByIdentifierInChain('self')
-                        }, OpEnum.COMMA, ops.Location.N_A);
+                        this.generateVariable(
+                            astUtils.getAnglScope(funcCallNode).getVariableByIdentifierInChain('self'),
+                            OpEnum.COMMA,
+                            ops.Location.N_A
+                        );
                     }
                     _.each(funcCallNode.args, (arg, i, args) => {
                         if(i || mustBindThis) this.print(', ');
@@ -550,10 +559,7 @@ export class JsGenerator {
                     if(scriptDefNode.exported) this.print('export ');
                     this.generateFunction(scriptDefNode, true, scriptDefNode.variable.getJsIdentifier());
                 } else {
-                    this.generateExpression({
-                        type: 'identifier',
-                        variable: scriptDefNode.variable
-                    }, OpEnum.ASSIGNMENT, ops.Location.LEFT);
+                    this.generateVariable(scriptDefNode.variable, OpEnum.ASSIGNMENT, ops.Location.LEFT);
                     this.print(' = ');
                     this.generateFunction(scriptDefNode);
                 }
@@ -566,10 +572,7 @@ export class JsGenerator {
                 if(this.options.generateTypeScript && constNode.exported) {
                     this.print('export var ');
                 }
-                this.generateExpression({
-                    type: 'identifier',
-                    variable: constNode.variable
-                }, OpEnum.ASSIGNMENT, ops.Location.LEFT);
+                this.generateVariable(constNode.variable, OpEnum.ASSIGNMENT, ops.Location.LEFT);
                 this.print(' = ');
                 this.generateExpression(constNode.expr, OpEnum.ASSIGNMENT, ops.Location.RIGHT);
                 break;
@@ -702,39 +705,26 @@ export class JsGenerator {
 
             case 'with':
                 var withNode = <astTypes.WithNode>astNode;
-                var allObjectsIdentifier = {
-                    type: 'identifier',
-                    variable: withNode.allObjectsVariable
-                };
-                var innerSelfIdentifier = {
-                    type: 'identifier',
-                    variable: astUtils.getAnglScope(withNode).getVariableByIdentifier('self')
-                };
-                var outerSelfIdentifier = {
-                    type: 'identifier',
-                    variable: astUtils.getAnglScope(withNode.parentNode).getVariableByIdentifier('self')
-                };
-                var outerOtherIdentifier = {
-                    type: 'identifier',
-                    variable: withNode.outerOtherVariable
-                };
+                var innerSelfVariable = astUtils.getAnglScope(withNode).getVariableByIdentifier('self');
+                var outerSelfVariable = astUtils.getAnglScope(withNode.parentNode).getVariableByIdentifier('self');
+                var outerOtherVariable = withNode.outerOtherVariable;
                 // Cache the outer `other` value
                 omitIndentation || this.printIndent();
                 this.beginNode(astNode);
-                this.generateExpression(outerOtherIdentifier);
+                this.generateVariable(outerOtherVariable);
                 this.print(' = ' + strings.ANGL_RUNTIME_IDENTIFIER + '.other;\n');
                 // Set the new `other` value
                 omitIndentation || this.printIndent();
                 this.print(strings.ANGL_RUNTIME_IDENTIFIER + '.other = ');
-                this.generateExpression(outerSelfIdentifier);
+                this.generateVariable(outerSelfVariable);
                 this.print(';\n');
                 // Start the while loop that iterates over all matching objects
                 omitIndentation || this.printIndent();
                 this.print('while(');
                 // Assign the value of inner `self` to the next object returned by the iterator
-                this.generateExpression(innerSelfIdentifier);
+                this.generateVariable(innerSelfVariable);
                 this.print(' = ');
-                this.generateExpression(allObjectsIdentifier);
+                this.generateVariable(withNode.allObjectsVariable);
                 this.print('.next()) {\n');
                 this.indent();
                 // Generate all statements within the with loop
@@ -745,7 +735,7 @@ export class JsGenerator {
                 // Restore the outer value of `other`
                 omitIndentation || this.printIndent();
                 this.print(strings.ANGL_RUNTIME_IDENTIFIER + '.other = ');
-                this.generateExpression(outerOtherIdentifier);
+                this.generateVariable(outerOtherVariable);
                 break;
 
             case 'return':
@@ -1018,10 +1008,11 @@ export class JsGenerator {
                     case ModuleExportsType.SINGLE:
                         this.printIndent();
                         this.print(this.options.generateTypeScript ? 'export = ' : 'module.exports = ');
-                        this.generateExpression({
-                            type: 'identifier',
-                            variable: fileNode.moduleDescriptor.singleExport
-                        }, OpEnum.ASSIGNMENT, ops.Location.RIGHT);
+                        this.generateVariable(
+                            fileNode.moduleDescriptor.singleExport,
+                            OpEnum.ASSIGNMENT,
+                            ops.Location.RIGHT
+                        );
                         this.print(';\n');
                         break;
 
