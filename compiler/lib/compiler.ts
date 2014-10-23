@@ -1,6 +1,10 @@
 /// <reference path="../../typings/all.d.ts"/>
 "use strict";
 
+// Install source-map support only when running in NodeJS
+var sourceMapSupport: any = require('source-map-support');
+sourceMapSupport && sourceMapSupport.install();
+
 import glob = require('glob');
 import _ = require('lodash');
 import path = require('path');

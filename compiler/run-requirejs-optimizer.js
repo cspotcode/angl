@@ -133,6 +133,7 @@ var config = {
         'path': '',
         'glob': '',
         'mkdirp': '',
+        'source-map-support': '',
         
         // This will be assigned a string below.
         'set-require-config': null
