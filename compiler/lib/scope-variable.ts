@@ -58,7 +58,7 @@ export interface AbstractVariable {
      * @param opts
      * @returns {boolean}
      */
-    generateInvocation(args: Array<astTypes.ExpressionNode>, codeGenerator: jsGenerator.JsGenerator, parentExpressionType: operators.JavascriptOperatorsEnum, locationInParentExpression: operators.Location): boolean;
+    generateInvocation(args: Array<astTypes.ExpressionNode>, codeGenerator: jsGenerator.JsGenerator, parentExpressionType: operators.JavascriptOperatorsEnum, locationInParentExpression: operators.Location, astContext: astTypes.AstNode): boolean;
     /**
      * Called by the JS code generator whenever the generated code must get the value of this variable.
      * This method can:
@@ -67,7 +67,7 @@ export interface AbstractVariable {
      * @param opts
      * @returns {boolean}
      */
-    generateGetter(codeGenerator: jsGenerator.JsGenerator, parentExpressionType: operators.JavascriptOperatorsEnum, locationInParentExpression: operators.Location): boolean;
+    generateGetter(codeGenerator: jsGenerator.JsGenerator, parentExpressionType: operators.JavascriptOperatorsEnum, locationInParentExpression: operators.Location, astContext: astTypes.AstNode): boolean;
     /**
      * Called by the JS code generator whenever the generated code must set the value of this variable.
      * This method can:
@@ -76,7 +76,7 @@ export interface AbstractVariable {
      * @param opts
      * @returns {boolean}
      */
-    generateSetter(valueToBeSet: astTypes.ExpressionNode, codeGenerator: jsGenerator.JsGenerator): boolean;
+    generateSetter(valueToBeSet: astTypes.ExpressionNode, codeGenerator: jsGenerator.JsGenerator, astContext: astTypes.AstNode): boolean;
 }
 
 export class Variable implements AbstractVariable {
@@ -165,15 +165,15 @@ export class Variable implements AbstractVariable {
 
     setUsesThisBinding(usesThisBinding: boolean) { this._usesThisBinding = usesThisBinding; }
 
-    generateInvocation(args: Array<astTypes.ExpressionNode>, codeGenerator: jsGenerator.JsGenerator, parentExpressionType: operators.JavascriptOperatorsEnum, locationInParentExpression: operators.Location): boolean {
+    generateInvocation(args: Array<astTypes.ExpressionNode>, codeGenerator: jsGenerator.JsGenerator, parentExpressionType: operators.JavascriptOperatorsEnum, locationInParentExpression: operators.Location, astContext: astTypes.AstNode): boolean {
         return false;
     }
     
-    generateGetter(codeGenerator: jsGenerator.JsGenerator, parentExpressionType: operators.JavascriptOperatorsEnum, locationInParentExpression: operators.Location): boolean {
+    generateGetter(codeGenerator: jsGenerator.JsGenerator, parentExpressionType: operators.JavascriptOperatorsEnum, locationInParentExpression: operators.Location, astContext: astTypes.AstNode): boolean {
         return false;
     }
 
-    generateSetter(valueToBeSet: astTypes.ExpressionNode, codeGenerator: jsGenerator.JsGenerator): boolean {
+    generateSetter(valueToBeSet: astTypes.ExpressionNode, codeGenerator: jsGenerator.JsGenerator, astContext: astTypes.AstNode): boolean {
         return false;
     }
 
@@ -256,16 +256,16 @@ export class ProxyToModuleProvidedVariable implements AbstractVariable {
     
     getUsesThisBinding() { return this._moduleProvidedVariable.getUsesThisBinding(); }
     
-    generateGetter(codeGenerator, parentExpressionType, locationInParentExpression) {
-        return this._moduleProvidedVariable.generateGetter(codeGenerator, parentExpressionType, locationInParentExpression);
+    generateGetter(codeGenerator, parentExpressionType, locationInParentExpression, astContext) {
+        return this._moduleProvidedVariable.generateGetter(codeGenerator, parentExpressionType, locationInParentExpression, astContext);
     }
     
-    generateSetter(valueToSet, codeGenerator) {
-        return this._moduleProvidedVariable.generateSetter(valueToSet, codeGenerator);
+    generateSetter(valueToSet, codeGenerator, astContext) {
+        return this._moduleProvidedVariable.generateSetter(valueToSet, codeGenerator, astContext);
     }
     
-    generateInvocation(args, codeGenerator, parentExpressionType, locationInParentExpression) {
-        return this._moduleProvidedVariable.generateInvocation(args, codeGenerator, parentExpressionType, locationInParentExpression);
+    generateInvocation(args, codeGenerator, parentExpressionType, locationInParentExpression, astContext) {
+        return this._moduleProvidedVariable.generateInvocation(args, codeGenerator, parentExpressionType, locationInParentExpression, astContext);
     }
     
 }

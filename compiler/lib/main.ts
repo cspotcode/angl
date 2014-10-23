@@ -234,7 +234,7 @@ export class JsGenerator {
                     if(this.options.trackReferencedGlobalVariables) {
                         this.logReferenceToVariable(variable);
                     }
-                    writeDefaultGetter = !variable.generateGetter(this, parentExpressionType, locationInParentExpression);
+                    writeDefaultGetter = !variable.generateGetter(this, parentExpressionType, locationInParentExpression, identifierNode);
                 }
                 if(writeDefaultGetter) {
                     if(variable) {
@@ -418,7 +418,7 @@ export class JsGenerator {
                 var writeDefaultInvocation = true;
                 if(funcCallNode.expr.type === 'identifier') {
                     if(funcIdentifierNode.variable) {
-                        writeDefaultInvocation = !funcIdentifierNode.variable.generateInvocation(funcCallNode.args, this, parentExpressionType, locationInParentExpression);
+                        writeDefaultInvocation = !funcIdentifierNode.variable.generateInvocation(funcCallNode.args, this, parentExpressionType, locationInParentExpression, funcIdentifierNode);
                     }
                 }
                 if(writeDefaultInvocation) {
@@ -541,7 +541,7 @@ export class JsGenerator {
                     var lvalIdentifierNode = <astTypes.IdentifierNode>assignNode.lval;
                     // It may have custom setter logic
                     if(lvalIdentifierNode.variable) {
-                        writeDefaultSetter = !lvalIdentifierNode.variable.generateSetter(assignNode.rval, this);
+                        writeDefaultSetter = !lvalIdentifierNode.variable.generateSetter(assignNode.rval, this, lvalIdentifierNode);
                     }
                 }
                 if(writeDefaultSetter) {
