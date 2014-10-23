@@ -21,6 +21,7 @@ export class JsGenerator {
     private indentationLevel: number;
     private options: options.Options;
     private indentationString: string;
+    private spacer: string;
     
     constructor(options: options.Options) {
         this.options = options;
@@ -33,14 +34,58 @@ export class JsGenerator {
         _.times(this.options.spacesPerIndentationLevel, () => {
             this.indentationString += ' ';
         });
+        this.spacer = null;
 
         // tracking usages of global variables
         this._referencedGlobalVariables = new FastSet<scopeVariable.AbstractVariable>();
         this._globalScope = null;
     }
     
-    print(text) {
+    print(text: string) {
+        this.spacer = '';
         this.buffer.push(text);
+    }
+
+    /**
+     * Like `print`, but the text is considered a "spacer."
+     * Adjacent spacers can be collapsed together and leading spacers at the beginning of a
+     * file are never printed.
+     * This is useful for putting blank lines between chunks of code that may or may not be empty.
+     * For example, the following code will only print a single newline:
+     * 
+     *     this.printSpacer('\n');
+     *     this.printSpacer('\n');
+     * 
+     * ...but this will print two newlines, one before the comment and one after:
+     * 
+     *     this.printSpacer('\n');
+     *     this.print('// whoa\n');
+     *     this.printSpacer('\n');
+     * 
+     * Note: at the moment, the collapsing logic is really primitive and only works for simple cases.
+     */
+    printSpacer(text: string) {
+        // If at the beginning of the file, do not print spacer.
+        if(this.spacer == null) return;
+        if(this.spacer.length >= text.length && this.spacer.slice(0, text.length) === text) {
+            // skip this new text; it is entirely contained in the already-printed spacer
+            return;
+        }
+        if(this.spacer.length < text.length && this.spacer === text.slice(0, this.spacer.length)) {
+            // only some of the text is new; the rest has already been printed
+            var textToPrint = text.slice(this.spacer.length);
+            this.spacer += textToPrint;
+            this.buffer.push(textToPrint);
+            return;
+        }
+        this.buffer.push(text);
+    }
+
+    /**
+     * Uses printSpacer to print a blank line
+     */
+    printSpacerLine(omitIndentation: boolean = false) {
+        this.printSpacer((omitIndentation ? '' : this.indentString()) + '\n');
     }
 
     indent() {
@@ -54,10 +99,16 @@ export class JsGenerator {
         }
     }
 
-    printIndent() {
+    indentString() {
+        var ret = '';
         _.times(this.indentationLevel, () => {
-            this.print(this.indentationString);
+            ret += this.indentationString;
         });
+        return ret;
+    }
+    
+    printIndent() {
+        this.print(this.indentString());
     }
 
     /**
@@ -759,6 +810,8 @@ export class JsGenerator {
                     this.generateExpression(parentObjectExpr);
                     this.print('.apply(this, arguments); };\n');
                 }
+                // blank line
+                this.printSpacerLine(omitIndentation);
                 // Set up inheritance
                 if(!this.options.generateTypeScript) {
                     omitIndentation || this.printIndent();
@@ -768,6 +821,8 @@ export class JsGenerator {
                     this.generateExpression(parentObjectExpr);
                     this.print(');\n');
                 }
+                // blank line
+                this.printSpacerLine(omitIndentation);
                 // Generate the property initialization function
                 omitIndentation || this.printIndent();
                 if(this.options.generateTypeScript) {
@@ -779,6 +834,8 @@ export class JsGenerator {
                     this.generateExpression(objectNode.propertyinitscript);
                     this.print(';\n');
                 }
+                // blank line
+                this.printSpacerLine(omitIndentation);
                 // Generate the create event, if specified
                 if(objectNode.createscript) {
                     omitIndentation || this.printIndent();
@@ -792,6 +849,8 @@ export class JsGenerator {
                     }
                     this.print('\n');
                 }
+                // blank line
+                this.printSpacerLine(omitIndentation);
                 // Generate the destroy event, if specified
                 if(objectNode.destroyscript) {
                     omitIndentation || this.printIndent();
@@ -807,6 +866,8 @@ export class JsGenerator {
                 }
                 // Generate all methods
                 _.each(objectNode.methods, (method) => {
+                    // blank line
+                    this.printSpacerLine(omitIndentation);
                     omitIndentation || this.printIndent();
                     if(this.options.generateTypeScript) {
                         this.generateFunction(method, false, method.methodname);
@@ -818,6 +879,8 @@ export class JsGenerator {
                     }
                     this.print('\n');
                 });
+                // blank line
+                this.printSpacerLine(omitIndentation);
                 this.outdent();
                 omitIndentation || this.printIndent();
                 this.print(this.options.generateTypeScript ? '}' : '})');
@@ -917,6 +980,7 @@ export class JsGenerator {
                     // Something removes "use strict" from the source code unless I split it up like so.  RequireJS perhaps?
                     this.print('"use' + ' strict";\n');
                 }
+                this.printSpacerLine();
                 // require modules
                 this.printIndent();
                 this.print(this.options.generateTypeScript ? 'import ' : 'var ');
@@ -932,20 +996,17 @@ export class JsGenerator {
                     this.print(');\n');
                 });
                 // blank line
-                this.printIndent();
-                this.print('\n');
+                this.printSpacerLine();
                 // allocate local variables
                 this.generateLocalVariableAllocation(fileNode);
                 // blank line
-                this.printIndent();
-                this.print('\n');
+                this.printSpacerLine();
                 // delegate to the statement generator
                 _.each(fileNode.stmts, (node) => {
                     this.generateStatement(node);
                 });
                 // blank line
-                this.printIndent();
-                this.print('\n');
+                this.printSpacerLine();
                 // Export values
                 switch(fileNode.moduleDescriptor.exportsType) {
                     case ModuleExportsType.MULTI:
