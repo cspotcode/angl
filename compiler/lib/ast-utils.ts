@@ -21,10 +21,13 @@ export var getGlobalAnglScope = (astNode:astTypes.AstNode):anglScope.AnglScope =
     return astNode.globalAnglScope;
 }
 
-export var findParent = (astNode:astTypes.AstNode, callback:(astNode:astTypes.AstNode)=>boolean):astTypes.AstNode => {
+export var findParent = (astNode:astTypes.AstNode, callback:(astNode:astTypes.AstNode)=>boolean, includeStartNode: boolean = false):astTypes.AstNode => {
+    // If we are *not* considering the current node as a possible candidate, skip it right away and start the search with its parent.
+    if(!includeStartNode) astNode = astNode.parentNode;
     while(true) {
-        astNode = astNode.parentNode;
         if(astNode == null) return null;
         if(callback(astNode)) return astNode;
+        // Ascend the node tree
+        astNode = astNode.parentNode;
     }
 }
