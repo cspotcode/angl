@@ -633,18 +633,6 @@ export class JsGenerator {
                 this.print('}');
                 break;
 
-            case 'if':
-                var ifNode = <astTypes.IfNode>astNode;
-                // This is a special case of ifelse where the else block is empty.
-                this.generateStatement({
-                    type: 'ifelse',
-                    expr: ifNode.expr,
-                    stmt1: ifNode.stmt,
-                    stmt2: null,
-                    comments: ifNode.comments
-                }, omitTerminator, omitIndentation);
-                break;
-
             case 'while':
                 var whileNode = <astTypes.WhileNode>astNode;
                 omitIndentation || this.printIndent();

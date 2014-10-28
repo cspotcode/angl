@@ -532,6 +532,18 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             };
             return assignNode;
         }
+        
+        // Replace all if nodes with the equivalent ifelse node with null else statement
+        if(node.type === 'if') {
+            var ifNode = <astTypes.IfNode>node;
+            var ifElseNode: astTypes.IfElseNode = {
+                type: 'ifelse',
+                expr: ifNode.expr,
+                stmt1: ifNode.stmt,
+                stmt2: null
+            };
+            return ifElseNode;
+        }
 
     });
-}
+};
