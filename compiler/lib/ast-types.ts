@@ -171,6 +171,10 @@ export interface StatementNode extends AstNode {
     
 }
 
+export interface NopNode extends StatementNode {
+
+}
+
 export interface ConstNode extends AstNode, AbstractExportableNode {
     name: string;
     expr: ExpressionNode;
