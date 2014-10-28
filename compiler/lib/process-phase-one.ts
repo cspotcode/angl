@@ -334,12 +334,14 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                         }
                         objectMethodNames.add(scriptDefStmt.name);
                         astUtils.cleanNode(scriptDefStmt);
-                        objectNode.methods.push({
+                        var newMethod: astTypes.MethodNode = {
                             type: 'script',
                             args: scriptDefStmt.args,
                             stmts: scriptDefStmt.stmts,
                             methodname: scriptDefStmt.name
-                        });
+                        };
+                        astUtils.migrateComments(newMethod, scriptDefStmt);
+                        objectNode.methods.push(newMethod);
                         break;
 
                     case 'createdef':
@@ -353,6 +355,7 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                             stmts: createDefStmt.stmts,
                             methodname: '$create'
                         };
+                        astUtils.migrateComments(objectNode.createscript, createDefStmt);
                         break;
 
                     case 'destroydef':
@@ -366,6 +369,7 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                             stmts: destroyDefStmt.stmts,
                             methodname: '$destroy'
                         };
+                        astUtils.migrateComments(objectNode.destroyscript, destroyDefStmt);
                         break;
 
                     case 'property':
@@ -375,7 +379,7 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                             throw new Error('Cannot initialize object property ' + JSON.stringify(propertyStmt.name) + ' more than once for object ' + JSON.stringify(objectNode.name));
                         }
                         objectPropertyNames.add(propertyStmt.name);
-                        objectNode.properties.push({
+                        var propertyNode: astTypes.AssignNode = {
                             type: 'assign',
                             lval: {
                                 type: 'binop',
@@ -390,7 +394,9 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                                 }
                             },
                             rval: astUtils.cleanNode(propertyStmt.expr)
-                        });
+                        };
+                        astUtils.migrateComments(propertyNode, propertyStmt);
+                        objectNode.properties.push(propertyNode);
                         break;
 
                     default:
