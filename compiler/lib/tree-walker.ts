@@ -76,7 +76,7 @@ function _walk(node, fn) {
                 }
                 ret === false || _walk(child, fn);
             }
-        } else if(child !== undefined) { // skip nodes that aren't present on the parent (e.g. if the child is optional)
+        } else if(child != null) { // skip nodes that aren't present on the parent (e.g. if the child is optional)
             // Keep visiting the child node until it is *not* replaced.
             // If it *is* replaced, we want to immediately visit the replacement node by looping.
             while(true) {

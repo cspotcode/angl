@@ -2,11 +2,8 @@
 %lex
 
 %%
-\s+\n                   %{
-                            yy.saveComment(yytext, yylloc);
-                        %}
-\s+                     %{
-                            /* skip whitespace */
+[\s\n]+                 %{
+                            /* whitespace */
                             yy.saveComment(yytext, yylloc);
                         %}
 "/*"[\s\S]*?"*/"        %{
@@ -156,7 +153,7 @@ top_level_statement
 statements
     : statements_unwrapped
         {
-            $$ = yy.makeStmtList($1);
+            $$ = yy.makeStmtList($1.length ? $1 : [yy.setLocation(yy.makeNopStmt(), @1)]);
             yy.setLocation($$, @1);
         }
     ;

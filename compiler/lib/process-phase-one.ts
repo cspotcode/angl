@@ -163,6 +163,7 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                     });
                 }
             });
+            replacement.length || replacement.push({type: 'nop'});
             return replacement;
         }
         
