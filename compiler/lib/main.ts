@@ -618,9 +618,11 @@ export class JsGenerator {
             case 'const':
                 var constNode = <astTypes.ConstNode>astNode;
                 omitIndentation || this.printIndent();
-                if(this.options.generateTypeScript && constNode.exported) {
-                    this.print('export var ');
                 this.beginNode(astNode, CommentContext.NEWLINE_INDENTED);
+                if(this.options.generateTypeScript) {
+                    if(constNode.exported)
+                        this.print('export ');
+                    this.print('var ');
                 }
                 this.generateVariable(constNode.variable, OpEnum.ASSIGNMENT, ops.Location.LEFT, CommentContext.NEWLINE_INDENTED);
                 this.print(' = ');
