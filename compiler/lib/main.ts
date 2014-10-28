@@ -99,16 +99,16 @@ export class JsGenerator {
         }
     }
 
-    indentString() {
+    indentString(additional: number = 0) {
         var ret = '';
-        _.times(this.indentationLevel, () => {
+        _.times(this.indentationLevel + additional, () => {
             ret += this.indentationString;
         });
         return ret;
     }
     
-    printIndent() {
-        this.print(this.indentString());
+    printIndent(additional?: number) {
+        this.print(this.indentString(additional));
     }
 
     /**
