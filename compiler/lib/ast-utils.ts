@@ -31,3 +31,38 @@ export function findParent(astNode: astTypes.AstNode, callback: (astNode: astTyp
         astNode = astNode.parentNode;
     }
 }
+
+/**
+ * Compares two NodeLocation instances, checking if one comes before the other one.
+ * Returns -1 if a comes before b, 1 if a comes after b, and 0 otherwise.
+ * @param a
+ * @param b
+ */
+export function compareLocations(a: astTypes.NodeLocation, b: astTypes.NodeLocation): number {
+    // If a is completely before b
+    if(isBefore(a, b)) return -1;
+
+    // If a is completely after b
+    if(isBefore(b, a)) return 1;
+
+    // Else one location is contained by the other, or the locations overlap.
+    return 0;
+}
+
+/**
+ * Returns true if `before` is completely before `after` (no overlap)
+ */
+export function isBefore(before: astTypes.NodeLocation, after: astTypes.NodeLocation): boolean {
+    if(before.last_line < after.first_line) return true;
+    if(before.last_line == after.first_line && before.last_column <= after.first_column) return true;
+    return false;
+}
+
+/**
+ * Returns true if `inside` is contained within `outside`
+ */
+export function isInside(inside: astTypes.NodeLocation, outside: astTypes.NodeLocation): boolean {
+    if(outside.first_line > inside.first_line || (outside.first_line === inside.first_line && outside.first_column > inside.first_column)) return false;
+    if(outside.last_line < inside.last_line || (outside.last_line === inside.last_line && outside.last_column < inside.last_column)) return false;
+    return true;
+}
