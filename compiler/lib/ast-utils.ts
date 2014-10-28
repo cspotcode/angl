@@ -66,3 +66,28 @@ export function isInside(inside: astTypes.NodeLocation, outside: astTypes.NodeLo
     if(outside.last_line < inside.last_line || (outside.last_line === inside.last_line && outside.last_column < inside.last_column)) return false;
     return true;
 }
+
+/*
+ * TODO what do we do if we're copying comments to a node that already has comments?
+ * Do we prepend or append to the existing comments list?
+ */
+
+export function migrateComments(target: astTypes.AstNode, source: astTypes.AstNode, migrateBefore: boolean = true, migrateAfter: boolean = true) {
+    if(!target.comments) {
+        target.comments = {
+            before: [],
+            after: []
+        };
+    }
+
+    if(source.comments) {
+        if(migrateBefore && source.comments.before) {
+            target.comments.before = source.comments.before.slice();
+            source.comments.before.length = 0;
+        }
+        if(migrateAfter && source.comments.after) {
+            target.comments.after = source.comments.after.slice();
+            source.comments.after.length = 0;
+        }
+    }
+}

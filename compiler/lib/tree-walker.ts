@@ -4,6 +4,7 @@
 import nodeChildren = require('./ast-node-children');
 import _ = require('lodash');
 import types = require('./ast-types');
+import astUtils = require('./ast-utils');
 
 export interface WalkerFunction {
     (node:types.AstNode, parentNode:types.AstNode, locationInParent:string):any;
@@ -60,8 +61,8 @@ function _walk(node, fn) {
                 if(_.isArray(ret)) {
                     // Migrate comments from the old node to its replacement
                     if(ret.length) {
-                        migrateComments(<types.AstNode>_.first(ret), child, true, false);
-                        migrateComments(<types.AstNode>_.last(ret), child, false, true);
+                        astUtils.migrateComments(<types.AstNode>_.first(ret), child, true, false);
+                        astUtils.migrateComments(<types.AstNode>_.last(ret), child, false, true);
                     } else {
                         // TODO migrate comments onto the next peer node?
                         // What if there are no more peer nodes?  Then attach to the preceding node?
@@ -98,13 +99,13 @@ function _walk(node, fn) {
                         if(_.isArray(ret) && ret.length) {
                             // We are migrating comments from the child onto a non-empty array of replacement nodes
                             // Migrate before comments to the first replacement
-                            migrateComments(<types.AstNode>_.first(ret), child, true, false);
+                            astUtils.migrateComments(<types.AstNode>_.first(ret), child, true, false);
                             // Migrate after comments to the last replacement
-                            migrateComments(<types.AstNode>_.last(ret), child, false, true);
+                            astUtils.migrateComments(<types.AstNode>_.last(ret), child, false, true);
                         } else {
                             // We are replacing the previous node with nothing (either null or empty array)
                             // Therefore, migrate comments onto the replacement StatementsNode
-                            migrateComments(statementsNode, child);
+                            astUtils.migrateComments(statementsNode, child);
                         }
                         // Replace node with new StatementsNode
                         child = statementsNode;
@@ -124,7 +125,7 @@ function _walk(node, fn) {
                 }
                 if(_.isObject(ret)) {
                     // Migrate comments from the old node to the new one
-                    migrateComments(ret, child);
+                    astUtils.migrateComments(ret, child);
                     // Replace node with returned object
                     child = ret;
                     node[childName] = child;
@@ -138,21 +139,3 @@ function _walk(node, fn) {
     });
 }
 
-/*
- * TODO what do we do if we're copying comments to a node that already has comments?
- * Do we prepend or append to the existing comments list?
- */
-
-function migrateComments(target: types.AstNode, source: types.AstNode, migrateBefore: boolean = true, migrateAfter: boolean = true) {
-    if(!target.comments) {
-        target.comments = {
-            before: [],
-            after: []
-        };
-    }
-    
-    if(source.comments) {
-        if(migrateBefore && source.comments.before) target.comments.before = source.comments.before;
-        if(migrateAfter && source.comments.after) target.comments.after = source.comments.after;
-    }
-}
