@@ -170,13 +170,13 @@ statements_unwrapped
 
 statement
     : assignment ';'
-        { $$ = $1; }
+        { $$ = $1; yy.setEndLocation($$, @2); }
     | function_call ';'
-        { $$ = $1; }
+        { $$ = $1; yy.setEndLocation($$, @2); }
     | var_statement ';'
-        { $$ = $1; }
+        { $$ = $1; yy.setEndLocation($$, @2); }
     | globalvar_statement ';'
-        { $$ = $1; }
+        { $$ = $1; yy.setEndLocation($$, @2); }
     | if_statement
         { $$ = $1; }
     | repeat_statement
@@ -192,7 +192,7 @@ statement
     | with_statement
         { $$ = $1; }
     | '{' statements '}'
-        { $$ = $2; }
+        { $$ = $2; yy.setLocation($$, @1, @3); }
     | BREAK ';'
         { $$ = yy.makeBreakStmt(); yy.setLocation($$, @1, @2); }
     | CONTINUE ';'
@@ -229,7 +229,12 @@ do_until_statement
 
 for_statement
     : FOR '(' assignment ';' expression ';' assignment ')' statement
-        { $$ = yy.makeForStmt($3, $5, $7, $9); yy.setLocation($$, @1, @9); }
+        {
+            $$ = yy.makeForStmt($3, $5, $7, $9);
+            yy.setLocation($$, @1, @9);
+            yy.setEndLocation($3, @4);
+            yy.setEndLocation($5, @6);
+        }
     ;
 
 switch_statement
@@ -286,16 +291,32 @@ globalvar_list
 
 script_literal
     : SCRIPT '(' ')' '{' statements '}'
-        { $$ = yy.makeScriptVal([], $5); yy.setLocation($$, @1, @6); }
+        {
+            $$ = yy.makeScriptVal([], $5);
+            yy.setLocation($$, @1, @6);
+            yy.setLocation($5, @4, @6);
+        }
     | SCRIPT '(' definition_arguments ')' '{' statements '}'
-        { $$ = yy.makeScriptVal($3, $6); yy.setLocation($$, @1, @7); }
+        {
+            $$ = yy.makeScriptVal($3, $6);
+            yy.setLocation($$, @1, @7);
+            yy.setLocation($6, @5, @7);
+        }
     ;
 
 script_definition
     : SCRIPT identifier '(' ')' '{' statements '}'
-        { $$ = yy.makeScriptStmt($2, [], $6); yy.setLocation($$, @1, @7); }
+        {
+            $$ = yy.makeScriptStmt($2, [], $6);
+            yy.setLocation($$, @1, @7);
+            yy.setLocation($6, @5, @7);
+        }
     | SCRIPT identifier '(' definition_arguments ')' '{' statements '}'
-        { $$ = yy.makeScriptStmt($2, $4, $7); yy.setLocation($$, @1, @8); }
+        {
+            $$ = yy.makeScriptStmt($2, $4, $7);
+            yy.setLocation($$, @1, @8);
+            yy.setLocation($7, @6, @8);
+        }
     ;
 
 top_level_script_definition
@@ -343,11 +364,23 @@ class_statement
     : script_definition
         { $$ = $1; }
     | CREATE '(' ')' '{' statements '}'
-        { $$ = yy.makeCreateStmt([], $5); yy.setLocation($$, @1, @6); }
+        {
+            $$ = yy.makeCreateStmt([], $5);
+            yy.setLocation($$, @1, @6);
+            yy.setLocation($5, @4, @6);
+        }
     | CREATE '(' definition_arguments ')' '{' statements '}'
-        { $$ = yy.makeCreateStmt($3, $6); yy.setLocation($$, @1, @7); }
+        {
+            $$ = yy.makeCreateStmt($3, $6);
+            yy.setLocation($$, @1, @7);
+            yy.setLocation($6, @5, @7);
+        }
     | DESTROY '{' statements '}'
-        { $$ = yy.makeDestroyStmt($3); yy.setLocation($$, @1, @4); }
+        {
+            $$ = yy.makeDestroyStmt($3);
+            yy.setLocation($$, @1, @4);
+            yy.setLocation($3, @2, @4);
+        }
     | identifier '=' expression ';'
         { $$ = yy.makePropertyStmt($1, $3); yy.setLocation($$, @1, @4); }
     ;
@@ -361,9 +394,9 @@ assignment
     : variable '=' expression
         { $$ = yy.makeAssignStmt($1, $3); yy.setLocation($$, @1, @3); }
     | variable '++'
-        { $$ = yy.makeCmpAssignStmt('+', $1, yy.makeNumVal('1')); yy.setLocation($$, @1, @2); }
+        { $$ = yy.makeCmpAssignStmt('+', $1, yy.setLocation(yy.makeNumVal('1'), @2)); yy.setLocation($$, @1, @2); }
     | variable '--'
-        { $$ = yy.makeCmpAssignStmt('-', $1, yy.makeNumVal('1')); yy.setLocation($$, @1, @2); }
+        { $$ = yy.makeCmpAssignStmt('-', $1, yy.setLocation(yy.makeNumVal('1'), @2)); yy.setLocation($$, @1, @2); }
     | variable '+=' expression
         { $$ = yy.makeCmpAssignStmt('+', $1, $3); yy.setLocation($$, @1, @3); }
     | variable '-=' expression
@@ -440,7 +473,7 @@ expression
     | variable
         { $$ = $1; }
     | '(' expression ')'
-        { $$ = $2; }
+        { $$ = $2; yy.setLocation($$, @1, @3); }
     ;
 
 function_call

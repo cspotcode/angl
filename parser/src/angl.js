@@ -340,6 +340,16 @@ parser.yy = {
         };
         return node;
     },
+    setStartLocation: function(node, startLocation) {
+        node.location.first_line = startLocation.first_line;
+        node.location.first_column = startLocation.first_column;
+        return node;
+    },
+    setEndLocation: function(node, endLocation) {
+        node.location.last_line = endLocation.last_line;
+        node.location.last_column = endLocation.last_column;
+        return node;
+    },
     // save the content and location of a comment
     saveComment: function(text, location) {
         commentNodes.push({
