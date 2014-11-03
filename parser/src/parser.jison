@@ -220,8 +220,8 @@ while_statement
     ;
 
 do_until_statement
-    : DO statement UNTIL '(' expression ')'
-        { $$ = yy.makeDoUntilStmt($2, $5); yy.setLocation($$, @1, @6); }
+    : DO statement UNTIL '(' expression ')' ';'
+        { $$ = yy.makeDoUntilStmt($2, $5); yy.setLocation($$, @1, @7); }
     ;
 
 for_statement
