@@ -49,6 +49,10 @@ export class AnglScope {
      */
     private _unshadowableVariables: FastSet<scopeVariable.AbstractVariable>;
     /**
+     * Set of variables that are actually used in the code.
+     */
+    private _usedVariables: FastSet<scopeVariable.AbstractVariable>;
+    /**
      * Set of all scopes that are direct children of this one (scopes for whom _parentScope === this scope)
      */
     private _childScopes: FastSet<AnglScope>;
@@ -67,6 +71,7 @@ export class AnglScope {
         this._parentScope = null;
         this._unshadowableVariables = new FastSet<scopeVariable.AbstractVariable>();
         this._childScopes = new FastSet<AnglScope>();
+        this._usedVariables = new FastSet<scopeVariable.AbstractVariable>();
     }
 
     // TODO what types should the identifier and value be?
@@ -180,7 +185,7 @@ export class AnglScope {
      * Returns an array of all Variables
      */
     getVariablesArray():scopeVariable.AbstractVariable[] { return this._variables.toArray(); }
-
+    
     setParentScope(parentAnglScope: AnglScope) {
         if(this._parentScope) {
             this._parentScope._childScopes.delete(this);
@@ -276,6 +281,49 @@ export class AnglScope {
         }
         return vars;
     }
+
+    setIdentifierIsUsed(identifier: string, isUsed: boolean = true) {
+        var variable = this.getVariableByIdentifier(identifier);
+        if(!variable) throw new Error('Scope does not have variable with identifier ' + JSON.stringify(identifier));
+        this.setVariableIsUsed(variable, isUsed);
+    }
+    
+    setIdentifierInChainIsUsed(identifier: string, isUsed: boolean = true) {
+        var variable = this.getVariableByIdentifierInChain(identifier);
+        if(!variable) throw new Error('Scope chain does not have variable with identifier ' + JSON.stringify(identifier));
+        this.setVariableIsUsed(variable, isUsed);
+    }
+    
+    setVariableIsUsed(variable: scopeVariable.AbstractVariable, isUsed: boolean = true) {
+        // Sanity check that we actually own this variable
+        if(!this.hasVariable(variable)) throw new Error('Variable is not from this scope.');
+        if(isUsed) this._usedVariables.add(variable);
+        else this._usedVariables.remove(variable);
+    }
+    
+    setVariableInChainIsUsed(variable: scopeVariable.AbstractVariable, isUsed: boolean = true) {
+        var scopeWithVariable = this;
+        while(!scopeWithVariable.hasVariable(variable)) {
+            scopeWithVariable = scopeWithVariable.getParentScope();
+            if(!scopeWithVariable) throw new Error('Variable is not from any scope in this scope\'s chain.');
+        }
+        scopeWithVariable.setVariableIsUsed(variable);
+    }
+    
+    getVariableIsUsed(variable: scopeVariable.AbstractVariable): boolean {
+        return this._usedVariables.has(variable);
+    }
+    
+    getIdentifierIsUsed(identifier: string): boolean {
+        var variable = this.getVariableByIdentifier(identifier);
+        if(!variable) throw new Error('Scope does not have a variable with identifier ' + JSON.stringify(identifier));
+        return this._usedVariables.has(variable);
+    }
+    
+    /**
+     * Returns an array of all used variables (variables that are actually referenced in the code)
+     */
+    getUsedVariablesArray(): Array<scopeVariable.AbstractVariable> { return this._usedVariables.toArray(); }
 }
 
 AnglScope.prototype.canAllocateOwnLocalVariables = true;

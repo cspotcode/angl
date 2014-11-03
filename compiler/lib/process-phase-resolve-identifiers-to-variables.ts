@@ -55,6 +55,8 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                 variable = fileNode.getLocalProxyForModuleVariable(variable, true);
             }
             node.variable = variable;
+            // Tell the scope that this variable is actually being used in the code.
+            astUtils.getAnglScope(node).setVariableInChainIsUsed(variable);
             // If this variable is from a parent scope, and it could theoretically be shadowed, then we must tell this
             // scope and parent scopes to avoid shadowing this variable.
             if(variable.getAccessType() === 'BARE') {
