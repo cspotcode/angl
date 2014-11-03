@@ -503,11 +503,25 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             };
             return replacementForSuper;
         }
-
+        
         // Replace all cmpassign with the equivalent assign and binop combo
         // TODO this does not properly prevent lvalue expressions from being evaluated twice
         if(node.type === 'cmpassign') {
             var cmpAssignNode = <astTypes.CmpAssignNode>node;
+            // We don't want to output the comments attached to the lval twice.
+            // Therefore we create a copy of the lval.  All comments are migrated to the copy, so the original has
+            // no comments.
+            var copyOfLval = _.clone(cmpAssignNode.lval);
+            copyOfLval.comments = null;
+            astUtils.migrateComments(copyOfLval, cmpAssignNode.lval);
+            var replacements = new FastSet<astTypes.AstNode>();
+            walk(copyOfLval, (node: astTypes.AstNode): astTypes.AstNode => {
+                if(replacements.has(node) || node === copyOfLval) return;
+                var replacement = _.clone(node);
+                replacement.comments = null;
+                replacements.add(replacement);
+                return replacement;
+            });
             var binopNode:astTypes.BinOpNode = {
                 type: 'binop',
                 op: cmpAssignNode.op,
@@ -516,7 +530,7 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             };
             var assignNode:astTypes.AssignNode = {
                 type: 'assign',
-                lval: cmpAssignNode.lval,
+                lval: copyOfLval,
                 rval: binopNode
             };
             return assignNode;
