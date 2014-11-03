@@ -67,6 +67,15 @@ export class Options {
      * @type {boolean}
      */
     trackReferencedGlobalVariables: boolean = true;
+
+    /**
+     * Members that should be declared on generated TypeScript classes.
+     * This is a mapping from keys to arrays.  Each key is the Angl identifier of a globally-exported Angl object.
+     * Each array is a list of strings, the identifiers of members that should be declared on the class.
+     */
+    additionalClassMembers: {
+        [classAnglIdentifier: string]: Array<string>;
+    } = {};
     
 }
 

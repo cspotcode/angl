@@ -850,6 +850,19 @@ export class JsGenerator {
                     this.print('function() {\n');
                 }
                 this.indent();
+                this.printSpacerLine(omitIndentation);
+                // Generate declarations for additional class members
+                var fileNode = <astTypes.FileNode>astUtils.findParent(objectNode, 'file');
+                var additionalClassMembers: Array<string>;
+                // Only do this in TypeScript, if the object is globally exported, and if an array of additional class members exists.
+                if(this.options.generateTypeScript && (objectNode.exported || fileNode.moduleDescriptor.singleExport === objectNode.variable) && (additionalClassMembers = this.options.additionalClassMembers[objectNode.variable.getJsIdentifier()])) {
+                    _.each(additionalClassMembers, (memberName) => {
+                        omitIndentation || this.printIndent();
+                        this.print(memberName);
+                        this.print(';\n');
+                    });
+                }
+                this.printSpacerLine(omitIndentation);
                 // Generate the constructor function
                 if(this.options.generateTypeScript) {
                     // TypeScript will generate the necessary constructor as long as we omit it.
