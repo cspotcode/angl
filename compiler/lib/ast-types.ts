@@ -102,9 +102,15 @@ export class FileNode implements AstNode {
             if(!addDependency) throw new Error('File does not already have a dependency on the appropriate module.');
             moduleVariable = this.addDependency(providedByModule);
         }
-        // create local proxy variable and add it to scope
-        var proxyVariable = new scopeVariable.ProxyToModuleProvidedVariable(variable, moduleVariable);
-        this.anglScope.addVariable(proxyVariable);
+        // Does the proxy variable already exist?
+        var identifier = variable.getIdentifier();
+        var proxyVariable: scopeVariable.AbstractVariable;
+        if(identifier) proxyVariable = this.anglScope.getVariableByIdentifier(identifier);
+        if(!proxyVariable) {
+            // create local proxy variable and add it to scope
+            proxyVariable = new scopeVariable.ProxyToModuleProvidedVariable(variable, moduleVariable);
+            this.anglScope.addVariable(proxyVariable);
+        }
         return proxyVariable;
     }
 
