@@ -12,6 +12,7 @@ import ModuleExportsType = require('./module-exports-type');
 import options = require('./options');
 import pathUtils = require('./path-utils');
 import scopeVariable = require('./scope-variable');
+import variableTypes = require('./variable-types');
 import scope = require('./angl-scope');
 import FastSet = require('collections/fast-set');
 
@@ -1027,7 +1028,7 @@ export class JsGenerator {
             this.printIndent();
             this.print('var ');
             this.print(_.map(localVariables, (variable) => {
-                return variable.getJsIdentifier();
+                return variable.getJsIdentifier() + (variable.getDataType() instanceof variableTypes.ArrayType ? ' = []' : '');
             }).join(', '));
             this.print(';\n');
         }

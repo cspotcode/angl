@@ -17,6 +17,7 @@ export interface AbstractVariable {
     getAllocationType():string;
     getAccessType():string;
     getDataType(): variableTypes.AbstractVariableType;
+    canSetDataType(): boolean;
     /**
      * Returns the identifier of the object which this variable is a property of.
      * Some variables are actually properties of another object.
@@ -81,10 +82,14 @@ export interface AbstractVariable {
     generateSetter(valueToBeSet: astTypes.ExpressionNode, codeGenerator: jsGenerator.JsGenerator, astContext: astTypes.AstNode): boolean;
 }
 
+export interface CanSetDataType extends AbstractVariable {
+    setDataType(type: variableTypes.AbstractVariableType);
+}
+
 /**
  * Basic implementation of AbstractVariable.
  */
-export class Variable implements AbstractVariable {
+export class Variable implements AbstractVariable, CanSetDataType {
 
     private _identifier:string;
     private _allocationType:string;
@@ -154,6 +159,10 @@ export class Variable implements AbstractVariable {
     
     getDataType() {
         return this._dataType;
+    }
+    
+    canSetDataType() {
+        return true;
     }
     
     setDataType(dataType: variableTypes.AbstractVariableType) {
@@ -249,6 +258,10 @@ export class ProxyToModuleProvidedVariable implements AbstractVariable {
     
     getDataType() {
         return this._moduleProvidedVariable.getDataType();
+    }
+    
+    canSetDataType() {
+        return false;
     }
     
     private _isPropertyOfModuleVariable(): boolean {

@@ -10,7 +10,7 @@ export class AnyType extends AbstractVariableType {}
 export class ClassType extends AbstractVariableType {}
 
 export class ArrayType extends AbstractVariableType {
-    constructor(public itemType: AbstractVariableType) {
+    constructor(public itemType?: AbstractVariableType) {
         super();
     }
 }

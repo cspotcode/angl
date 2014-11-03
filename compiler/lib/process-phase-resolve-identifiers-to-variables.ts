@@ -9,6 +9,7 @@ import astTypes = require('./ast-types');
 import astUtils = require('./ast-utils');
 import options = require('./options');
 import scopeVariable = require('./scope-variable');
+import variableTypes = require('./variable-types');
 import identifierManipulations = require('./identifier-manipulations');
 var Ident = identifierManipulations.Identifier;
 var walk = treeWalker.walk;
@@ -67,6 +68,14 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             var containingObjectVariable = variable.getContainingObjectVariable();
             if(containingObjectVariable) {
                 doNotShadow(anglScope, containingObjectVariable);
+            }
+            
+            // Are we attempting to subscript this variable?
+            // If so, attach Array type information to this variable.
+            var indexNode = <astTypes.IndexNode>node.parentNode; // speculative downcast
+            if(indexNode.type === 'index' && indexNode.expr === node) {
+                var dataType = variable.getDataType();
+                if(dataType == null && variable.canSetDataType()) (<scopeVariable.CanSetDataType>variable).setDataType(new variableTypes.ArrayType());
             }
         }
 
