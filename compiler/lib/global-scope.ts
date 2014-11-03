@@ -2,33 +2,18 @@
 "use strict";
 
 import _ = require('lodash');
+
 import scope = require('./angl-scope');
 import scopeVariable = require('./scope-variable');
 import strings = require('./strings');
 import ModuleDescriptor = require('./module-descriptor');
-var anglGlobalsNamespace = require('../../runtime/src/angl-globals-namespace');
-// Trigger loading of all globals onto the globals namespace
-require('../../runtime/src/angl-globals');
 import options = require('./options');
+import ModuleExportsType = require('./module-exports-type');
+var allGmlGlobalIdentifiers = <Array<string>>require('../resource/globals');
 
 
-export function createGlobalScope(opts: options.Options, extraGlobalIdentifiers:string[] = []): scope.AnglScope {
+export function createGlobalScope(opts: options.Options, extraGlobalIdentifiers:string[] = [], extraGlobalVariables: Array<scopeVariable.AbstractVariable> = []): scope.AnglScope {
     var globalScope = new scope.AnglScope();
-
-    var showMessageVariable = new scopeVariable.Variable('show_message');
-    showMessageVariable.setProvidedByModule(new ModuleDescriptor('window', false, 'window'));
-    showMessageVariable.generateGetter = function(jsGenerator, exprType, exprLocation) {
-        jsGenerator.print('alert');
-        return true;
-    };
-    globalScope.addVariable(showMessageVariable);
-    
-    // Grab the list of all global identifiers from the runtime
-    var globalIdentifiers:Array<string> = _.keys(anglGlobalsNamespace);
-    globalIdentifiers = _.difference(globalIdentifiers, ['true', 'false']);
-    
-    // Add any user-supplied global identifiers
-    globalIdentifiers = globalIdentifiers.concat(extraGlobalIdentifiers);
     
     // Add variables for `true` and `false` to global scope.
     ['true', 'false'].forEach((name) => {
@@ -42,13 +27,43 @@ export function createGlobalScope(opts: options.Options, extraGlobalIdentifiers:
         globalScope.addVariable(variable);
     });
     
-    // Add all global identifiers into global scope
-    _.each(globalIdentifiers, (globalIdentifier) => {
+    // Add variable for AnglRoom to global scope.
+    var anglRoomVariable = new scopeVariable.Variable('AnglRoom', 'IMPORT', 'BARE');
+    var anglRoomModule = new ModuleDescriptor('angl/room', false, 'AnglRoom');
+    anglRoomModule.exportsType = ModuleExportsType.SINGLE;
+    anglRoomModule.singleExport = anglRoomVariable;
+    anglRoomVariable.setProvidedByModule(anglRoomModule);
+    globalScope.addVariable(anglRoomVariable);
+
+    // Add variable for AnglObject to global scope.
+    var anglObjectVariable = new scopeVariable.Variable(strings.SUPER_OBJECT_NAME, 'NONE', 'PROP_ACCESS');
+    anglObjectVariable.setJsIdentifier('AnglObject');
+    var anglObjectModule = new ModuleDescriptor('angl/object', false, 'AnglObject');
+    anglObjectModule.exportsType = ModuleExportsType.SINGLE;
+    anglObjectModule.singleExport = anglObjectVariable;
+    anglObjectVariable.setProvidedByModule(anglObjectModule);
+    globalScope.addVariable(anglObjectVariable);
+
+    // Add all extra global variables into global scope
+    _.each(extraGlobalVariables, (globalVariable) => {
+        globalScope.addVariable(globalVariable);
+    });
+    
+    function addIdentifierToGlobalScope(globalIdentifier) {
         // TODO what values should I be adding?  Gotta invent an object/type/schema for values.
         var variable = new scopeVariable.Variable(globalIdentifier, 'PROP_ASSIGNMENT', 'PROP_ACCESS');
         variable.setContainingObjectIdentifier(strings.ANGL_GLOBALS_IDENTIFIER);
         globalScope.addVariable(variable);
-    });
+    }
+    
+    // Add any user-supplied global identifiers
+    _.each(extraGlobalIdentifiers, addIdentifierToGlobalScope);
+    
+    // Add our built-in list of GM's global identifiers
+    // Omit identifiers that are already in global scope
+    var globalIdentifiers = <Array<string>>_.filter(allGmlGlobalIdentifiers, (ident) => !globalScope.hasIdentifier(ident));
+
+    _.each(globalIdentifiers, addIdentifierToGlobalScope);
 
     return globalScope;
 }
