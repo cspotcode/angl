@@ -307,7 +307,7 @@ export class JsGenerator {
                 switch(binOpNode.op) {
                     // special-case the dot operator - no brackets!
                     case '.':
-                        this.generateExpression(binOpNode.expr1, OpEnum.MEMBER_ACCESS, ops.Location.LEFT);
+                        this.generateExpression(binOpNode.expr1, OpEnum.MEMBER_ACCESS, ops.Location.LEFT, beforeCommentContext);
                         this.print('.');
                         this.generateExpression(binOpNode.expr2, OpEnum.MEMBER_ACCESS, ops.Location.RIGHT);
                         break;
