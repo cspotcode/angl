@@ -5,7 +5,8 @@ import _ = require('lodash');
 import types = require('./ast-types');
 import options = require('./options');
 
-export var transformers = [
+export var transformerFns = [
+    (ast) => ast,
     require('./process-phase-assign-comments-to-nodes').transform,
     require('./process-phase-zero').transform,
     require('./process-phase-one').transform,
@@ -14,6 +15,24 @@ export var transformers = [
     require('./process-phase-assign-js-identifiers').transform
 ];
 
-export function runAllTransformations(ast: types.AstNode, options: options.Options, startPhase: number = 0, endPhase: number = Infinity): types.AstNode {
-    return _.reduce(transformers.slice(startPhase, endPhase), (ast:types.AstNode, transformer) => ( transformer(ast, options) || ast ), ast);
+export enum Phases {
+    BEGIN,
+    ASSIGN_COMMENTS,
+    ZERO,
+    ONE,
+    RESOLVE_IDENTIFIERS_TO_VARIABLES,
+    MARK_METHOD_CALLS,
+    ASSIGN_JS_IDENTIFIERS,
+    END
+}
+
+// sanity-check that we have the same number of Phases as transformerFns
+if(Phases.END !== transformerFns.length) {
+    throw new Error('Length of transformerFns does not match length of Phases enum.');
+}
+
+export function transform(ast: types.AstNode, options: options.Options, startPhase?: Phases, endPhase?: Phases): types.AstNode {
+    if(typeof startPhase === 'undefined') startPhase = Phases.BEGIN;
+    if(typeof endPhase === 'undefined') endPhase = Phases.END;
+    return _.reduce(transformerFns.slice(startPhase, endPhase), (ast:types.AstNode, transformer) => ( transformer(ast, options) || ast ), ast);
 };

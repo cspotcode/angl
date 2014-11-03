@@ -34,7 +34,7 @@ export function compileAst(anglAst:astTypes.AstNode, extraGlobalIdentifiers:stri
     // Manually create and assign a global scope to the AST
     var newGlobalScope = globalScope.createGlobalScope(options, extraGlobalIdentifiers);
     anglAst.globalAnglScope = newGlobalScope;
-    anglAst = allTransformations.runAllTransformations(anglAst, options);
+    anglAst = allTransformations.transform(anglAst, options);
     var jsSource = jsGenerator.generateCode(anglAst, options);
     return jsSource;
 }
@@ -76,7 +76,7 @@ export function compileDirectory(sourcePath: string, destinationPath: string, op
     console.log('Performing first transformation phase on each file...');
     var allFileAsts = <Array<astTypes.FileNode>>_.map(files, (file) => {
         file.ast.globalAnglScope = newGlobalScope;
-        file.ast = allTransformations.runAllTransformations(file.ast, options, 0, 2);
+        file.ast = allTransformations.transform(file.ast, options, allTransformations.Phases.BEGIN, allTransformations.Phases.ONE);
         var moduleDescriptor = (<astTypes.FileNode>file.ast).moduleDescriptor;
         moduleDescriptor.name = file.moduleName;
         moduleDescriptor.preferredIdentifier = _.last(file.moduleName.split('/'));
@@ -96,7 +96,7 @@ export function compileDirectory(sourcePath: string, destinationPath: string, op
     };
     
     console.log('Performing remaining transformation phases on project...');
-    projectNode = <astTypes.ProjectNode>allTransformations.runAllTransformations(projectNode, options, 2);
+    projectNode = <astTypes.ProjectNode>allTransformations.transform(projectNode, options, allTransformations.Phases.ONE);
     
     console.log('Generating code...');
     _.each(files, (file: AnglFile) => {
