@@ -21,7 +21,14 @@ export function getGlobalAnglScope(astNode: astTypes.AstNode): anglScope.AnglSco
     return astNode.globalAnglScope;
 }
 
-export function findParent(astNode: astTypes.AstNode, callback: (astNode: astTypes.AstNode) => boolean, includeStartNode: boolean = false): astTypes.AstNode {
+export function findParent(astNode: astTypes.AstNode, parentTypes: Array<string>,                       includeStartNode?: boolean): astTypes.AstNode;
+export function findParent(astNode: astTypes.AstNode, parentType: string,                               includeStartNode?: boolean): astTypes.AstNode;
+export function findParent(astNode: astTypes.AstNode, callback: (astNode: astTypes.AstNode) => boolean, includeStartNode?: boolean): astTypes.AstNode;
+export function findParent(astNode: astTypes.AstNode, filterCriteria: any,                              includeStartNode: boolean = false): astTypes.AstNode {
+    var callback;
+    if(typeof filterCriteria === 'function') callback = filterCriteria;
+    else if(typeof filterCriteria === 'string') callback = (node) => node.type === filterCriteria;
+    else callback = (node) => _.contains(filterCriteria, node.type);
     // If we are *not* considering the current node as a possible candidate, skip it right away and start the search with its parent.
     if(!includeStartNode) astNode = astNode.parentNode;
     while(true) {
