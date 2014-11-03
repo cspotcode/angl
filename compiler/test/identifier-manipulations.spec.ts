@@ -39,9 +39,14 @@ describe('identifier-manipulations', () => {
             expect(Ident.fromUnderscores('fOO_BAr').toCamelCase(true)).to.equal('FooBar');
             expect(Ident.fromUnderscores('__fOO_BAr').toCamelCase(true)).to.equal('__FooBar');
         });
-        it('should lowercase the first word in camelCase when passed false or nothing', () => {
+        it('should lowercase the first word in camelCase when passed false', () => {
             expect(Ident.fromUnderscores('fOO_BAr').toCamelCase(false)).to.equal('fooBar');
-            expect(Ident.fromUnderscores('fOO_BAr').toCamelCase()).to.equal('fooBar');
+        });
+        it('should match the case of the first word in camelCase when passed nothing', () => {
+            expect(Ident.fromUnderscores('foo_bar').toCamelCase()).to.equal('fooBar');
+            expect(Ident.fromUnderscores('Foo_Bar').toCamelCase()).to.equal('FooBar');
+            expect(Ident.fromHyphenated('foo-bar').toCamelCase()).to.equal('fooBar');
+            expect(Ident.fromHyphenated('Foo-bar').toCamelCase()).to.equal('FooBar');
         });
         it('should capitalize everything in UNDER_SCORE when passed true', () => {
             expect(Ident.fromCamelCase('fooBar').toUnderscores(true)).to.equal('FOO_BAR');

@@ -19,10 +19,12 @@ export class Identifier {
         var ret = new Identifier(priv);
         ret._prefix = p[0];
         ret._nameParts = p[1].split(/(?=[A-Z])/);
+        ret._computeInitialCapital();
         return ret;
     }
     
-    toCamelCase(initialCapital: boolean = false): string {
+    toCamelCase(initialCapital?: boolean): string {
+        if(typeof initialCapital === 'undefined') initialCapital = this._initialCapital;
         return this._prefix
              + this._nameParts
                    .map((v, i) => initialCapital || i ? v.toLowerCase().replace(/^./, () => v[0].toUpperCase()) : v.toLowerCase())
@@ -34,6 +36,7 @@ export class Identifier {
         var ret = new Identifier(priv);
         ret._prefix = p[0];
         ret._nameParts = p[1].split('_');
+        ret._computeInitialCapital();
         return ret;
     }
     
@@ -52,6 +55,7 @@ export class Identifier {
         var ret = new Identifier(priv);
         ret._prefix = p[0];
         ret._nameParts = p[1].split('-');
+        ret._computeInitialCapital();
         return ret;
     }
     
@@ -64,6 +68,10 @@ export class Identifier {
         return [m[1], m[2]];
     }
     
+    private _computeInitialCapital() {
+        this._initialCapital = this._nameParts[0] ? this._nameParts[0][0].toUpperCase() === this._nameParts[0][0] : false;
+    }
+    
     /*private*/ constructor(p) {
         if(p !== priv) throw new Error('Private constructor');
         this._nameParts = [];
@@ -72,6 +80,7 @@ export class Identifier {
     
     private _nameParts: Array<string>;
     private _prefix: string;
+    private _initialCapital: boolean;
     
 }
 
