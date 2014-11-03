@@ -784,8 +784,11 @@ export class JsGenerator {
                 // For example, inside a _.each() iterator function
                 omitIndentation || this.printIndent();
                 this.beginNode(astNode, CommentContext.NEWLINE_INDENTED);
-                this.print('return ');
-                this.generateExpression(returnNode.expr, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A);
+                this.print('return');
+                if(returnNode.expr) {
+                    this.print(' ');
+                    this.generateExpression(returnNode.expr, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A);
+                }
                 break;
 
             case 'exit':
