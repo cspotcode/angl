@@ -745,16 +745,30 @@ export class JsGenerator {
 
             case 'with':
                 var withNode = <astTypes.WithNode>astNode;
-                var innerSelfVariable = astUtils.getAnglScope(withNode).getVariableByIdentifier('self');
-                var outerSelfVariable = astUtils.getAnglScope(withNode.parentNode).getVariableByIdentifier('self');
-                var outerOtherVariable = withNode.outerOtherVariable;
-                // Cache the outer `other` value
+                var withScope = astUtils.getAnglScope(withNode);
+                var parentScope = astUtils.getAnglScope(withNode.parentNode);
+                var innerSelfVariable = withScope.getVariableByIdentifier('self');
+                var outerSelfVariable = parentScope.getVariableByIdentifierInChain('self');
+                var outerOtherVariable = parentScope.getVariableByIdentifierInChain('other');
+                var outerOtherCacheVariable = withNode.outerOtherVariable;
+                var mustCacheOuterOther = outerOtherVariable.getContainingObjectIdentifier() === strings.ANGL_RUNTIME_IDENTIFIER;
                 omitIndentation || this.printIndent();
                 this.beginNode(astNode, CommentContext.NEWLINE_INDENTED);
-                this.generateVariable(outerOtherVariable);
-                this.print(' = ' + strings.ANGL_RUNTIME_IDENTIFIER + '.other;\n');
+                // Cache the outer `other` value if necessary.
+                // If the outerOtherVariable isn't $ART.other, there's no need to cache its value.
+                // For example, if the outerOtherVariable is 
+                if(mustCacheOuterOther) {
+                    this.generateVariable(outerOtherCacheVariable);
+                    this.print(' = ');
+                    this.generateVariable(outerOtherVariable);
+                    this.print(';\n');
+                    omitIndentation || this.printIndent();
+                }
                 // Set the new `other` value
-                omitIndentation || this.printIndent();
+                if(withNode.innerOtherVariable.getJsIdentifier() !== 'this' && withScope.getVariableIsUsed(withNode.innerOtherVariable)) {
+                    this.generateVariable(withNode.innerOtherVariable);
+                    this.print(' = ');
+                }
                 this.print(strings.ANGL_RUNTIME_IDENTIFIER + '.other = ');
                 this.generateVariable(outerSelfVariable);
                 this.print(';\n');
@@ -775,7 +789,7 @@ export class JsGenerator {
                 // Restore the outer value of `other`
                 omitIndentation || this.printIndent();
                 this.print(strings.ANGL_RUNTIME_IDENTIFIER + '.other = ');
-                this.generateVariable(outerOtherVariable);
+                this.generateVariable(mustCacheOuterOther ? outerOtherCacheVariable : outerOtherVariable);
                 break;
 
             case 'return':

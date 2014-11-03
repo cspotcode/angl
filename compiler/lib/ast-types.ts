@@ -274,6 +274,7 @@ export interface WithNode extends StatementNode {
     stmt: StatementNode;
     allObjectsVariable: scopeVariable.AbstractVariable;
     outerOtherVariable: scopeVariable.AbstractVariable;
+    innerOtherVariable: scopeVariable.AbstractVariable;
     /**
      * Used in a processing phase to avoid processing this node twice.
      */

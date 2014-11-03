@@ -273,6 +273,17 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             selfVariable.setIdentifier('self');
             selfVariable.setDesiredJsIdentifier('wSelf');
             innerScope.addVariable(selfVariable);
+            
+            // Create variable to hold the inner `other` value
+            var innerOtherIsThis = outerScope.getVariableByIdentifier('self').getJsIdentifier() === 'this';
+            var innerOtherVariable = new scopeVariable.Variable(null, innerOtherIsThis ? 'NONE' : 'LOCAL');
+            innerOtherVariable.setIdentifier('other');
+            if(innerOtherIsThis) {
+                innerOtherVariable.setJsIdentifier('this');
+            } else {
+                innerOtherVariable.setDesiredJsIdentifier('wOther');
+            }
+            innerScope.addVariable(innerOtherVariable);
 
             // Create variable to cache the outer `other` value.  This will be used to restore the value of `other`
             // after `with` has finished looping.
@@ -283,6 +294,7 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             // Store variables onto the with node, for using during code generation
             withNode.allObjectsVariable = allObjectsVariable;
             withNode.outerOtherVariable = outerOtherVariable;
+            withNode.innerOtherVariable = innerOtherVariable;
 
             // Prepend with() AST node with an assignment statement that creates the array of matched objects.
             // By doing this, we ensure that the with() expression is evaluated in the outer scope.
