@@ -129,8 +129,8 @@ var nodeChildNames: {
         "stmt"
     ],
     "dountil": [
-        "expr",
-        "stmt"
+        "stmt",
+        "expr"
     ],
     "switch": [
         "expr",
