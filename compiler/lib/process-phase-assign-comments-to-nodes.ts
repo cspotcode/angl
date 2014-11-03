@@ -81,7 +81,7 @@ export var transform = (ast: types.SimpleFileNode, opts: options.Options): types
         
         // Is nodeB contained within nodeA?  If so, there may be comments within nodeA that should be attached to "before" nodeB
         if(astUtils.isInside(nodeB.location, nodeA.location)) {
-            while(astUtils.isBefore(comments.peek().location, nodeB.location)) {
+            while(comments.peek() && astUtils.isBefore(comments.peek().location, nodeB.location)) {
                 nodeB.comments.before.push(comments.next());
             }
         }
