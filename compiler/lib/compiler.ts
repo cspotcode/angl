@@ -25,7 +25,12 @@ var Ident = identifierManipulations.Identifier;
 var defaultOptions = new options.Options();
 
 export function compile(anglSourceCode:string, options: options.Options):string {
+function normalizeNewlines(input: string): string {
+    return input.replace(/\r\n/g, '\n');
+}
+
     // Parse the angl source code into an AST
+    anglSourceCode = normalizeNewlines(anglSourceCode);
     var ast = angl.parse(anglSourceCode);
     return compileAst(ast, null, options);
 }
@@ -59,7 +64,7 @@ export function compileDirectory(sourcePath: string, destinationPath: string, op
         var file:AnglFile = {
             sourcePath: filePath,
             moduleName: filePath.replace(/\.[^/]+?$/, ''),
-            sourceContent: fs.readFileSync(path.resolve(sourcePath, filePath), 'utf8')
+            sourceContent: normalizeNewlines(fs.readFileSync(path.resolve(sourcePath, filePath), 'utf8'))
         };
         // Generate an AST
         try {
