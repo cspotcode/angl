@@ -25,7 +25,7 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
         if(node.type === 'identifier') {
             // If this identifier node is actually a property name for property access (e.g. the `bar` in `foo.bar`)
             // then it does *not* resolve to a variable in scope.
-            if(locationInParent === 'expr2' && parent.type === 'binop' && parent.op === '.') {
+            if(locationInParent === 'expr2' && parent.type === 'binop' && (parent.op === '.' || parent.op === '->')) {
                 return;
             }
             // Some identifiers have already been resolved to a variable, possibly because they

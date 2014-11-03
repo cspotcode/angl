@@ -12,6 +12,8 @@ export var transformerFns = [
     require('./process-phase-break-to-return').transform,
     require('./process-phase-one').transform,
     require('./process-phase-resolve-identifiers-to-variables').transform,
+    require('./process-phase-dot-to-arrow').transform,
+    require('./process-phase-arrow-operators').transform,
     require('./process-phase-mark-method-calls').transform,
     require('./process-phase-assign-js-identifiers').transform
 ];
@@ -23,6 +25,8 @@ export enum Phases {
     BREAK_TO_RETURN,
     ONE,
     RESOLVE_IDENTIFIERS_TO_VARIABLES,
+    DOT_TO_ARROW,
+    ARROW_OPERATORS,
     MARK_METHOD_CALLS,
     ASSIGN_JS_IDENTIFIERS,
     END
