@@ -823,7 +823,9 @@ export class JsGenerator {
                 this.beginNode(astNode, CommentContext.NEWLINE_INDENTED);
                 if(this.options.generateTypeScript) {
                     if(objectNode.exported) this.print('export ');
-                    this.print('class ' + objectNode.name + ' extends ');
+                    this.print('class ');
+                    this.generateVariable(objectNode.variable);
+                    this.print(' extends ');
                     this.generateExpression(objectNode.parentIdentifier);
                     this.print(' {\n');
                     // TODO properly import the parent
