@@ -5,6 +5,7 @@ import _ = require('lodash');
 
 import scope = require('./angl-scope');
 import scopeVariable = require('./scope-variable');
+import variableTypes = require('./variable-types');
 import strings = require('./strings');
 import ModuleDescriptor = require('./module-descriptor');
 import options = require('./options');
@@ -29,6 +30,7 @@ export function createGlobalScope(opts: options.Options, extraGlobalIdentifiers:
     
     // Add variable for AnglRoom to global scope.
     var anglRoomVariable = new scopeVariable.Variable('AnglRoom', 'IMPORT', 'BARE');
+    anglRoomVariable.setDataType(new variableTypes.ClassType());
     var anglRoomModule = new ModuleDescriptor('angl/room', false, 'AnglRoom');
     anglRoomModule.exportsType = ModuleExportsType.SINGLE;
     anglRoomModule.singleExport = anglRoomVariable;
@@ -38,6 +40,7 @@ export function createGlobalScope(opts: options.Options, extraGlobalIdentifiers:
     // Add variable for AnglObject to global scope.
     var anglObjectVariable = new scopeVariable.Variable(strings.SUPER_OBJECT_NAME, 'NONE', 'PROP_ACCESS');
     anglObjectVariable.setJsIdentifier('AnglObject');
+    anglObjectVariable.setDataType(new variableTypes.ClassType());
     var anglObjectModule = new ModuleDescriptor('angl/object', false, 'AnglObject');
     anglObjectModule.exportsType = ModuleExportsType.SINGLE;
     anglObjectModule.singleExport = anglObjectVariable;

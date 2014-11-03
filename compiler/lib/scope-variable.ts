@@ -8,6 +8,7 @@ import ModuleExportsType = require('./module-exports-type');
 import astTypes = require('./ast-types');
 import operators = require('./operator-precedence-and-associativity');
 import jsGenerator = require('./main');
+import variableTypes = require('./variable-types');
 
 export interface AbstractVariable {
     awaitingJsIdentifierAssignment():boolean;
@@ -15,6 +16,7 @@ export interface AbstractVariable {
     getIdentifier():string;
     getAllocationType():string;
     getAccessType():string;
+    getDataType(): variableTypes.AbstractVariableType;
     /**
      * Returns the identifier of the object which this variable is a property of.
      * Some variables are actually properties of another object.
@@ -92,6 +94,7 @@ export class Variable implements AbstractVariable {
     private _containingObjectIdentifier:string;
     private _providedByModule: ModuleDescriptor;
     private _usesThisBinding: boolean;
+    private _dataType: variableTypes.AbstractVariableType;
 
     /**
      * Enumeration of possible allocationType values.
@@ -115,6 +118,7 @@ export class Variable implements AbstractVariable {
         this._containingObjectIdentifier = null;
         this._providedByModule = null;
         this._usesThisBinding = true;
+        this._dataType = null;
     }
 
     awaitingJsIdentifierAssignment() { return !this._jsIdentifier; }
@@ -147,6 +151,14 @@ export class Variable implements AbstractVariable {
     getAllocationType():string { return this._allocationType; }
 
     getAccessType():string { return this._accessType; }
+    
+    getDataType() {
+        return this._dataType;
+    }
+    
+    setDataType(dataType: variableTypes.AbstractVariableType) {
+        this._dataType = dataType;
+    }
 
     /**
      * Sets the identifier of the containing object (the object that contains this variable).
@@ -233,6 +245,10 @@ export class ProxyToModuleProvidedVariable implements AbstractVariable {
             return 'BARE';
         }
         
+    }
+    
+    getDataType() {
+        return this._moduleProvidedVariable.getDataType();
     }
     
     private _isPropertyOfModuleVariable(): boolean {

@@ -11,6 +11,7 @@ import scope = require('./angl-scope');
 import astTypes = require('./ast-types');
 import astUtils = require('./ast-utils');
 import scopeVariable = require('./scope-variable');
+import variableTypes = require('./variable-types');
 import strings = require('./strings');
 import ModuleExportsType = require('./module-exports-type');
 import options = require('./options');
@@ -47,6 +48,12 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             if(options.renameUnderscoreToCamelCaseForGlobals) {
                 jsIdentifier = identifierManipulations.autoConvertUnderscoreToCamel(exportableNode.name);
             }
+            
+            // Create type information to attach to the variable.
+            var variableType: variableTypes.AbstractVariableType;
+            if(exportableNode.type === 'object') variableType = new variableTypes.ClassType();
+            // TODO set types for scriptdef or const nodes?
+            
             var variable: scopeVariable.Variable;
             if(exportableNode.exported) {
                 // This variable is destined for the global scope.
@@ -65,12 +72,12 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                     variable.setJsIdentifier(null);
                     variable.setDesiredJsIdentifier(jsIdentifier);
                 }
-                astUtils.getAnglScope(exportableNode).addVariable(variable);
                 var globalVariable = new scopeVariable.Variable(exportableNode.name, 'PROP_ASSIGNMENT', 'PROP_ACCESS');
                 if(jsIdentifier) {
                     globalVariable.setJsIdentifier(null);
                     globalVariable.setDesiredJsIdentifier(jsIdentifier);
                 }
+                globalVariable.setDataType(variableType);
                 globalVariable.setProvidedByModule(fileNode.moduleDescriptor);
                 astUtils.getGlobalAnglScope(exportableNode).addVariable(globalVariable);
             } else {
@@ -84,9 +91,10 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                 }
                 variable.setJsIdentifier(null);
                 variable.setDesiredJsIdentifier(jsIdentifier || exportableNode.name);
-                astUtils.getAnglScope(exportableNode).addVariable(variable);
             }
+            variable.setDataType(variableType);
             exportableNode.variable = variable;
+            astUtils.getAnglScope(exportableNode).addVariable(variable);
             
             if(exportableNode.exported) {
                 if(fileNode.moduleDescriptor.exportsType === ModuleExportsType.UNKNOWN)
@@ -106,12 +114,13 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                 fileNode.moduleDescriptor.exportsType = ModuleExportsType.SINGLE;
             if(fileNode.moduleDescriptor.exportsType !== ModuleExportsType.SINGLE)
                 throw new Error('Module cannot have both "export =" and "export object|const|script" statements.');
-            fileNode.moduleDescriptor.singleExport = astUtils.getAnglScope(exportDeclarationNode).getVariableByIdentifier(exportDeclarationNode.name);
+            var localVariable = fileNode.moduleDescriptor.singleExport = astUtils.getAnglScope(exportDeclarationNode).getVariableByIdentifier(exportDeclarationNode.name);
             if(!fileNode.moduleDescriptor.singleExport)
                 throw new Error('Cannot export "' + exportDeclarationNode.name + '": no such variable.');
             fileNode.moduleDescriptor.preferredIdentifier = exportDeclarationNode.name;
             // Since this is an export, add a variable to global scope.
             var globalVar = new scopeVariable.Variable(exportDeclarationNode.name, 'NONE', 'BARE');
+            globalVar.setDataType(localVariable.getDataType());
             globalVar.setProvidedByModule(fileNode.moduleDescriptor);
             astUtils.getGlobalAnglScope(fileNode).addVariable(globalVar);
             return null;
