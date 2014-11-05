@@ -3,7 +3,7 @@
 
 import _ = require('lodash');
 
-import arrayIter = require('./array-iter');
+import arrayIter = require('./util/array-iter');
 import types = require('./ast-types');
 import astUtils = require('./ast-utils');
 import options = require('./options');
