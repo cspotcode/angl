@@ -6,7 +6,6 @@ import types = require('./ast-types');
 import options = require('./options');
 
 export var transformerFns = [
-    (ast) => ast,
     require('./process-phase-assign-comments-to-nodes').transform,
     require('./process-phase-zero').transform,
     require('./process-phase-break-to-return').transform,
@@ -19,7 +18,6 @@ export var transformerFns = [
 ];
 
 export enum Phases {
-    BEGIN,
     ASSIGN_COMMENTS,
     ZERO,
     BREAK_TO_RETURN,
@@ -29,7 +27,10 @@ export enum Phases {
     ARROW_OPERATORS,
     MARK_METHOD_CALLS,
     ASSIGN_JS_IDENTIFIERS,
-    END
+    
+    // So that we can easily refer to the first phase and after the last phase:
+    END,
+    BEGIN = 0
 }
 
 // sanity-check that we have the same number of Phases as transformerFns
