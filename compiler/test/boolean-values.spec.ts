@@ -47,7 +47,6 @@ describe('boolean values', () => {
     it('should access global constant values when compiler option is true', () => {
         opts.trueAndFalseAreNumberConstants = true;
         _module = util.compileAndLoad(anglSource, opts, sandbox);
-        debugger;
         expect(_module.getTrue()).to.equal(trueValue);
         expect(_module.getFalse()).to.equal(falseValue);
     });
