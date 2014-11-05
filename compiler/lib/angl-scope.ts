@@ -364,28 +364,3 @@ export class WithScope extends AnglScope {
 
 WithScope.prototype.canAllocateOwnLocalVariables = false;
 
-
-// An identifier that exists in an Angl scope, will refer to a variable in memory at runtime, and knows how that
-// variable can be accessed via JavaScript code at runtime.
-export interface Identifier {
-    getJsExpression():string;
-}
-
-
-// Types of identifiers:
-// script const
-// other const (these are the same???)
-//    consts can't be an lvalue
-// function argument
-// local variables
-// value is a script, const value, local variable
-
-/*
-  An Angl value takes the form:
-  {
-    type: 'constant' || 'localVar' || 'argument',
-
-  }
- */
-
-

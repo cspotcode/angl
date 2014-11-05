@@ -137,8 +137,6 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             var thisVar = new scopeVariable.Variable('self', scopeVariable.AllocationType.ARGUMENT);
             thisVar.setJsIdentifier('this');
             newScope.addVariable(thisVar);
-            /*            var otherVar = new scopeVariable.Variable('other', 'ARGUMENT');
-             newScope.addVariable(otherVar);*/
             _.each(scriptNode.args, (argName) => {
                 var argumentVar = new scopeVariable.Variable(argName, scopeVariable.AllocationType.ARGUMENT);
                 newScope.addVariable(argumentVar);
