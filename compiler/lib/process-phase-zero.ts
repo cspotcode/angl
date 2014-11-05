@@ -17,15 +17,15 @@ export var transform = (ast:types.SimpleFileNode, opts: options.Options):types.A
         throw new Error('Unexpected root node from Angl parser. Expected type "statements", got "' + ast.type + '".');
     
     var anglScope = new AnglScope.AnglScope();
-    var thisVariable = new scopeVariable.Variable('self', 'ARGUMENT');
+    var thisVariable = new scopeVariable.Variable('self', scopeVariable.AllocationType.ARGUMENT);
     thisVariable.setJsIdentifier('this');
-    var otherVariable = new scopeVariable.Variable('other', 'PROP_ASSIGNMENT', 'PROP_ACCESS');
+    var otherVariable = new scopeVariable.Variable('other', scopeVariable.AllocationType.PROP_ASSIGNMENT, scopeVariable.AccessType.PROP_ACCESS);
     otherVariable.setContainingObjectIdentifier(strings.ANGL_RUNTIME_IDENTIFIER);
-    var requireVariable = new scopeVariable.Variable(null, 'ARGUMENT', 'BARE');
+    var requireVariable = new scopeVariable.Variable(null, scopeVariable.AllocationType.ARGUMENT, scopeVariable.AccessType.BARE);
     requireVariable.setJsIdentifier('require');
-    var exportsVariable = new scopeVariable.Variable(null, 'ARGUMENT', 'BARE');
+    var exportsVariable = new scopeVariable.Variable(null, scopeVariable.AllocationType.ARGUMENT, scopeVariable.AccessType.BARE);
     exportsVariable.setJsIdentifier('exports');
-    var moduleVariable = new scopeVariable.Variable(null, 'ARGUMENT', 'BARE');
+    var moduleVariable = new scopeVariable.Variable(null, scopeVariable.AllocationType.ARGUMENT, scopeVariable.AccessType.BARE);
     moduleVariable.setJsIdentifier('module');
     anglScope.addVariable(thisVariable);
     anglScope.addVariable(otherVariable);

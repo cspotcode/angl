@@ -60,7 +60,7 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             astUtils.getAnglScope(node).setVariableInChainIsUsed(variable);
             // If this variable is from a parent scope, and it could theoretically be shadowed, then we must tell this
             // scope and parent scopes to avoid shadowing this variable.
-            if(variable.getAccessType() === 'BARE') {
+            if(variable.getAccessType() === scopeVariable.AccessType.BARE) {
                 doNotShadow(anglScope, variable);
             }
             // If this is a module-provided variable, and the module's variable could theoretically be shadowed, then we must

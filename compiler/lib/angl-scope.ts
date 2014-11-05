@@ -208,7 +208,7 @@ export class AnglScope {
         // Add all the identifier names we cannot shadow.
         this._unshadowableVariables.forEach((variable) => {
             // Sanity check that this variable is capable of being shadowed
-            if(variable.getAccessType() !== 'BARE') {
+            if(variable.getAccessType() !== scopeVariable.AccessType.BARE) {
                 throw new Error('Variable should not be shadowed, yet it is not possible to shadow this variable.  This probably indicates a bug elsewhere in the compiler.');
             }
             // Sanity check that this variable has been assigned a JS identifier.  Otherwise there is
@@ -275,7 +275,7 @@ export class AnglScope {
             if(scope !== this && scope.canAllocateOwnLocalVariables) continue;
             pushArray(
                 vars,
-                _.filter(scope.getVariablesArray(), (variable: scopeVariable.AbstractVariable) => variable.getAllocationType() === 'LOCAL')
+                _.filter(scope.getVariablesArray(), (variable: scopeVariable.AbstractVariable) => variable.getAllocationType() === scopeVariable.AllocationType.LOCAL)
             );
             pushArray(visitedScopes, scope._childScopes.toArray());
         }

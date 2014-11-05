@@ -289,7 +289,7 @@ export class JsGenerator {
                 }
                 if(writeDefaultGetter) {
                     if(variable) {
-                        if(variable.getAccessType() === 'PROP_ACCESS') {
+                        if(variable.getAccessType() === scopeVariable.AccessType.PROP_ACCESS) {
                             this.print(variable.getContainingObjectIdentifier() + '.');
                         }
                         this.print(variable.getJsIdentifier());

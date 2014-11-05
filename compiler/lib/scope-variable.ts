@@ -10,12 +10,59 @@ import operators = require('./operator-precedence-and-associativity');
 import jsGenerator = require('./main');
 import variableTypes = require('./variable-types');
 
+/**
+ * Enumeration of possible allocationType values.
+ * TODO should this be split into allocationType and assignmentType?  Or is that unnecessary complexity/over-engineering?
+ * A Variable's AllocationType is how that variable must be declared/allocated in the generated code.
+ */
+export enum AllocationType {
+    /**
+     * This is a local variable, allocated with a `var` statement.
+     */
+    LOCAL,
+    /**
+     * This is a function argument.  It is declared in the function's signature.
+     */
+    ARGUMENT,
+    /**
+     * This variable is a property of some containing object.
+     */
+    PROP_ASSIGNMENT,
+    /**
+     * This variable is an imported module.
+     * In JS, it's declared and initialized with `var foo = require('./foo');`
+     * In TS, it's declared and initialized with `import foo = require('./foo');`
+     */
+    IMPORT,
+    /**
+     * This variable does not need to be declared or initialized at all.
+     */
+    NONE
+}
+
+/**
+ * Enumeration of possible accessType values.
+ * A Variable's AccessType is how that variable's value is accessed (setting or getting) in the generated code.
+ */
+export enum AccessType {
+    /**
+     * This variable is accessed as a bare identifier in scope.
+     * E.g. `foo`
+     */
+    BARE,
+    /**
+     * This variable is accessed as a property of some containing object.
+     * E.g. `containingObject.foo`
+     */
+    PROP_ACCESS
+}
+
 export interface AbstractVariable {
     awaitingJsIdentifierAssignment():boolean;
     getJsIdentifier():string;
     getIdentifier():string;
-    getAllocationType():string;
-    getAccessType():string;
+    getAllocationType(): AllocationType;
+    getAccessType(): AccessType;
     getDataType(): variableTypes.AbstractVariableType;
     canSetDataType(): boolean;
     /**
@@ -92,8 +139,8 @@ export interface CanSetDataType extends AbstractVariable {
 export class Variable implements AbstractVariable, CanSetDataType {
 
     private _identifier:string;
-    private _allocationType:string;
-    private _accessType:string;
+    private _allocationType: AllocationType;
+    private _accessType: AccessType;
     private _desiredJsIdentifier:string;
     private _jsIdentifier:string;
     private _containingObjectIdentifier:string;
@@ -101,20 +148,7 @@ export class Variable implements AbstractVariable, CanSetDataType {
     private _usesThisBinding: boolean;
     private _dataType: variableTypes.AbstractVariableType;
 
-    /**
-     * Enumeration of possible allocationType values.
-     * TODO should this be split into allocationType and assignmentType?  Or is that unnecessary complexity/over-engineering?
-     */
-    private static allocationTypes = ['LOCAL', 'ARGUMENT', 'PROP_ASSIGNMENT', 'IMPORT', 'NONE'];
-    /**
-     * Enumeration of possible accessType values.
-     */
-    private static accessTypes = ['BARE', 'PROP_ACCESS'];
-
-    constructor(identifier:string = null, allocationType:string = 'LOCAL', accessType:string = 'BARE') {
-        if(!_.contains(Variable.allocationTypes, allocationType)) throw new Error('Invalid Variable allocationType "' + allocationType + '"');
-        if(!_.contains(Variable.accessTypes, accessType)) throw new Error('Invalid Variable accessType"' + accessType + '"');
-
+    constructor(identifier: string = null, allocationType: AllocationType = AllocationType.LOCAL, accessType: AccessType = AccessType.BARE) {
         this._identifier = identifier;
         this._jsIdentifier = identifier;
         this._desiredJsIdentifier = null;
@@ -153,9 +187,9 @@ export class Variable implements AbstractVariable, CanSetDataType {
 
     getIdentifier():string { return this._identifier; }
 
-    getAllocationType():string { return this._allocationType; }
+    getAllocationType(): AllocationType { return this._allocationType; }
 
-    getAccessType():string { return this._accessType; }
+    getAccessType(): AccessType { return this._accessType; }
     
     getDataType() {
         return this._dataType;
@@ -245,13 +279,13 @@ export class ProxyToModuleProvidedVariable implements AbstractVariable {
         }
     }
     
-    getAllocationType() { return 'NONE'; }
+    getAllocationType() { return AllocationType.NONE; }
     
     getAccessType() {
         if(this._moduleProvidedVariable.getProvidedByModule().exportsType === ModuleExportsType.MULTI) {
-            return 'PROP_ACCESS';
+            return AccessType.PROP_ACCESS;
         } else {
-            return 'BARE';
+            return AccessType.BARE;
         }
         
     }

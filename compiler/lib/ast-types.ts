@@ -74,7 +74,7 @@ export class FileNode implements AstNode {
         if(this.dependencies.has(moduleDescriptor)) {
             throw new Error('File already has a dependency on module: ' + moduleDescriptor.name);
         }
-        var variable = new scopeVariable.Variable(null, 'IMPORT', 'BARE');
+        var variable = new scopeVariable.Variable(null, scopeVariable.AllocationType.IMPORT, scopeVariable.AccessType.BARE);
         variable.setDesiredJsIdentifier(moduleDescriptor.preferredIdentifier);
         this.anglScope.addVariable(variable);
         this.dependencies.set(moduleDescriptor, variable);

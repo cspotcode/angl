@@ -63,16 +63,16 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                 // This second version is set as "provided" by this file, such that other files using
                 // the variable will require() this module/file.
                 if(options.generateTypeScript) {
-                    variable = new scopeVariable.Variable(exportableNode.name, 'NONE', 'BARE');
+                    variable = new scopeVariable.Variable(exportableNode.name, scopeVariable.AllocationType.NONE, scopeVariable.AccessType.BARE);
                 } else {
-                    variable = new scopeVariable.Variable(exportableNode.name, 'PROP_ASSIGNMENT', 'PROP_ACCESS');
+                    variable = new scopeVariable.Variable(exportableNode.name, scopeVariable.AllocationType.PROP_ASSIGNMENT, scopeVariable.AccessType.PROP_ACCESS);
                     variable.setContainingObjectIdentifier('exports');
                 }
                 if(jsIdentifier) {
                     variable.setJsIdentifier(null);
                     variable.setDesiredJsIdentifier(jsIdentifier);
                 }
-                var globalVariable = new scopeVariable.Variable(exportableNode.name, 'PROP_ASSIGNMENT', 'PROP_ACCESS');
+                var globalVariable = new scopeVariable.Variable(exportableNode.name, scopeVariable.AllocationType.PROP_ASSIGNMENT, scopeVariable.AccessType.PROP_ACCESS);
                 if(jsIdentifier) {
                     globalVariable.setJsIdentifier(null);
                     globalVariable.setDesiredJsIdentifier(jsIdentifier);
@@ -85,9 +85,9 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                 if(options.generateTypeScript) {
                     // No need for a "var" declaration in TypeScript; we use a declarative syntax that automatically
                     // creates the local variable.
-                    variable = new scopeVariable.Variable(exportableNode.name, 'NONE', 'BARE');
+                    variable = new scopeVariable.Variable(exportableNode.name, scopeVariable.AllocationType.NONE, scopeVariable.AccessType.BARE);
                 } else {
-                    variable = new scopeVariable.Variable(exportableNode.name, 'LOCAL', 'BARE');
+                    variable = new scopeVariable.Variable(exportableNode.name, scopeVariable.AllocationType.LOCAL, scopeVariable.AccessType.BARE);
                 }
                 variable.setJsIdentifier(null);
                 variable.setDesiredJsIdentifier(jsIdentifier || exportableNode.name);
@@ -119,7 +119,7 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                 throw new Error('Cannot export "' + exportDeclarationNode.name + '": no such variable.');
             fileNode.moduleDescriptor.preferredIdentifier = exportDeclarationNode.name;
             // Since this is an export, add a variable to global scope.
-            var globalVar = new scopeVariable.Variable(exportDeclarationNode.name, 'NONE', 'BARE');
+            var globalVar = new scopeVariable.Variable(exportDeclarationNode.name, scopeVariable.AllocationType.NONE, scopeVariable.AccessType.BARE);
             globalVar.setDataType(localVariable.getDataType());
             globalVar.setProvidedByModule(fileNode.moduleDescriptor);
             astUtils.getGlobalAnglScope(fileNode).addVariable(globalVar);
@@ -134,13 +134,13 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             scriptNode.anglScope = newScope;
             // Register script arguments into the local scope
             // TODO how to handle self and other?
-            var thisVar = new scopeVariable.Variable('self', 'ARGUMENT');
+            var thisVar = new scopeVariable.Variable('self', scopeVariable.AllocationType.ARGUMENT);
             thisVar.setJsIdentifier('this');
             newScope.addVariable(thisVar);
             /*            var otherVar = new scopeVariable.Variable('other', 'ARGUMENT');
              newScope.addVariable(otherVar);*/
             _.each(scriptNode.args, (argName) => {
-                var argumentVar = new scopeVariable.Variable(argName, 'ARGUMENT');
+                var argumentVar = new scopeVariable.Variable(argName, scopeVariable.AllocationType.ARGUMENT);
                 newScope.addVariable(argumentVar);
             });
         }
@@ -184,7 +184,7 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                 if(astUtils.getGlobalAnglScope(globalVarNode).hasIdentifier(var_item.name)) {
                     throw new Error('Attempt to declare global variable with the name ' + JSON.stringify(var_item.name) + ' more than once.');
                 }
-                var globalVar = new scopeVariable.Variable(var_item.name, 'PROP_ASSIGNMENT', 'PROP_ACCESS');
+                var globalVar = new scopeVariable.Variable(var_item.name, scopeVariable.AllocationType.PROP_ASSIGNMENT, scopeVariable.AccessType.PROP_ACCESS);
                 globalVar.setContainingObjectIdentifier(strings.ANGL_GLOBALS_IDENTIFIER);
                 astUtils.getGlobalAnglScope(globalVarNode).addVariable(globalVar);
             });
@@ -285,7 +285,7 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             
             // Create variable to hold the inner `other` value
             var innerOtherIsThis = outerScope.getVariableByIdentifier('self').getJsIdentifier() === 'this';
-            var innerOtherVariable = new scopeVariable.Variable(null, innerOtherIsThis ? 'NONE' : 'LOCAL');
+            var innerOtherVariable = new scopeVariable.Variable(null, innerOtherIsThis ? scopeVariable.AllocationType.NONE : scopeVariable.AllocationType.LOCAL);
             innerOtherVariable.setIdentifier('other');
             if(innerOtherIsThis) {
                 innerOtherVariable.setJsIdentifier('this');

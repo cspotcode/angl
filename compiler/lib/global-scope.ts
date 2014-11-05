@@ -20,16 +20,16 @@ export function createGlobalScope(opts: options.Options, extraGlobalIdentifiers:
     ['true', 'false'].forEach((name) => {
         var variable;
         if(opts.trueAndFalseAreNumberConstants) {
-            variable = new scopeVariable.Variable(name, 'NONE', 'PROP_ACCESS');
+            variable = new scopeVariable.Variable(name, scopeVariable.AllocationType.NONE, scopeVariable.AccessType.PROP_ACCESS);
             variable.setContainingObjectIdentifier(strings.ANGL_GLOBALS_IDENTIFIER);
         } else {
-            variable = new scopeVariable.Variable(name, 'NONE', 'BARE');
+            variable = new scopeVariable.Variable(name, scopeVariable.AllocationType.NONE, scopeVariable.AccessType.BARE);
         }
         globalScope.addVariable(variable);
     });
     
     // Add variable for AnglRoom to global scope.
-    var anglRoomVariable = new scopeVariable.Variable('AnglRoom', 'IMPORT', 'BARE');
+    var anglRoomVariable = new scopeVariable.Variable('AnglRoom', scopeVariable.AllocationType.IMPORT, scopeVariable.AccessType.BARE);
     anglRoomVariable.setDataType(new variableTypes.ClassType());
     var anglRoomModule = new ModuleDescriptor('angl/room', false, 'AnglRoom');
     anglRoomModule.exportsType = ModuleExportsType.SINGLE;
@@ -38,7 +38,7 @@ export function createGlobalScope(opts: options.Options, extraGlobalIdentifiers:
     globalScope.addVariable(anglRoomVariable);
 
     // Add variable for AnglObject to global scope.
-    var anglObjectVariable = new scopeVariable.Variable(strings.SUPER_OBJECT_NAME, 'NONE', 'PROP_ACCESS');
+    var anglObjectVariable = new scopeVariable.Variable(strings.SUPER_OBJECT_NAME, scopeVariable.AllocationType.NONE, scopeVariable.AccessType.PROP_ACCESS);
     anglObjectVariable.setJsIdentifier('AnglObject');
     anglObjectVariable.setDataType(new variableTypes.ClassType());
     var anglObjectModule = new ModuleDescriptor('angl/object', false, 'AnglObject');
@@ -54,7 +54,7 @@ export function createGlobalScope(opts: options.Options, extraGlobalIdentifiers:
     
     function addIdentifierToGlobalScope(globalIdentifier) {
         // TODO what values should I be adding?  Gotta invent an object/type/schema for values.
-        var variable = new scopeVariable.Variable(globalIdentifier, 'PROP_ASSIGNMENT', 'PROP_ACCESS');
+        var variable = new scopeVariable.Variable(globalIdentifier, scopeVariable.AllocationType.PROP_ASSIGNMENT, scopeVariable.AccessType.PROP_ACCESS);
         variable.setContainingObjectIdentifier(strings.ANGL_GLOBALS_IDENTIFIER);
         globalScope.addVariable(variable);
     }
