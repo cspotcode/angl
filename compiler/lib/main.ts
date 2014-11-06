@@ -456,11 +456,12 @@ export class JsGenerator {
             case 'funccall':
                 var funcCallNode = <astTypes.FuncCallNode>astNode;
                 var funcIdentifierNode = <astTypes.IdentifierNode>funcCallNode.expr;
+                var funcVariable = funcIdentifierNode.type === 'identifier' && funcIdentifierNode.variable || null;
                 var mustBindThis =
                     !(funcCallNode.isMethodCall
-                      || (funcIdentifierNode.type === 'identifier'
-                          && funcIdentifierNode.variable
-                          && !funcIdentifierNode.variable.getUsesThisBinding()));
+                      || (funcVariable
+                          && !funcVariable.getUsesThisBinding()));
+                var mustPassOther = funcVariable && funcVariable.getAcceptsOtherArgument();
                 var opType = mustBindThis ? OpEnum.MEMBER_ACCESS : OpEnum.FUNCTION_CALL;
                 /**
                  * Should we generate our regular function invocation code?  Maybe not if the variable decides
@@ -486,8 +487,12 @@ export class JsGenerator {
                             ops.Location.N_A
                         );
                     }
+                    if(mustPassOther) {
+                        if(mustBindThis) this.print(', ');
+                        this.generateVariable(astUtils.getAnglScope(funcCallNode).getVariableByIdentifierInChain('other'));
+                    }
                     _.each(funcCallNode.args, (arg, i, args) => {
-                        if(i || mustBindThis) this.print(', ');
+                        if(i || mustBindThis || mustPassOther) this.print(', ');
                         this.generateExpression(arg, OpEnum.COMMA, ops.Location.N_A);
                     });
                     this.print(')');

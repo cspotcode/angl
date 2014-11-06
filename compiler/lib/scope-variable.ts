@@ -100,6 +100,10 @@ export interface AbstractVariable {
      */
     getUsesThisBinding():boolean;
     /**
+     * True if this variable, when invoked as a function, wants to be passed the value of `other` as its first argument.
+     */
+    getAcceptsOtherArgument(): boolean;
+    /**
      * Called by the JS code generator whenever the generated code must invoke this variable as a function.
      * This method can:
      * * return true after generating the function invocation code itself.
@@ -146,6 +150,7 @@ export class Variable implements AbstractVariable, CanSetDataType {
     private _containingObjectIdentifier:string;
     private _providedByModule: ModuleDescriptor;
     private _usesThisBinding: boolean;
+    private _acceptsOtherArgument: boolean;
     private _dataType: variableTypes.AbstractVariableType;
 
     constructor(identifier: string = null, allocationType: AllocationType = AllocationType.LOCAL, accessType: AccessType = AccessType.BARE) {
@@ -157,6 +162,7 @@ export class Variable implements AbstractVariable, CanSetDataType {
         this._containingObjectIdentifier = null;
         this._providedByModule = null;
         this._usesThisBinding = true;
+        this._acceptsOtherArgument = false;
         this._dataType = null;
     }
 
@@ -220,8 +226,12 @@ export class Variable implements AbstractVariable, CanSetDataType {
     getProvidedByModule() { return this._providedByModule; }
 
     getUsesThisBinding() { return this._usesThisBinding; }
-
+    
     setUsesThisBinding(usesThisBinding: boolean) { this._usesThisBinding = usesThisBinding; }
+    
+    getAcceptsOtherArgument() { return this._acceptsOtherArgument; }
+
+    setAcceptsOtherArgument(acceptsOtherArgument: boolean) { this._acceptsOtherArgument = acceptsOtherArgument; }
 
     generateInvocation(args: Array<astTypes.ExpressionNode>, codeGenerator: jsGenerator.JsGenerator, parentExpressionType: operators.JavascriptOperatorsEnum, locationInParentExpression: operators.Location, astContext: astTypes.AstNode): boolean {
         return false;
@@ -321,6 +331,8 @@ export class ProxyToModuleProvidedVariable implements AbstractVariable {
     getProvidedByModule() { return null; }
     
     getUsesThisBinding() { return this._moduleProvidedVariable.getUsesThisBinding(); }
+    
+    getAcceptsOtherArgument() { return this._moduleProvidedVariable.getAcceptsOtherArgument(); }
     
     generateGetter(codeGenerator, parentExpressionType, locationInParentExpression, astContext) {
         return this._moduleProvidedVariable.generateGetter(codeGenerator, parentExpressionType, locationInParentExpression, astContext);
