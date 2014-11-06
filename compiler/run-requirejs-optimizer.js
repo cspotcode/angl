@@ -98,9 +98,11 @@ var config = {
     
     // Map short-and-sweet module names to full paths and names
     paths: {
-        // jQuery and Knockout are only used in the browser.  Therefore they don't need paths compatible with Node-require
+        // these libraries are only used in the browser.  Therefore they don't need paths compatible with Node-require
         jquery: 'demo/vendor/jquery-1.9.1.min',
         knockout: 'demo/vendor/knockout-2.2.1.min',
+        mousetrap: 'demo/vendor/mousetrap',
+        'mousetrap-global-bind': 'demo/vendor/mousetrap-global-bind',
         
         // Map from short-and-sweet names to the proper relative paths, so that RequireJS's optimizer can find these files
         runtime: '../runtime/src',
@@ -124,6 +126,11 @@ var config = {
         // Knockout caches a reference to jQuery when it loads, so window.jQuery must already exist.
         knockout: {
             deps: ['jquery']
+        },
+        // Just in case someone tries to require mousetrap modules out of order
+        'mousetrap-global-bind': {
+            deps: ['mousetrap'],
+            exports: 'Mousetrap'
         }
     },
     // Allow these modules to resolve in the browser without actually loading any code.

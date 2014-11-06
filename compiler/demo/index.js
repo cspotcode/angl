@@ -3,6 +3,9 @@ define(function(require) {
 
 var $ = require('jquery');
 var ko = require('knockout');
+var mousetrap = require('mousetrap');
+require('mousetrap-global-bind');
+
 var anglParser = require('angl-parser/angl');
 var compiler = require('lib/compiler');
 
@@ -48,6 +51,8 @@ $(document).ready(function($) {
     }).apply(viewModel);
 
     ko.applyBindings(viewModel);
+    
+    mousetrap.bindGlobal('ctrl+shift+l', viewModel.on_getPermalinkClicked);
 });
 
 });

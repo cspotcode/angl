@@ -5,3 +5,4 @@
 /// <reference path="from-tsd/glob/glob.d.ts" />
 /// <reference path="from-tsd/minimatch/minimatch.d.ts" />
 /// <reference path="from-tsd/mkdirp/mkdirp.d.ts" />
+/// <reference path="from-tsd/mousetrap/mousetrap.d.ts" />
