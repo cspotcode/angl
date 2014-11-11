@@ -15,7 +15,7 @@ var Ident = identifierManipulations.Identifier;
 var walk = treeWalker.walk;
 
 // Create scopes for all nodes
-export var transform = (ast:astTypes.AstNode, options: options.Options) => {
+export function transform(ast:astTypes.AstNode, options: options.Options) {
     var fileNode: astTypes.FileNode;
     walk(ast, (node, parent, locationInParent:string) => {
         // Cache the file node that we are currently within.  This is useful later when adding proxy
@@ -76,6 +76,18 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             if(indexNode.type === 'index' && indexNode.expr === node) {
                 var dataType = variable.getDataType();
                 if(dataType == null && variable.canSetDataType()) (<scopeVariable.CanSetDataType>variable).setDataType(new variableTypes.ArrayType());
+            }
+            
+            // Are we going to invoke this variable?
+            // If so, does the invocation use the values of self or other?
+            // If so, mark those variables as being used.
+            if(parent.type === 'funccall' && (<astTypes.FuncCallNode>parent).expr === node) {
+                if(variable.getUsesThisBinding()) {
+                    astUtils.getAnglScope(node).setIdentifierInChainIsUsed('self');
+                }
+                if(variable.getAcceptsOtherArgument()) {
+                    astUtils.getAnglScope(node).setIdentifierInChainIsUsed('other');
+                }
             }
         }
 
