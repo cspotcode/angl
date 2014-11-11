@@ -143,10 +143,8 @@ export class JsGenerator {
         
         
         // If context is TRAILING, omit a single trailing newline (cuz the code generator will output one anyway)
-        // If context is NEWLINE, do the same thing, cuz our comment printing logic (below) is hard-coded to output a
-        // trailing newline.
         var lastComment = _.last(commentsArray);
-        if((context === CommentContext.TRAILING || context === CommentContext.NEWLINE) && lastComment && _.last(lastComment) === '\n') {
+        if((context === CommentContext.TRAILING || context === CommentContext.BEFORE_CURLY_BRACE) && lastComment && _.last(lastComment) === '\n') {
             commentsArray.pop();
             lastComment = lastComment.slice(0, -1);
             if(lastComment.length) commentsArray.push(lastComment);
@@ -184,13 +182,20 @@ export class JsGenerator {
         }
         
         // When outputting a TRAILING comment, put a space between the comment and the preceding code
-        if(context === CommentContext.TRAILING && commentLines[0]) {
+        if((context === CommentContext.TRAILING || context === CommentContext.BEFORE_CURLY_BRACE) && commentLines[0]) {
             commentLines[0] = ' ' + commentLines[0];
         }
         
         // When outputting a leading comment in NEWLINE_INDENTED context, put a space between the comment and the following code
         if(context === CommentContext.NEWLINE_INDENTED && _.last(commentLines)) {
             commentLines[commentLines.length - 1] = commentLines[commentLines.length - 1] + ' ';
+        }
+
+        // When in NEWLINE context, we *must* leave the code in the same state we found it: after a newline with no indentation
+        // or anything else on the line.
+        // Therefore we always print a trailing newline.
+        if(context === CommentContext.NEWLINE && _.last(commentLines)) {
+            commentLines.push('');
         }
         
         // For INLINE comments, any lines after the first should use a hanging indent.
@@ -202,19 +207,12 @@ export class JsGenerator {
             if(i) {
                 this.print('\n');
             }
-            // In NEWLINE context, print leading indentation on all lines.
+            // In NEWLINE context, print leading indentation on all lines except the last.
             // In all other contexts, print leading indentation on all lines except the first.
-            if(context === CommentContext.NEWLINE || i) {
+            if(context === CommentContext.NEWLINE ? i < l - 1 : i > 0) {
                 this.printIndent(indentation);
             }
             this.print(commentLines[i]);
-        }
-        
-        // When in NEWLINE context, we *must* leave the code in the same state we found it: after a newline with no indentation
-        // or anything else on the line.
-        // Therefore we always print a trailing newline.
-        if(context === CommentContext.NEWLINE) {
-            this.print('\n');
         }
     }
     
@@ -250,12 +248,12 @@ export class JsGenerator {
         return this._referencedGlobalVariables.toArray();
     }
     
-    generateVariable(variable: scopeVariable.AbstractVariable, parentExpressionType: ops.JavascriptOperatorsEnum = OpEnum.GROUPING, locationInParentExpression: ops.Location = ops.Location.N_A, commentContext: CommentContext = CommentContext.INLINE, omitIndentation: boolean = false) {
+    generateVariable(variable: scopeVariable.AbstractVariable, parentExpressionType: ops.JavascriptOperatorsEnum = OpEnum.GROUPING, locationInParentExpression: ops.Location = ops.Location.N_A, beforeCommentContext: CommentContext = CommentContext.INLINE, afterCommentContext: CommentContext = CommentContext.INLINE, omitIndentation: boolean = false) {
         var identifierNode: astTypes.IdentifierNode = {
             type: 'identifier',
             variable: variable
         };
-        this.generateExpression(identifierNode, parentExpressionType, locationInParentExpression, commentContext, omitIndentation);
+        this.generateExpression(identifierNode, parentExpressionType, locationInParentExpression, beforeCommentContext, afterCommentContext, omitIndentation);
     }
 
     // TODO properly translate all binops and unops:
@@ -263,7 +261,7 @@ export class JsGenerator {
     //   ones with different behavior that need to be implemented differently
     //   DIV, MOD, ^^, bitwise ops
     //   how does GML do type coercion (42 + "hello world")?  Do I need to emulate that behavior?
-    generateExpression(astNode: astTypes.ExpressionNode, parentExpressionType: ops.JavascriptOperatorsEnum = OpEnum.GROUPING, locationInParentExpression: ops.Location = ops.Location.N_A, beforeCommentContext: CommentContext = CommentContext.INLINE, omitIndentation: boolean = false, callBeginNode: boolean = true, callEndNode: boolean = true) {
+    generateExpression(astNode: astTypes.ExpressionNode, parentExpressionType: ops.JavascriptOperatorsEnum = OpEnum.GROUPING, locationInParentExpression: ops.Location = ops.Location.N_A, beforeCommentContext: CommentContext = CommentContext.INLINE, afterCommentContext: CommentContext = CommentContext.INLINE, omitIndentation: boolean = false, callBeginNode: boolean = true, callEndNode: boolean = true) {
         var writeParens:boolean;
         
         callBeginNode && this.beginNode(astNode, beforeCommentContext);
@@ -310,7 +308,7 @@ export class JsGenerator {
                     case '.':
                         this.generateExpression(binOpNode.expr1, OpEnum.MEMBER_ACCESS, ops.Location.LEFT, beforeCommentContext);
                         this.print('.');
-                        this.generateExpression(binOpNode.expr2, OpEnum.MEMBER_ACCESS, ops.Location.RIGHT);
+                        this.generateExpression(binOpNode.expr2, OpEnum.MEMBER_ACCESS, ops.Location.RIGHT, undefined, afterCommentContext);
                         break;
 
                     case 'div':
@@ -386,13 +384,12 @@ export class JsGenerator {
                         break;
 
                     default:
-                        // TODO figure out if we need to writeParens. Must create a mapping from binOpNode.op values to OpEnum values.
                         var binOpType = anglToJsOpMap.anglToJsBinOps[binOpNode.op];
                         writeParens = ops.needsParentheses(binOpType, parentExpressionType, locationInParentExpression);
                         writeParens && this.print('(');
-                        this.generateExpression(binOpNode.expr1, binOpType, ops.Location.LEFT);
+                        this.generateExpression(binOpNode.expr1, binOpType, ops.Location.LEFT, beforeCommentContext);
                         this.print(' ' + binOpNode.op + ' ');
-                        this.generateExpression(binOpNode.expr2, binOpType, ops.Location.RIGHT);
+                        this.generateExpression(binOpNode.expr2, binOpType, ops.Location.RIGHT, undefined, afterCommentContext);
                         writeParens && this.print(')');
                         break;
                 }
@@ -534,7 +531,7 @@ export class JsGenerator {
                 throw new Error('Unknown expression type: "' + astNode.type + '"');
         }
         
-        callEndNode && this.endNode(astNode, CommentContext.INLINE);
+        callEndNode && this.endNode(astNode, afterCommentContext);
     }
     
     generateFunction(astNode: astTypes.AbstractArgsInvokableNode, writeFunctionKeyword: boolean = true, functionName?: string) {
@@ -603,7 +600,7 @@ export class JsGenerator {
                 if(writeDefaultSetter) {
                     this.generateExpression(assignNode.lval, OpEnum.ASSIGNMENT, ops.Location.LEFT, CommentContext.NEWLINE_INDENTED);
                     this.print(' = ');
-                    this.generateExpression(assignNode.rval, OpEnum.ASSIGNMENT, ops.Location.RIGHT);
+                    this.generateExpression(assignNode.rval, OpEnum.ASSIGNMENT, ops.Location.RIGHT, undefined, CommentContext.TRAILING);
                 }
                 break;
 
@@ -640,7 +637,7 @@ export class JsGenerator {
                 omitIndentation || this.printIndent();
                 this.beginNode(astNode, CommentContext.NEWLINE_INDENTED);
                 this.print('switch(');
-                this.generateExpression(switchNode.expr, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A);
+                this.generateExpression(switchNode.expr, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A, undefined, CommentContext.BEFORE_CURLY_BRACE);
                 this.print(') {\n');
                 this.indent();
                 _.each(switchNode.cases, (caseNode) => {
@@ -675,7 +672,7 @@ export class JsGenerator {
                 omitIndentation || this.printIndent();
                 this.beginNode(astNode, CommentContext.NEWLINE_INDENTED);
                 this.print('if(');
-                this.generateExpression(ifElseNode.expr, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A);
+                this.generateExpression(ifElseNode.expr, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A, undefined, CommentContext.BEFORE_CURLY_BRACE);
                 this.print(') {\n');
                 this.indent();
                 this.generateStatement(ifElseNode.stmt1);
@@ -696,7 +693,7 @@ export class JsGenerator {
                 omitIndentation || this.printIndent();
                 this.beginNode(astNode, CommentContext.NEWLINE_INDENTED);
                 this.print('while(');
-                this.generateExpression(whileNode.expr, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A);
+                this.generateExpression(whileNode.expr, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A, undefined, CommentContext.BEFORE_CURLY_BRACE);
                 this.print(') {\n');
                 this.indent();
                 this.generateStatement(whileNode.stmt);
@@ -736,6 +733,10 @@ export class JsGenerator {
             case 'statements':
                 var statementsNode = <astTypes.StatementsNode>astNode;
                 this.beginNode(astNode, CommentContext.NEWLINE);
+                // Skip a newline at the beginning of any statements block.
+                // This is because statements blocks use curly braces so the code generator will put a
+                // newline right after the opening curly brace.
+                this.skipCommentNewlines++;
                 _.each(statementsNode.list, (statement) => {
                     this.generateStatement(statement);
                 });
@@ -746,7 +747,7 @@ export class JsGenerator {
                 // Delegate to the expression generator
                 omitIndentation || this.printIndent();
                 this.beginNode(astNode, CommentContext.NEWLINE_INDENTED);
-                this.generateExpression(astNode, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A, CommentContext.NEWLINE_INDENTED, false, false, false);
+                this.generateExpression(astNode, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A, CommentContext.NEWLINE_INDENTED, undefined, false, false, false);
                 break;
 
             case 'with':
@@ -1165,6 +1166,12 @@ export enum CommentContext {
      * For example, after the semicolon at the end of a line.
      */
     TRAILING,
+    /**
+     * The last expression or statement before curly braces surrounding a block of statements.
+     * For example, after the conditional expression of an if() {} statement or the iteration statement of a for() {}
+     * loop.
+     */
+    BEFORE_CURLY_BRACE,
     /**
      * Between bits of code within a single line.
      * For example, between numbers in a math expression.
