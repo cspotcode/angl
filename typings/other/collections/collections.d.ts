@@ -94,6 +94,10 @@ declare module "collections" {
             // TODO interface contents?
     }
     
+    interface Collection<V> {
+        // TODO
+    }
+    
 }
 
 
@@ -12138,8 +12142,8 @@ declare module "collections/fast-map" {
      * 
      */
     class FastMap<K, V> {
-    
         
+        constructor(values?: any, equals?: (left: K, right: K) => boolean, hash?: (value: K) => string, getDefault?: any);
         
         /**
          * The number of items in this collection.
@@ -14701,6 +14705,7 @@ declare module "collections/lru-map" {
 }
 
 declare module "collections/multi-map" {
+    import collections = require("collections");
     import TreeNode = require("collections/tree-node");
     import ListNode = require("collections/list-node");
     /**
@@ -14721,9 +14726,11 @@ declare module "collections/multi-map" {
      * 
      * 
      */
-    class MultiMap<K, V> {
-    
+    class MultiMap<K, V extends collections.Collection<any>> {
         
+        constructor(values?: collections.Collection<any>, bucket?: (key: K) => V, equals?: (left: V, right: V) => boolean, hash?: (value: V) => string);
+    
+        bucket: (key: K) => V;
         
         /**
          * The number of items in this collection.

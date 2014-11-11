@@ -14,6 +14,7 @@ export var transformerFns = [
     require('./process-phase-dot-to-arrow').transform,
     require('./process-phase-arrow-operators').transform,
     require('./process-phase-mark-method-calls').transform,
+    require('./process-phase-self-and-other-usage').transform,
     require('./process-phase-assign-js-identifiers').transform
 ];
 
@@ -26,6 +27,7 @@ export enum Phases {
     DOT_TO_ARROW,
     ARROW_OPERATORS,
     MARK_METHOD_CALLS,
+    SELF_AND_OTHER_USAGE,
     ASSIGN_JS_IDENTIFIERS,
     
     // So that we can easily refer to the first phase and after the last phase:

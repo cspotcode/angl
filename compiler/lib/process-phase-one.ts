@@ -92,6 +92,12 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                 variable.setDesiredJsIdentifier(jsIdentifier || exportableNode.name);
             }
             variable.setDataType(variableType);
+            
+            // If this is a scriptdef whose first argument is `other` then set acceptsOtherArgument to true
+            if(exportableNode.type === 'scriptdef' && (<astTypes.ScriptDefNode>exportableNode).args[0] === 'other') {
+                variable.setAcceptsOtherArgument(true);
+            }
+            
             exportableNode.variable = variable;
             astUtils.getAnglScope(exportableNode).addVariable(variable);
             
@@ -135,12 +141,21 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             var thisVar = new scopeVariable.Variable('self', scopeVariable.AllocationType.ARGUMENT);
             thisVar.setJsIdentifier('this');
             newScope.addVariable(thisVar);
-            _.each(scriptNode.args, (argName) => {
+            if(node.type === 'scriptdef') {
+                var otherVar = new scopeVariable.Variable(null, scopeVariable.AllocationType.ARGUMENT);
+                otherVar.setIdentifier('other');
+                otherVar.setDesiredJsIdentifier('other');
+                newScope.addVariable(otherVar);
+            }
+            _.each(scriptNode.args, (argName, argIndex) => {
+                // Special case: don't create local variable for a scriptdef's first argument that is `other`
+                if(node.type === 'scriptdef' && argIndex === 0 && argName === 'other')
+                    return;
                 var argumentVar = new scopeVariable.Variable(argName, scopeVariable.AllocationType.ARGUMENT);
                 newScope.addVariable(argumentVar);
             });
         }
-
+        
         // Var declarations register local variables into their scope
         if(node.type === 'var') {
             var varNode = <astTypes.VarDeclarationNode>node;
@@ -324,7 +339,7 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             // After replacement, this node will be visited again.  Mark it with a flag so that we can skip processing
             // next time.
             withNode.alreadyVisited = true;
-
+            
             var withReplacement:astTypes.AstNode[] = [assignmentNode, withNode];
             return withReplacement;
         }

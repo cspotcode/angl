@@ -161,7 +161,7 @@ export class Variable implements AbstractVariable, CanSetDataType {
         this._accessType = accessType;
         this._containingObjectIdentifier = null;
         this._providedByModule = null;
-        this._usesThisBinding = true;
+        this._usesThisBinding = false;
         this._acceptsOtherArgument = false;
         this._dataType = null;
     }
