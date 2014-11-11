@@ -25,7 +25,8 @@ var setNodeParent = (node:types.AstNode, parent:types.AstNode) => {
  *   false, children will *not* be visited
  */
 export function walk(rootNode:types.AstNode, fn:WalkerFunction) {
-    setNodeParent(rootNode, null);
+    if(typeof rootNode.parentNode === 'undefined')
+        setNodeParent(rootNode, null);
     // visit this node
     fn(rootNode, null, null);
     // visit children
