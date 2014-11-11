@@ -291,7 +291,7 @@ export class AnglScope {
     setIdentifierInChainIsUsed(identifier: string, isUsed: boolean = true) {
         var variable = this.getVariableByIdentifierInChain(identifier);
         if(!variable) throw new Error('Scope chain does not have variable with identifier ' + JSON.stringify(identifier));
-        this.setVariableIsUsed(variable, isUsed);
+        this.setVariableInChainIsUsed(variable, isUsed);
     }
     
     setVariableIsUsed(variable: scopeVariable.AbstractVariable, isUsed: boolean = true) {
