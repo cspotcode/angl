@@ -316,6 +316,10 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                     op: operators.JavascriptOperatorsEnum.MEMBER_ACCESS
                 }
             };
+            
+            // Ensure that future transformations don't transform the with node's expr twice.
+            // The expression has already been moved into an assignment node, so remove it from the with() node
+            withNode.expr = null;
 
             // After replacement, this node will be visited again.  Mark it with a flag so that we can skip processing
             // next time.
