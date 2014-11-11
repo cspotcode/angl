@@ -345,5 +345,27 @@ export class ProxyToModuleProvidedVariable implements AbstractVariable {
     generateInvocation(args, codeGenerator, parentExpressionType, locationInParentExpression, astContext) {
         return this._moduleProvidedVariable.generateInvocation(args, codeGenerator, parentExpressionType, locationInParentExpression, astContext);
     }
+   
+}
+
+/**
+ * This variable is placed in global scope and proxies to the local version of an exported variable in a module.
+ */
+export class GlobalVersionOfExportedVariable extends Variable {
+    private _var: Variable;
+    constructor(exportedVariable: Variable, identifier: string, allocationType?: AllocationType, accessType?: AccessType) {
+        this._var = exportedVariable;
+        super(identifier, allocationType, accessType);
+    }
+    
+    getLocalVariable(): Variable { return this._var; }
+    
+    getDataType() { return this._var.getDataType(); }
+    setDataType(dataType) {return this._var.setDataType(dataType); }
+    canSetDataType() { return this._var.canSetDataType(); }
+    getUsesThisBinding() { return this._var.getUsesThisBinding(); }
+    setUsesThisBinding(uses) { return this._var.setUsesThisBinding(uses); }
+    getAcceptsOtherArgument() { return this._var.getAcceptsOtherArgument(); }
+    setAcceptsOtherArgument(uses) { return this._var.setAcceptsOtherArgument(uses); }
     
 }

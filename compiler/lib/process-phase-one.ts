@@ -72,12 +72,11 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                     variable.setJsIdentifier(null);
                     variable.setDesiredJsIdentifier(jsIdentifier);
                 }
-                var globalVariable = new scopeVariable.Variable(exportableNode.name, scopeVariable.AllocationType.PROP_ASSIGNMENT, scopeVariable.AccessType.PROP_ACCESS);
+                var globalVariable = new scopeVariable.GlobalVersionOfExportedVariable(variable, exportableNode.name, scopeVariable.AllocationType.PROP_ASSIGNMENT, scopeVariable.AccessType.PROP_ACCESS);
                 if(jsIdentifier) {
                     globalVariable.setJsIdentifier(null);
                     globalVariable.setDesiredJsIdentifier(jsIdentifier);
                 }
-                globalVariable.setDataType(variableType);
                 globalVariable.setProvidedByModule(fileNode.moduleDescriptor);
                 astUtils.getGlobalAnglScope(exportableNode).addVariable(globalVariable);
             } else {
@@ -114,13 +113,12 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                 fileNode.moduleDescriptor.exportsType = ModuleExportsType.SINGLE;
             if(fileNode.moduleDescriptor.exportsType !== ModuleExportsType.SINGLE)
                 throw new Error('Module cannot have both "export =" and "export object|const|script" statements.');
-            var localVariable = fileNode.moduleDescriptor.singleExport = astUtils.getAnglScope(exportDeclarationNode).getVariableByIdentifier(exportDeclarationNode.name);
+            var localVariable = fileNode.moduleDescriptor.singleExport = <scopeVariable.Variable>astUtils.getAnglScope(exportDeclarationNode).getVariableByIdentifier(exportDeclarationNode.name);
             if(!fileNode.moduleDescriptor.singleExport)
                 throw new Error('Cannot export "' + exportDeclarationNode.name + '": no such variable.');
             fileNode.moduleDescriptor.preferredIdentifier = exportDeclarationNode.name;
             // Since this is an export, add a variable to global scope.
-            var globalVar = new scopeVariable.Variable(exportDeclarationNode.name, scopeVariable.AllocationType.NONE, scopeVariable.AccessType.BARE);
-            globalVar.setDataType(localVariable.getDataType());
+            var globalVar = new scopeVariable.GlobalVersionOfExportedVariable(localVariable, exportDeclarationNode.name, scopeVariable.AllocationType.NONE, scopeVariable.AccessType.BARE);
             globalVar.setProvidedByModule(fileNode.moduleDescriptor);
             astUtils.getGlobalAnglScope(fileNode).addVariable(globalVar);
             return null;
