@@ -1,4 +1,3 @@
-var requirejs = require('requirejs');
 var path = require('path');
 
 /**
@@ -61,13 +60,14 @@ function describeCommonjsPackage(name, main, resolveFrom) {
     return descriptor;
 }
 
+var baseUrl = './compiler';
 var config = {
-    baseUrl: '.',
+    baseUrl: baseUrl,
     out: './out/demo/index.js',
     // Automatically wrap Node-style .js files in an AMD wrapping.
     cjsTranslate: true,
     // Main module: the Almond AMD loader.  This ugliness finds its exact path on the filesystem
-    name: path.relative('.', require.resolve('almond')).replace(/\.js$/, ''),
+    name: path.relative(baseUrl, require.resolve('almond')).replace(/\.js$/, ''),
     // Include and execute our RequireJS configuration and our main module
     include: ['set-require-config', 'demo/index'],
     insertRequire: ['demo/index'],
@@ -166,12 +166,4 @@ var config = {
 // We add this JavaScript code to the rawText section above.  It's included by the "include" configuration above.
 config.rawText['set-require-config'] = 'require.config(' + JSON.stringify({map: config.map}) + ');';
 
-// Perform the optimization.
-console.log('Optimizing with RequireJS...');
-requirejs.optimize(config, function(buildResponse) {
-    console.log('Done!');
-    console.log(buildResponse);
-}, function(err) {
-    console.error('Error!');
-    console.error(err.message);
-});
+module.exports = config;

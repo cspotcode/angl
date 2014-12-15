@@ -7,14 +7,28 @@ Compiles [Angl](https://github.com/TazeTSchnitzel/angl/) code into Javascript.
 
 This project relies on TazeTSchnitzel's Angl parser to generate an AST, then compiles that AST into Javascript.
 
+Building:
+---
+
+To build the parser, compiler, and browser-based demo:
+```
+> grunt build
+```
+
+Documentation:
+---
+
+To generate API documentation into `./docs`:
+```
+> grunt docs
+```
+
 Tests:
 ---
 
 To compile and run the tests:
 ```
-> cd compiler
-> node build-tests.js
-> ..\node_modules\.bin\mocha
+> grunt test
 ```
 
 The tests are located in `compiler/test`.  Each test filename must end in `.spec.ts`.  When practical, it should match the

@@ -6,3 +6,8 @@ node_modules
 
 # Built compiler and tests
 compiler-build
+
+# Other
+.tscache
+compiler/lib/.baseDir.ts
+compiler/test/.baseDir.ts
