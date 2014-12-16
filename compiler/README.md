@@ -1,11 +1,12 @@
 Angl-to-Javascript compiler
 ===
 
-Compiles [Angl](https://github.com/TazeTSchnitzel/angl/) code into Javascript.
+Compiles [Angl](https://github.com/cspotcode/angl/) code into Javascript or TypeScript.
 
-**See a live demo here:** http://cspotcode.github.com/angl-compiler/demo
+**See a live demo here:** http://cspotcode.github.io/angl/demo
 
-This project relies on TazeTSchnitzel's Angl parser to generate an AST, then compiles that AST into Javascript.
+This project uses a parser originally created by TazeTSchnitzel, since modified for this project, to generate an AST.
+Then we compile that AST into Javascript or TypeScript.
 
 Building:
 ---

@@ -2,8 +2,8 @@
   "name": "angl",
   "version": "0.0.0",
   "description": "angl parser and angl-to-JavaScript compiler with accompanying runtime",
-  "homepage": "https://github.com/gg2-angl/angl",
-  "repository": "https://github.com/gg2-angl/angl.git",
+  "homepage": "https://github.com/cspotcode/angl",
+  "repository": "https://github.com/cspotcode/angl.git",
   "contributors": [
     "Andrew Bradley <cspotcode@gmail.com>",
     "Andrea Faulds <ajf@ajf.me>"
