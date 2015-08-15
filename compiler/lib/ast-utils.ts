@@ -80,6 +80,8 @@ export function isInside(inside: astTypes.NodeLocation, outside: astTypes.NodeLo
  */
 
 export function migrateComments(target: astTypes.AstNode, source: astTypes.AstNode, migrateBefore: boolean = true, migrateAfter: boolean = true) {
+    if(target === source) return;
+    
     if(!target.comments) {
         target.comments = {
             before: [],

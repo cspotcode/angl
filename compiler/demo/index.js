@@ -62,7 +62,7 @@ $(document).ready(function($) {
             }
             this.parserErrors(undefined);
             try {
-                this.compiledJs(compiler.compileAst(ast));
+                this.compiledJs(compiler.compileAstToCode(ast));
             } catch(e) {
                 this.compilerErrors(e.message);
                 return;

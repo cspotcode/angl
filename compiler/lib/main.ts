@@ -287,7 +287,7 @@ export class JsGenerator {
                 }
                 if(writeDefaultGetter) {
                     if(variable) {
-                        if(variable.getAccessType() === scopeVariable.AccessType.PROP_ACCESS) {
+                        if(variable.getAccessType() === scopeVariable.VariableFlags.PROP_ACCESS) {
                             this.print(variable.getContainingObjectIdentifier() + '.');
                         }
                         this.print(variable.getJsIdentifier());
@@ -326,9 +326,9 @@ export class JsGenerator {
                     case 'mod':
                         writeParens = ops.needsParentheses(OpEnum.REMAINDER, parentExpressionType, locationInParentExpression);
                         writeParens && this.print('(');
-                        this.generateExpression(binOpNode.expr1, OpEnum.REMAINDER, ops.Location.LEFT);
+                        this.generateExpression(binOpNode.expr1, OpEnum.REMAINDER, ops.Location.LEFT, beforeCommentContext);
                         this.print(' % ');
-                        this.generateExpression(binOpNode.expr2, OpEnum.REMAINDER, ops.Location.RIGHT);
+                        this.generateExpression(binOpNode.expr2, OpEnum.REMAINDER, ops.Location.RIGHT, undefined, afterCommentContext);
                         writeParens && this.print(')');
                         break;
 
@@ -342,9 +342,9 @@ export class JsGenerator {
                         writeParens = ops.needsParentheses(opts[0], parentExpressionType, locationInParentExpression);
                         writeParens && this.print('(');
                         this.print(opts[5]);
-                        this.generateExpression(binOpNode.expr1, opts[1], opts[2]);
+                        this.generateExpression(binOpNode.expr1, opts[1], opts[2], beforeCommentContext);
                         this.print(opts[6]);
-                        this.generateExpression(binOpNode.expr2, opts[3], opts[4]);
+                        this.generateExpression(binOpNode.expr2, opts[3], opts[4], undefined, afterCommentContext);
                         this.print(opts[7]);
                         writeParens && this.print(')');
                         break;
@@ -359,9 +359,9 @@ export class JsGenerator {
                         writeParens = ops.needsParentheses(opts[0], parentExpressionType, locationInParentExpression);
                         writeParens && this.print('(');
                         this.print(opts[5]);
-                        this.generateExpression(binOpNode.expr1, opts[1], opts[2]);
+                        this.generateExpression(binOpNode.expr1, opts[1], opts[2], beforeCommentContext);
                         this.print(opts[6]);
-                        this.generateExpression(binOpNode.expr2, opts[3], opts[4]);
+                        this.generateExpression(binOpNode.expr2, opts[3], opts[4], undefined, afterCommentContext);
                         this.print(opts[7]);
                         writeParens && this.print(')');
                         break;
@@ -384,11 +384,13 @@ export class JsGenerator {
                         break;
 
                     default:
+                        var jsOp = binOpNode.op;
+                        if(jsOp === '==') jsOp = '===';
                         var binOpType = anglToJsOpMap.anglToJsBinOps[binOpNode.op];
                         writeParens = ops.needsParentheses(binOpType, parentExpressionType, locationInParentExpression);
                         writeParens && this.print('(');
                         this.generateExpression(binOpNode.expr1, binOpType, ops.Location.LEFT, beforeCommentContext);
-                        this.print(' ' + binOpNode.op + ' ');
+                        this.print(' ' + jsOp + ' ');
                         this.generateExpression(binOpNode.expr2, binOpType, ops.Location.RIGHT, undefined, afterCommentContext);
                         writeParens && this.print(')');
                         break;
@@ -397,7 +399,7 @@ export class JsGenerator {
 
             case 'unop':
                 var unOpNode = <astTypes.UnOpNode> astNode;
-                var unOpType = anglToJsOpMap.anglToJsUnOps[unOpNode.op];this.options
+                var unOpType = anglToJsOpMap.anglToJsUnOps[unOpNode.op];
                 var coerceToNumber = this.options.coerceBooleanLogicToNumber;
                 // Special case: for the ! (not) operator, we might need to coerce the output to a number.
                 writeParens = ops.needsParentheses(
@@ -406,7 +408,7 @@ export class JsGenerator {
                     locationInParentExpression);
                 writeParens && this.print('(');
                 this.print(unOpNode.op);
-                this.generateExpression(unOpNode.expr, unOpType, ops.Location.RIGHT);
+                this.generateExpression(unOpNode.expr, unOpType, ops.Location.RIGHT, undefined, afterCommentContext);
                 unOpNode.op === '!' && coerceToNumber && this.print('|0');
                 writeParens && this.print(')');
                 break;
@@ -562,24 +564,35 @@ export class JsGenerator {
     }
 
     generateStatement(astNode, omitTerminator:boolean = false, omitIndentation:boolean = false) {
+        var omitSemicolon = false;
         
         switch(astNode.type) {
 
             case 'var':
                 var varNode = <astTypes.VarDeclarationNode>astNode;
-                omitIndentation || this.printIndent();
-                this.beginNode(astNode, CommentContext.NEWLINE_INDENTED);
-                this.print('var ');
-                _.each(varNode.list, (varItemNode, i, args) => {
-                    this.print(varItemNode.name);
-                    if(varItemNode.hasOwnProperty('expr')) {
-                        this.print(' = ');
-                        this.generateExpression(varItemNode.expr);
-                    }
-                    if(i < args.length - 1) {
-                        this.print(', ');
-                    }
+                var varsToOutput = _.filter(varNode.list, (varItemNode) => {
+                    return !(varItemNode.variable.getFlags() & (
+                          scopeVariable.VariableFlags.DECLARED_AT_ASSIGNMENT
+                        | scopeVariable.VariableFlags.DECLARED_BY_GENERATED_CODE
+                    ));
                 });
+                omitIndentation || this.printIndent();
+                this.beginNode(varNode, CommentContext.NEWLINE_INDENTED);
+                if(varsToOutput.length) {
+                    this.print('var ');
+                    _.each(varsToOutput, (varItemNode, i, args) => {
+                        this.generateVariable(varItemNode.variable);
+                        if(varItemNode.expr) {
+                            this.print(' = ');
+                            this.generateExpression(varItemNode.expr, OpEnum.ASSIGNMENT, ops.Location.RIGHT);
+                        }
+                        if(i < args.length - 1) {
+                            this.print(', ');
+                        }
+                    });
+                } else {
+                    omitSemicolon = true;
+                }
                 break;
 
             case 'assign':
@@ -598,7 +611,10 @@ export class JsGenerator {
                     }
                 }
                 if(writeDefaultSetter) {
-                    this.generateExpression(assignNode.lval, OpEnum.ASSIGNMENT, ops.Location.LEFT, CommentContext.NEWLINE_INDENTED);
+                    // Since we are potentially inserting a 'var ' before the lval, manually call beginNode here and don't allow generateExpression to do so.
+                    this.beginNode(assignNode.lval, CommentContext.NEWLINE_INDENTED);
+                    if(assignNode.isVarDeclaration) this.print('var ');
+                    this.generateExpression(assignNode.lval, OpEnum.ASSIGNMENT, ops.Location.LEFT, undefined, undefined, undefined, false, undefined);
                     this.print(' = ');
                     this.generateExpression(assignNode.rval, OpEnum.ASSIGNMENT, ops.Location.RIGHT, undefined, CommentContext.TRAILING);
                 }
@@ -765,6 +781,7 @@ export class JsGenerator {
                 // If the outerOtherVariable isn't $ART.other, there's no need to cache its value.
                 // For example, if the outerOtherVariable is 
                 if(mustCacheOuterOther) {
+                    this.print('var ');
                     this.generateVariable(outerOtherCacheVariable);
                     this.print(' = ');
                     this.generateVariable(outerOtherVariable);
@@ -773,6 +790,7 @@ export class JsGenerator {
                 }
                 // Set the new `other` value
                 if(withNode.innerOtherVariable.getJsIdentifier() !== 'this' && withScope.getVariableIsUsed(withNode.innerOtherVariable)) {
+                    this.print('var ');
                     this.generateVariable(withNode.innerOtherVariable);
                     this.print(' = ');
                 }
@@ -780,6 +798,15 @@ export class JsGenerator {
                 this.generateVariable(outerSelfVariable);
                 this.print(';\n');
                 // Start the while loop that iterates over all matching objects
+                omitIndentation || this.printIndent();
+                this.print('var ');
+                this.generateVariable(innerSelfVariable);
+                if(this.options.generateTypeScript) {
+                    this.print(': typeof ');
+                    this.generateVariable(withNode.allObjectsVariable);
+                    this.print('.__type__');
+                }
+                this.print(';\n');
                 omitIndentation || this.printIndent();
                 this.print('while(');
                 // Assign the value of inner `self` to the next object returned by the iterator
@@ -858,11 +885,41 @@ export class JsGenerator {
                 }
                 this.indent();
                 this.printSpacerLine(omitIndentation);
-                // Generate declarations for additional class members
+                // Generate declaration of object config and/or additioanl class members
                 var fileNode = <astTypes.FileNode>astUtils.findParent(objectNode, 'file');
+                var classConfig: {};
                 var additionalClassMembers: Array<string>;
                 // Only do this in TypeScript, if the object is globally exported, and if an array of additional class members exists.
-                if(this.options.generateTypeScript && (objectNode.exported || fileNode.moduleDescriptor.singleExport === objectNode.variable) && (additionalClassMembers = this.options.additionalClassMembers[objectNode.variable.getJsIdentifier()])) {
+                if(objectNode.exported || fileNode.moduleDescriptor.singleExport === objectNode.variable) {
+                    additionalClassMembers = this.options.additionalClassMembers[objectNode.variable.getJsIdentifier()];
+                    classConfig = this.options.classConfigs[objectNode.variable.getJsIdentifier()];
+                }
+                if(classConfig) {
+                    omitIndentation || this.printIndent();
+                    if(this.options.generateTypeScript) {
+                        this.print('static config = {\n');
+                    } else {
+                        this.generateExpression(objectExpr, OpEnum.MEMBER_ACCESS, ops.Location.LEFT, CommentContext.NEWLINE_INDENTED);
+                        this.print('.config = {\n');
+                    }
+                    this.indent();
+                    _(classConfig).chain().keys().sortBy((name) =>
+                        ['name', 'parent', 'solid', 'visible', 'spriteName', 'maskName', 'depth', 'persistent'].indexOf(name)
+                    ).each((name, i, l) => {
+                        omitIndentation || this.printIndent();
+                        this.print(name + ': ');
+                        if(typeof classConfig[name] === 'string')
+                            this.print(this.codeForStringLiteral(classConfig[name]));
+                        else
+                            this.print(JSON.stringify(classConfig[name]));
+                        this.print(i >= l.length - 1 ? '\n' : ',\n');
+                    });
+                    this.outdent();
+                    omitIndentation || this.printIndent();
+                    this.print('};\n');
+                }
+                this.printSpacerLine(omitIndentation);
+                if(this.options.generateTypeScript && additionalClassMembers) {
                     _.each(additionalClassMembers, (memberName) => {
                         omitIndentation || this.printIndent();
                         this.print(memberName);
@@ -981,7 +1038,7 @@ export class JsGenerator {
         // (e.g., initializer statement of a for loop)
         if(!_.contains(['nop', 'statements', 'ifelse', 'while', 'for', 'switch'], astNode.type)
                 && (!this.options.generateTypeScript || !_.contains(['scriptdef', 'object'], astNode.type))
-                && !omitTerminator)
+                && !omitTerminator && !omitSemicolon)
             this.print(';');
         
         //if(!_.contains(['if'], astNode.type))
@@ -1004,7 +1061,7 @@ export class JsGenerator {
                 var caseNode = <astTypes.CaseNode>astNode;
                 this.printIndent();
                 this.print('case ');
-                this.generateExpression(caseNode.expr, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A);
+                this.generateExpression(caseNode.expr, OpEnum.WRAPPED_IN_PARENTHESES, ops.Location.N_A, undefined, CommentContext.BEFORE_CURLY_BRACE);
                 this.print(':\n');
                 this.indent();
                 this.generateStatement(caseNode.stmts);
@@ -1029,7 +1086,7 @@ export class JsGenerator {
     }
 
     generateLocalVariableAllocation(astNode) {
-        var localVariables = astUtils.getAnglScope(astNode).getVariablesThatMustBeAllocatedInThisScope();
+        var localVariables = astUtils.getAnglScope(astNode).getVariablesThatMustBeAllocatedAtTopOfScope();
         if(localVariables.length) {
             this.printIndent();
             this.print('var ');

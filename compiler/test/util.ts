@@ -8,7 +8,7 @@ import compiler = require('../lib/compiler');
 import options = require('../lib/options');
 
 export function compileAndLoad(anglSource: string, opts: options.Options, sandbox?: any) {
-    var jsCode = compiler.compile(anglSource, opts);
+    var jsCode = compiler.compileToCode(anglSource, opts);
     if(!sandbox) sandbox = createSandbox();
     vm.runInNewContext(jsCode, sandbox);
     return sandbox.module.exports;

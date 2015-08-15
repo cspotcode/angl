@@ -6,8 +6,8 @@ function add(n) {
 
 add([
     "global",
-    "self",
-    "other",
+    //"self",
+    //"other",
     "all",
     "noone",
     "true",

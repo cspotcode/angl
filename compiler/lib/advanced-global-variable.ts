@@ -73,6 +73,7 @@ export interface CodeGeneratorContext {
     fileNode: astTypes.FileNode;
     getVariableForModule(module:ModuleDescriptor): scopeVariable.AbstractVariable;
     getProxyOfVariable(variable:scopeVariable.AbstractVariable): scopeVariable.AbstractVariable;
+    astContext: astTypes.AstNode;
 }
 
 export interface MightNeedParenthesesCodeGeneratorContext extends CodeGeneratorContext {
@@ -135,7 +136,7 @@ export class AdvancedGlobalVariable extends scopeVariable.Variable {
     }
     
     constructor(opts: CustomVariableDescriptor) {
-        super(null, scopeVariable.AllocationType.NONE, scopeVariable.AccessType.PROP_ACCESS); // TODO pick the correct strings
+        super(null, scopeVariable.VariableFlags.NO_ALLOCATION, scopeVariable.VariableFlags.PROP_ACCESS); // TODO pick the correct strings
         this.setIdentifier(opts.name);
         if(opts.jsName) this.setJsIdentifier(opts.jsName);
         this.setUsesThisBinding(opts.usesThisBinding == null ? true : opts.usesThisBinding);
@@ -159,6 +160,7 @@ export class AdvancedGlobalVariable extends scopeVariable.Variable {
         var fileNode = <astTypes.FileNode>astUtils.findParent(astContext, (node: astTypes.AstNode) => node.type === 'file', true);
         var ctx: CodeGeneratorContext = {
             variable: this,
+            astContext: astContext,
             jsGenerator: codeGenerator,
             options: codeGenerator.getOptions(),
             fileNode: fileNode,

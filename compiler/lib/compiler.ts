@@ -52,13 +52,18 @@ export interface AbstractCompileOptions {
     };
 }
 
+export interface CompilationResult {
+    code?: string;
+    referencedGlobalVariables?: Array<scopeVariable.AbstractVariable>;
+}
+
 export interface CompileOptions extends AbstractCompileOptions {
     anglSourceCode: string;
 }
 
-export function compile(opts: CompileOptions): string;
-export function compile(anglSourceCode: string, options: options.Options): string;
-export function compile(arg0: any, arg1?: any):string {
+export function compile(opts: CompileOptions): CompilationResult;
+export function compile(anglSourceCode: string, options: options.Options): CompilationResult;
+export function compile(arg0: any, arg1?: any): CompilationResult {
     var anglSourceCode: string, options: options.Options, opts: CompileOptions;
     if(typeof arg0 === 'object') {
         opts = arg0;
@@ -74,14 +79,20 @@ export function compile(arg0: any, arg1?: any):string {
     return compileAst(ast, null, options);
 }
 
+export function compileToCode(opts: CompileOptions): string;
+export function compileToCode(anglSourceCode: string, options: options.Options): string;
+export function compileToCode(arg0: any, arg1?: any):string {
+    return compile(arg0, arg1).code;
+}
+
 export interface CompileAstOptions extends AbstractCompileOptions {
     anglAst: astTypes.AstNode;
     extraGlobalIdentifiers: Array<string>;
 }
 
-export function compileAst(opts: CompileAstOptions): string;
-export function compileAst(anglAst: astTypes.AstNode, extraGlobalIdentifiers?: Array<string>, options?: options.Options): string;
-export function compileAst(arg0: any, arg1?: any, arg2?: any): string {
+export function compileAst(opts: CompileAstOptions): CompilationResult;
+export function compileAst(anglAst: astTypes.AstNode, extraGlobalIdentifiers?: Array<string>, options?: options.Options): CompilationResult;
+export function compileAst(arg0: any, arg1?: any, arg2?: any): CompilationResult {
     var anglAst: astTypes.AstNode,
         extraGlobalIdentifiers: Array<string>,
         options: options.Options,
@@ -97,13 +108,22 @@ export function compileAst(arg0: any, arg1?: any, arg2?: any): string {
         extraGlobalIdentifiers = opts.extraGlobalIdentifiers || [];
         options = opts.options || defaultOptions;
     }
-    
+
     // Manually create and assign a global scope to the AST
     var newGlobalScope = globalScope.createGlobalScope(options, extraGlobalIdentifiers);
     anglAst.globalAnglScope = newGlobalScope;
     anglAst = allTransformations.transform(anglAst, options);
-    var jsSource = jsGenerator.generateCode(anglAst, options);
-    return jsSource;
+    var result = jsGenerator.generate(anglAst, options);
+    return {
+        code: result.code,
+        referencedGlobalVariables: result.referencedGlobalVariables
+    };
+}
+
+export function compileAstToCode(opts: CompileAstOptions): string;
+export function compileAstToCode(anglAst: astTypes.AstNode, extraGlobalIdentifiers?: Array<string>, options?: options.Options): string;
+export function compileAstToCode(arg0: any, arg1?: any, arg2?: any): string {
+    return compileAst(arg0, arg1, arg2).code;
 }
 
 interface AnglFile {
@@ -120,9 +140,9 @@ export interface CompileDirectoryOptions extends AbstractCompileOptions {
     dest: string;
 }
 
-export function compileDirectory(opts: CompileDirectoryOptions);
-export function compileDirectory(sourcePath: string, destinationPath: string, options: options.Options);
-export function compileDirectory(arg0: any, arg1?: any, arg2?: any) {
+export function compileDirectory(opts: CompileDirectoryOptions): CompilationResult;
+export function compileDirectory(sourcePath: string, destinationPath: string, options: options.Options): CompilationResult;
+export function compileDirectory(arg0: any, arg1?: any, arg2?: any): CompilationResult {
     var opts: CompileDirectoryOptions;
     if(typeof arg0 === 'object') {
         opts = arg0;
@@ -185,10 +205,12 @@ export function compileDirectory(arg0: any, arg1?: any, arg2?: any) {
     console.log('Performing remaining transformation phases on project...');
     projectNode = <astTypes.ProjectNode>allTransformations.transform(projectNode, options, allTransformations.Phases.ONE);
     
+    var referencedGlobalVariables = [];
     console.log('Generating code...');
     _.each(files, (file: AnglFile) => {
-        var jsSource = jsGenerator.generateCode(file.ast, options);
-        file.compiledJs = jsSource;
+        var res = jsGenerator.generate(file.ast, options);
+        file.compiledJs = res.code;
+        referencedGlobalVariables.push(res.referencedGlobalVariables);
     });
 
     console.log('Writing code to disc...');
@@ -199,5 +221,8 @@ export function compileDirectory(arg0: any, arg1?: any, arg2?: any) {
         mkdirp.sync(path.dirname(outputPath));
         fs.writeFileSync(outputPath, file.compiledJs);
     });
-        
+    
+    return {
+        referencedGlobalVariables: <Array<scopeVariable.AbstractVariable>>_(referencedGlobalVariables).chain().flatten().unique().value()
+    };
 }

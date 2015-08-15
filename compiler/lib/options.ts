@@ -77,6 +77,10 @@ export class Options {
         [classAnglIdentifier: string]: Array<string>;
     } = {};
     
+    classConfigs: {
+        [classAnglIdentifier: string]: {};
+    } = {};
+    
 }
 
 export enum StringQuoteStyle {

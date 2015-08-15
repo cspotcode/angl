@@ -24,8 +24,12 @@ var walk = treeWalker.walk;
 
 export var transform = (ast:astTypes.AstNode, options: options.Options) => {
     var fileNode: astTypes.FileNode;
+    
+    // TODO can likely replace this with a single reference to the previously-visited node.
+    var alreadyVisited = new FastSet<astTypes.AstNode>();
+    
     walk(ast, (node:astTypes.AstNode, parent:astTypes.AstNode, locationInParent):any => {
-
+        
         var replacement: Array<astTypes.AstNode>;
 
         // TODO convert all scriptdefs into consts
@@ -63,30 +67,29 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                 // This second version is set as "provided" by this file, such that other files using
                 // the variable will require() this module/file.
                 if(options.generateTypeScript) {
-                    variable = new scopeVariable.Variable(exportableNode.name, scopeVariable.AllocationType.NONE, scopeVariable.AccessType.BARE);
+                    variable = new scopeVariable.Variable(exportableNode.name, scopeVariable.VariableFlags.NO_ALLOCATION, scopeVariable.VariableFlags.BARE);
                 } else {
-                    variable = new scopeVariable.Variable(exportableNode.name, scopeVariable.AllocationType.PROP_ASSIGNMENT, scopeVariable.AccessType.PROP_ACCESS);
+                    variable = new scopeVariable.Variable(exportableNode.name, scopeVariable.VariableFlags.PROP_ASSIGNMENT, scopeVariable.VariableFlags.PROP_ACCESS);
                     variable.setContainingObjectIdentifier('exports');
                 }
                 if(jsIdentifier) {
                     variable.setJsIdentifier(null);
                     variable.setDesiredJsIdentifier(jsIdentifier);
                 }
-                var globalVariable = new scopeVariable.GlobalVersionOfExportedVariable(variable, exportableNode.name, scopeVariable.AllocationType.PROP_ASSIGNMENT, scopeVariable.AccessType.PROP_ACCESS);
+                var globalVariable = new scopeVariable.GlobalVersionOfExportedVariable(variable, fileNode.moduleDescriptor, exportableNode.name, scopeVariable.VariableFlags.PROP_ASSIGNMENT, scopeVariable.VariableFlags.PROP_ACCESS);
                 if(jsIdentifier) {
                     globalVariable.setJsIdentifier(null);
                     globalVariable.setDesiredJsIdentifier(jsIdentifier);
                 }
-                globalVariable.setProvidedByModule(fileNode.moduleDescriptor);
                 astUtils.getGlobalAnglScope(exportableNode).addVariable(globalVariable);
             } else {
                 // This variable is in local scope
                 if(options.generateTypeScript) {
                     // No need for a "var" declaration in TypeScript; we use a declarative syntax that automatically
                     // creates the local variable.
-                    variable = new scopeVariable.Variable(exportableNode.name, scopeVariable.AllocationType.NONE, scopeVariable.AccessType.BARE);
+                    variable = new scopeVariable.Variable(exportableNode.name, scopeVariable.VariableFlags.NO_ALLOCATION, scopeVariable.VariableFlags.BARE);
                 } else {
-                    variable = new scopeVariable.Variable(exportableNode.name, scopeVariable.AllocationType.LOCAL, scopeVariable.AccessType.BARE);
+                    variable = new scopeVariable.Variable(exportableNode.name, scopeVariable.VariableFlags.LOCAL_GENERATED, scopeVariable.VariableFlags.BARE);
                 }
                 variable.setJsIdentifier(null);
                 variable.setDesiredJsIdentifier(jsIdentifier || exportableNode.name);
@@ -124,8 +127,7 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                 throw new Error('Cannot export "' + exportDeclarationNode.name + '": no such variable.');
             fileNode.moduleDescriptor.preferredIdentifier = exportDeclarationNode.name;
             // Since this is an export, add a variable to global scope.
-            var globalVar = new scopeVariable.GlobalVersionOfExportedVariable(localVariable, exportDeclarationNode.name, scopeVariable.AllocationType.NONE, scopeVariable.AccessType.BARE);
-            globalVar.setProvidedByModule(fileNode.moduleDescriptor);
+            var globalVar = new scopeVariable.GlobalVersionOfExportedVariable(localVariable, fileNode.moduleDescriptor, exportDeclarationNode.name, scopeVariable.VariableFlags.NO_ALLOCATION, scopeVariable.VariableFlags.BARE);
             astUtils.getGlobalAnglScope(fileNode).addVariable(globalVar);
             return null;
         }
@@ -138,11 +140,11 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             scriptNode.anglScope = newScope;
             // Register script arguments into the local scope
             // TODO how to handle self and other?
-            var thisVar = new scopeVariable.Variable('self', scopeVariable.AllocationType.ARGUMENT);
+            var thisVar = new scopeVariable.Variable('self', scopeVariable.VariableFlags.ARGUMENT);
             thisVar.setJsIdentifier('this');
             newScope.addVariable(thisVar);
             if(node.type === 'scriptdef') {
-                var otherVar = new scopeVariable.Variable(null, scopeVariable.AllocationType.ARGUMENT);
+                var otherVar = new scopeVariable.Variable(null, scopeVariable.VariableFlags.ARGUMENT);
                 otherVar.setIdentifier('other');
                 otherVar.setDesiredJsIdentifier('other');
                 newScope.addVariable(otherVar);
@@ -151,20 +153,26 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                 // Special case: don't create local variable for a scriptdef's first argument that is `other`
                 if(node.type === 'scriptdef' && argIndex === 0 && argName === 'other')
                     return;
-                var argumentVar = new scopeVariable.Variable(argName, scopeVariable.AllocationType.ARGUMENT);
+                var argumentVar = new scopeVariable.Variable(argName, scopeVariable.VariableFlags.ARGUMENT);
                 newScope.addVariable(argumentVar);
             });
         }
         
         // Var declarations register local variables into their scope
-        if(node.type === 'var') {
+        if(node.type === 'var' && !alreadyVisited.has(node)) {
             var varNode = <astTypes.VarDeclarationNode>node;
-            replacement = [];
+            replacement = [varNode];
+            
+            // After replacement, this node will be visited again.  However, we should not attempt to declare local
+            // variables more than once.
+            alreadyVisited.add(varNode);
+            
             _.each(varNode.list, (var_item) => {
                 if(astUtils.getAnglScope(varNode).hasIdentifier(var_item.name)) {
                     throw new Error('Attempt to declare local variable with the name ' + JSON.stringify(var_item.name) + ' more than once.');
                 }
-                var localVar = new scopeVariable.Variable(var_item.name);
+                var localVar = new scopeVariable.Variable(var_item.name, scopeVariable.VariableFlags.LOCAL);
+                localVar.flags |= scopeVariable.VariableFlags.DECLARED_BY_ANGL | scopeVariable.VariableFlags.REFERENCED;
                 localVar.setJsIdentifier(null);
                 localVar.setDesiredJsIdentifier(
                     options.renameUnderscoreToCamelCase
@@ -172,18 +180,22 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                     : var_item.name
                 );
                 astUtils.getAnglScope(varNode).addVariable(localVar);
+                var_item.variable = localVar;
                 if(var_item.expr) {
-                    replacement.push({
+                    var rep: astTypes.AssignNode = {
                         type: 'assign',
                         lval: {
                             type: 'identifier',
                             variable: localVar
                         },
                         rval: var_item.expr
-                    });
+                    };
+                    replacement.push(rep);
+                    astUtils.migrateComments(rep, var_item);
+                    localVar.flags |= scopeVariable.VariableFlags.ASSIGNED_BY_ANGL;
+                    var_item.expr = null; // avoid visiting expr twice in subsequent transformation passes.
                 }
             });
-            replacement.length || replacement.push({type: 'nop'});
             return replacement;
         }
         
@@ -195,7 +207,7 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                 if(astUtils.getGlobalAnglScope(globalVarNode).hasIdentifier(var_item.name)) {
                     throw new Error('Attempt to declare global variable with the name ' + JSON.stringify(var_item.name) + ' more than once.');
                 }
-                var globalVar = new scopeVariable.Variable(var_item.name, scopeVariable.AllocationType.PROP_ASSIGNMENT, scopeVariable.AccessType.PROP_ACCESS);
+                var globalVar = new scopeVariable.Variable(var_item.name, scopeVariable.VariableFlags.PROP_ASSIGNMENT, scopeVariable.VariableFlags.PROP_ACCESS);
                 globalVar.setContainingObjectIdentifier(strings.ANGL_GLOBALS_IDENTIFIER);
                 astUtils.getGlobalAnglScope(globalVarNode).addVariable(globalVar);
             });
@@ -208,12 +220,13 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             var repeatNode = <astTypes.RepeatNode>node;
             // construct a new AstNode to replace it.
             // allocate a temporary Javascript counter variable
-            var counterVariable = new scopeVariable.Variable();
+            var anglScope = astUtils.getAnglScope(repeatNode);
+            var counterVariable = new scopeVariable.Variable(null, scopeVariable.VariableFlags.LOCAL_GENERATED | scopeVariable.VariableFlags.DECLARED_BY_GENERATED_CODE);
             counterVariable.setDesiredJsIdentifier('i');
-            astUtils.getAnglScope(repeatNode).addVariable(counterVariable);
-            var timesVariable = new scopeVariable.Variable();
+            anglScope.addVariable(counterVariable);
+            var timesVariable = new scopeVariable.Variable(null, scopeVariable.VariableFlags.LOCAL_GENERATED | scopeVariable.VariableFlags.DECLARED_BY_GENERATED_CODE);
             timesVariable.setDesiredJsIdentifier('l');
-            astUtils.getAnglScope(repeatNode).addVariable(timesVariable);
+            anglScope.addVariable(timesVariable);
             replacement = [
                 {
                     type: 'assign',
@@ -221,7 +234,8 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                         type: 'identifier',
                         variable: timesVariable
                     },
-                    rval: astUtils.cleanNode(repeatNode.expr)
+                    rval: astUtils.cleanNode(repeatNode.expr),
+                    isVarDeclaration: true
                 },
                 {
                     type: 'for',
@@ -234,7 +248,8 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
                         rval: {
                             type: 'number',
                             val: 0
-                        }
+                        },
+                        isVarDeclaration: true
                     },
                     contexpr: {
                         type: 'binop',
@@ -272,7 +287,7 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
         // for-loop over each object
         // within the loop, `other` maps to the outer `self`
         // and `self` maps to each object from the array, one after the other
-        if(node.type === 'with' && !(<astTypes.WithNode>node).alreadyVisited) {
+        if(node.type === 'with' && !alreadyVisited.has(node)) {
             var withNode = <astTypes.WithNode>node;
 
             // Grab a reference to the outer scope
@@ -292,23 +307,27 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
             var selfVariable = new scopeVariable.Variable();
             selfVariable.setIdentifier('self');
             selfVariable.setDesiredJsIdentifier('wSelf');
+            selfVariable.flags |= scopeVariable.VariableFlags.DECLARED_BY_GENERATED_CODE;
             innerScope.addVariable(selfVariable);
             
             // Create variable to hold the inner `other` value
-            var innerOtherIsThis = outerScope.getVariableByIdentifier('self').getJsIdentifier() === 'this';
-            var innerOtherVariable = new scopeVariable.Variable(null, innerOtherIsThis ? scopeVariable.AllocationType.NONE : scopeVariable.AllocationType.LOCAL);
-            innerOtherVariable.setIdentifier('other');
-            if(innerOtherIsThis) {
+            var innerOtherVariable: scopeVariable.Variable;
+            if(outerScope.getVariableByIdentifier('self').getJsIdentifier() === 'this') {
+                innerOtherVariable = new scopeVariable.Variable(null, scopeVariable.VariableFlags.NO_ALLOCATION);
                 innerOtherVariable.setJsIdentifier('this');
             } else {
+                innerOtherVariable = new scopeVariable.Variable(null, scopeVariable.VariableFlags.LOCAL_GENERATED);
                 innerOtherVariable.setDesiredJsIdentifier('wOther');
+                innerOtherVariable.flags |= scopeVariable.VariableFlags.DECLARED_BY_GENERATED_CODE;
             }
+            innerOtherVariable.setIdentifier('other');
             innerScope.addVariable(innerOtherVariable);
 
             // Create variable to cache the outer `other` value.  This will be used to restore the value of `other`
             // after `with` has finished looping.
             var outerOtherVariable = new scopeVariable.Variable();
             outerOtherVariable.setDesiredJsIdentifier('wPrevOther');
+            outerOtherVariable.flags |= scopeVariable.VariableFlags.DECLARED_BY_GENERATED_CODE;
             outerScope.addVariable(outerOtherVariable);
 
             // Store variables onto the with node, for using during code generation
@@ -338,7 +357,7 @@ export var transform = (ast:astTypes.AstNode, options: options.Options) => {
 
             // After replacement, this node will be visited again.  Mark it with a flag so that we can skip processing
             // next time.
-            withNode.alreadyVisited = true;
+            alreadyVisited.add(withNode);
             
             var withReplacement:astTypes.AstNode[] = [assignmentNode, withNode];
             return withReplacement;

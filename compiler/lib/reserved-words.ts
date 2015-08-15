@@ -21,7 +21,9 @@ var commonReservedWords = [
     //'implements',
     //'interface',
     //'declare',
-    //'module'
+    //'module',
+    'new',
+    'delete'
 ];
 
 /**

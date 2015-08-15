@@ -11,3 +11,8 @@ compiler-build
 .tscache
 compiler/lib/.baseDir.ts
 compiler/test/.baseDir.ts
+
+notes
+compiler/lib/test-compile-directory.ts
+examples
+dest

@@ -63,12 +63,12 @@ export class AnglScope {
      */
     canAllocateOwnLocalVariables: boolean;
 
-    constructor() {
+    constructor(parentScope: AnglScope = null) {
         this._identifiers = new Dict<scopeVariable.AbstractVariable>();
         this._jsIdentifiers = new Dict<scopeVariable.AbstractVariable>();
         this._unnamedVariables = new FastSet<scopeVariable.AbstractVariable>();
         this._variables = new FastSet<scopeVariable.AbstractVariable>();
-        this._parentScope = null;
+        this._parentScope = parentScope;
         this._unshadowableVariables = new FastSet<scopeVariable.AbstractVariable>();
         this._childScopes = new FastSet<AnglScope>();
         this._usedVariables = new FastSet<scopeVariable.AbstractVariable>();
@@ -114,6 +114,8 @@ export class AnglScope {
         } else {
             this._jsIdentifiers.set(jsIdentifier, variable);
         }
+        
+        (<any>variable).__scope = this;
     }
 
     /**
@@ -150,10 +152,15 @@ export class AnglScope {
         return this._variables.contains(variable);
     }
 
-    // sets identifier with given name and value, replacing previous one with that name if it exists
-/*    setIdentifier(name, value) {
-        this._identifiers.set(name, value);
-    };*/
+    /**
+     * Returns scope that owns the given variable, or null if the variable is not owned by any scope in this scope's
+     * chain.
+     */
+    getScopeOfVariable(variable: scopeVariable.AbstractVariable): AnglScope {
+        var scope = this;
+        while(scope && !scope.hasVariable(variable)) scope = scope._parentScope;
+        return scope;
+    }
 
     /**
      * removes identifier with the given name, returning true if it was removed, false if it didn't exist
@@ -198,17 +205,29 @@ export class AnglScope {
         return this._parentScope;
     }
 
+    _jsIdentifierIsTaken(identifier: string): boolean {
+        function _taken(scope: AnglScope) {
+            if(scope._jsIdentifiers.has(identifier)) return true;
+            return scope._childScopes.some((childScope) => {
+                return !childScope.canAllocateOwnLocalVariables && _taken(childScope);
+            });
+        }
+        for(var scope: AnglScope = this; !scope.canAllocateOwnLocalVariables; scope = scope.getParentScope()) {}
+        return _taken(scope);
+    }
+    
     /**
      * Converts all unnamed identifiers to regular identifiers by assigning them names
      */
     assignJsIdentifiers():void {
+        if(!this._unnamedVariables.length) return;
         var unnamedVariables = this._unnamedVariables.toArray();
         // Create a set of all the identifier names we cannot use.
         var forbiddenNames = new FastSet();
         // Add all the identifier names we cannot shadow.
         this._unshadowableVariables.forEach((variable) => {
             // Sanity check that this variable is capable of being shadowed
-            if(variable.getAccessType() !== scopeVariable.AccessType.BARE) {
+            if(variable.getAccessType() !== scopeVariable.VariableFlags.BARE) {
                 throw new Error('Variable should not be shadowed, yet it is not possible to shadow this variable.  This probably indicates a bug elsewhere in the compiler.');
             }
             // Sanity check that this variable has been assigned a JS identifier.  Otherwise there is
@@ -222,7 +241,10 @@ export class AnglScope {
         forbiddenNames.addEach(reservedWords.typeScriptReservedWords);
         forbiddenNames.addEach(reservedWords.javaScriptReservedWords);
         
-        _.each(unnamedVariables, (variable:scopeVariable.Variable) => {
+        _(unnamedVariables).sortBy((variable: scopeVariable.Variable) =>
+            // Assign names to generated variables last.  That way, variables declared in the original Angl source are given priority for names.
+            variable.flags & scopeVariable.VariableFlags.GENERATED ? 1 : 0
+        ).each((variable:scopeVariable.Variable) => {
             // Some variables might be unnamed but don't want us to assign them a name.
             if(!variable.awaitingJsIdentifierAssignment()) return;
             // Remove variable from self.  Will be re-added once we've assigned a JS name
@@ -231,7 +253,7 @@ export class AnglScope {
             var nameSuffix = '';
             // While the name is already in use, create a new name by using a different suffix
             var uid = 2;
-            while(this._hasJsIdentifier(namePrefix + nameSuffix) || forbiddenNames.contains(namePrefix + nameSuffix)) {
+            while(this._jsIdentifierIsTaken(namePrefix + nameSuffix) || forbiddenNames.contains(namePrefix + nameSuffix)) {
                 nameSuffix = '' + uid;
                 uid++;
             }
@@ -243,17 +265,22 @@ export class AnglScope {
         });
     }
 
-    _hasJsIdentifier(identifier:string):boolean {
-        return this._jsIdentifiers.has(identifier);
-    }
-
     /**
-     * Remember not to shadow the given variable in the generated JS.
+     * Remember not to shadow the given variable in the generated JS in *this* scope.  Other scopes might shadow this
+     * variable, but this scope cannot.
      * @param variable A variable from a parent scope that must not be shadowed by this scope.
      */
     doNotShadow(variable: scopeVariable.AbstractVariable) {
         this._unshadowableVariables.add(variable);
     }
+
+    /**
+     * Remember not to shadow this given variable in the generated JS in any child scopes.
+     * @param variable
+     */
+    //doNotShadowInChildScopes(variable: scopeVariable.AbstractVariable) {
+    //    this._unshadowableInChildren.add(variable);
+    //}
 
     /**
      * Returns an array of all variables that must be allocated by/in this scope.  Some variables
@@ -262,7 +289,7 @@ export class AnglScope {
      * Imports (`var mod = require('mod')` or `import mod = require('mod')` are excluded; they are handled
      * separately.
      */
-    getVariablesThatMustBeAllocatedInThisScope(): Array<scopeVariable.AbstractVariable> {
+    getVariablesThatMustBeAllocatedAtTopOfScope(): Array<scopeVariable.AbstractVariable> {
         if(!this.canAllocateOwnLocalVariables) return [];
         var vars: Array<scopeVariable.AbstractVariable> = [];
         // Search all child scopes, recursive-descent, for variables that must be allocated by
@@ -275,7 +302,16 @@ export class AnglScope {
             if(scope !== this && scope.canAllocateOwnLocalVariables) continue;
             pushArray(
                 vars,
-                _.filter(scope.getVariablesArray(), (variable: scopeVariable.AbstractVariable) => variable.getAllocationType() === scopeVariable.AllocationType.LOCAL)
+                _.filter(scope.getVariablesArray(), (variable: scopeVariable.AbstractVariable) =>
+                    // is local
+                    variable.getFlags() & scopeVariable.VariableFlags.LOCAL
+                    // is not going to be declared elsewhere
+                    && !(variable.getFlags() & (
+                          scopeVariable.VariableFlags.DECLARED_AT_ASSIGNMENT
+                        | scopeVariable.VariableFlags.DECLARED_BY_GENERATED_CODE
+                        | scopeVariable.VariableFlags.DECLARED_BY_ANGL
+                    ))
+                )
             );
             pushArray(visitedScopes, scope._childScopes.toArray());
         }
@@ -354,10 +390,6 @@ export class WithScope extends AnglScope {
             }
         }
         this._addVariable(variable);
-    }
-
-    _hasJsIdentifier(identifier:string):boolean {
-        return this._jsIdentifiers.has(identifier) || this._parentScope._hasJsIdentifier(identifier);
     }
 
 }

@@ -5,6 +5,16 @@ module.exports = function(grunt) {
     // Load all grunt tasks
     require('load-grunt-tasks')(grunt);
     
+    switch(grunt.option('tsc')) {
+        case 'custom':
+            grunt.log.writeln('Using custom grunt-ts');
+            grunt.loadNpmTasks('custom-grunt-ts');
+            break;
+        default:
+            grunt.log.writeln('Using original grunt-ts');
+            grunt.loadNpmTasks('original-grunt-ts');
+    }
+    
     // Declare configuration in a more readable style
     grunt = require('grunt-organized')(grunt, {
         pkg: grunt.file.readJSON('package.json')

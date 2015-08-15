@@ -30,7 +30,7 @@
     "grunt-jison": "^1.3.2",
     "grunt-mocha-test": "^0.12.4",
     "grunt-organized": "^0.1.3",
-    "grunt-ts": "^2.0.0",
+    "grunt-ts": "https://github.com/cspotcode/grunt-ts/releases/download/v2.0.1%2Bnospawn/grunt-ts-2.0.1.tgz",
     "grunt-typedoc": "^0.2.1",
     "jison": "^0.4.15",
     "load-grunt-tasks": "^1.0.0",

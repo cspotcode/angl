@@ -380,7 +380,7 @@ export function transform(ast:astTypes.AstNode) {
     }
     
     // Everything has been resolved.  For all scriptdef scopes that do not declare a `other` argument, replace the local `other` with the angl runtime's global `other`
-    scopes.forEach((scope)=> {
+    scopes.forEach((scope) => {
         if(scope.scriptDefNode && scope.scriptDefNode.args[0] !== 'other') {
             var localOther = astUtils.getAnglScope(scope.scriptDefNode).getVariableByIdentifier('other');
             var globalOther = astUtils.getGlobalAnglScope(scope.scriptDefNode).getVariableByIdentifier('other');
@@ -390,7 +390,13 @@ export function transform(ast:astTypes.AstNode) {
                     if(identifierNode.variable === localOther) identifierNode.variable = globalOther;
                 }
             });
+            // TODO this is a hack.
+            // Child scopes may have been instructed not to shadow this variable.  If we don't assign this variable an identifier,
+            // and then child scopes try to avoid a name collision with this variable, they'll throw an error.
+            // Therefore, instead of removing the variable, we assign it a random name that will hopefully never be used.
             astUtils.getAnglScope(scope.scriptDefNode).removeVariable(localOther);
+            (<scopeVariable.Variable>localOther).setIdentifier('a' + Math.random() + new Date);
+            astUtils.getAnglScope(scope.scriptDefNode).addVariable(localOther);
         }
     });
 }

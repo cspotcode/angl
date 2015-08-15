@@ -74,7 +74,7 @@ export class FileNode implements AstNode {
         if(this.dependencies.has(moduleDescriptor)) {
             throw new Error('File already has a dependency on module: ' + moduleDescriptor.name);
         }
-        var variable = new scopeVariable.Variable(null, scopeVariable.AllocationType.IMPORT, scopeVariable.AccessType.BARE);
+        var variable = new scopeVariable.Variable(null, scopeVariable.VariableFlags.IMPORT, scopeVariable.VariableFlags.BARE);
         variable.setDesiredJsIdentifier(moduleDescriptor.preferredIdentifier);
         this.anglScope.addVariable(variable);
         this.dependencies.set(moduleDescriptor, variable);
@@ -154,6 +154,7 @@ export interface IndexNode extends ExpressionNode {
 export interface AssignNode extends StatementNode {
     lval: ExpressionNode;
     rval: ExpressionNode;
+    isVarDeclaration?: boolean;
 }
 
 export interface CmpAssignNode extends StatementNode {
@@ -164,6 +165,7 @@ export interface CmpAssignNode extends StatementNode {
 
 export interface VarDeclarationNode extends StatementNode {
     list: Array<VarDeclarationItemNode>;
+    
 }
 
 export interface GlobalVarDeclarationNode extends VarDeclarationNode {}
@@ -171,6 +173,7 @@ export interface GlobalVarDeclarationNode extends VarDeclarationNode {}
 export interface VarDeclarationItemNode extends AstNode {
     name: string;
     expr?: ExpressionNode;
+    variable?: scopeVariable.AbstractVariable;
 }
 
 export interface StatementNode extends AstNode {
@@ -275,10 +278,6 @@ export interface WithNode extends StatementNode {
     allObjectsVariable: scopeVariable.AbstractVariable;
     outerOtherVariable: scopeVariable.AbstractVariable;
     innerOtherVariable: scopeVariable.AbstractVariable;
-    /**
-     * Used in a processing phase to avoid processing this node twice.
-     */
-    alreadyVisited: boolean;
 }
 
 export interface RepeatNode extends StatementNode {
